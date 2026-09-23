@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <title>JV · EQE 数据工作台</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css?v=20260918-2">
+  <link rel="stylesheet" href="styles.css?v=20260923-1">
 </head>
 <body>
   <header class="site-header">
@@ -19,6 +19,7 @@
     </div>
     <div class="header-identity">
       <img class="university-logo" src="assets/sztu-logo.svg" alt="深圳技术大学 Shenzhen Technology University" width="132" height="92">
+      <a class="header-email" href="mailto:202401201056@stumail.sztu.edu.cn">202401201056@stumail.sztu.edu.cn</a>
       <div class="privacy-note"><span class="status-dot"></span>数据仅在本机处理</div>
     </div>
   </header>
@@ -188,12 +189,14 @@
           </div>
         </div>
 
-        <div id="plot" class="plot" aria-label="数据图表"></div>
+        <div class="plot-stage">
+          <div id="plot" class="plot" aria-label="数据图表"></div>
 
-        <div id="chartEmpty" class="chart-empty">
-          <div class="empty-orbit" aria-hidden="true"><span></span></div>
-          <strong>等待数据</strong>
-          <span>上传测试文件后，这里会自动生成曲线。</span>
+          <div id="chartEmpty" class="chart-empty">
+            <div class="empty-orbit" aria-hidden="true"><span></span></div>
+            <strong>等待数据</strong>
+            <span>上传测试文件后，这里会自动生成曲线。</span>
+          </div>
         </div>
       </section>
     </section>
