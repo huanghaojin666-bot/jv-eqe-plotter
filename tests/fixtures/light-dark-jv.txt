@@ -1,0 +1,7 @@
+Name	O 1-1		O 1-1
+Mode	Light		Dark
+[Result]	Volt. (V)	J (A/cm^2)	Volt. (V)	J (A/cm^2)
+[Raw Data]	0	0.01	0	0.001
+[Raw Data]	0.5	0.02	0.5	0.002
+[Raw Data]	1	0.03	1	0.003
+====

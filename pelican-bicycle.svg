@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="760" viewBox="0 0 900 760" role="img" aria-labelledby="title desc">
+  <title id="title">Pelican riding a bicycle</title>
+  <desc id="desc">A cheerful white pelican with a long golden bill pedals a coral bicycle against a pale mint circle.</desc>
+  <defs>
+    <g id="wheel">
+      <circle r="111" fill="#fffdf5" stroke="#243e43" stroke-width="12"/>
+      <circle r="98" fill="none" stroke="#c3d8d4" stroke-width="3"/>
+      <g stroke="#a3bfbd" stroke-width="2.5">
+        <path d="M-97 0H97M0-97V97M-69-69 69 69M-69 69 69-69M-90-37 90 37M-90 37 90-37M-37-90 37 90M-37 90 37-90"/>
+      </g>
+      <circle r="10" fill="#243e43"/>
+    </g>
+  </defs>
+  <rect width="900" height="760" rx="36" fill="#fffdf5"/>
+  <circle cx="442" cy="348" r="290" fill="#e2f0e6"/>
+  <circle cx="699" cy="151" r="43" fill="#f7cf74"/>
+  <g fill="none" stroke="#b6d3c7" stroke-width="6" stroke-linecap="round">
+    <path d="M124 324h71m-98 28h67m-34 28h44"/>
+    <path d="M697 371h57m-32 24h49"/>
+  </g>
+  <ellipse cx="462" cy="665" rx="312" ry="19" fill="#dce8dd"/>
+  <g transform="translate(269 546)"><use href="#wheel"/></g>
+  <g transform="translate(655 546)"><use href="#wheel"/></g>
+  <!-- The far leg and pedal sit behind the bicycle frame. -->
+  <g stroke="#243e43" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M397 369 445 419 403 482" fill="none" stroke="#d59b47" stroke-width="15"/>
+    <path d="m401 474-22 8-8 14 45-1 4-12Z" fill="#eab356"/>
+    <path d="M370 499h57" fill="none"/>
+  </g>
+  <!-- Coral step-through bicycle, crank, fork, and swept handlebars. -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m269 546 104-153 81 153H269l281-130-96 130" stroke="#243e43" stroke-width="15"/>
+    <path d="m269 546 104-153 81 153H269l281-130-96 130" stroke="#ed7665" stroke-width="9"/>
+    <path d="m540 384 115 162" stroke="#243e43" stroke-width="15"/>
+    <path d="m540 384 115 162" stroke="#ed7665" stroke-width="9"/>
+    <path d="m373 393-14-37m181 28-22-48 40-13q24-9 32 10" stroke="#243e43" stroke-width="9"/>
+    <path d="m573 324 17 9" stroke="#b98354" stroke-width="13"/>
+  </g>
+  <path d="M327 350q30-13 70 0l-3 13h-64q-15-2-3-13" fill="#243e43"/>
+  <circle cx="454" cy="546" r="25" fill="#fffdf5" stroke="#243e43" stroke-width="6"/>
+  <circle cx="454" cy="546" r="7" fill="#ed7665"/>
+  <path d="m454 546 40 33" fill="none" stroke="#243e43" stroke-width="7" stroke-linecap="round"/>
+  <path d="M476 582h49" fill="none" stroke="#243e43" stroke-width="9" stroke-linecap="round"/>
+  <!-- Tail, body, and the characteristic curved pelican neck. -->
+  <g stroke="#243e43" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m298 302-61-37 26 54-35-9q30 48 86 38" fill="#fdfcf5"/>
+    <path d="M301 276q46-29 109-2 27-28 32-76-26-18-15-52 9-34 48-34 41 0 51 35 11 39-13 77-21 32-16 70 11 67-54 86-68 17-119-18-36-25-23-86Z" fill="#fffefa"/>
+    <path d="M482 224q-28 59-13 92-10 35-61 43-64 8-100-37 25 65 103 62 73 0 86-55 7-25-3-50Z" fill="#dbe7df" stroke="none"/>
+    <path d="M326 287q43-23 86 7 31 18 53 18-30 37-72 24-33-8-51-28" fill="#edf0e6"/>
+    <path d="m362 303 34 18m-9-29 34 20" fill="none" stroke="#bacfc8" stroke-width="4"/>
+    <!-- A reaching wing rests on the handlebar. -->
+    <path d="M421 278q24 0 52 31l65 12q14 3 12 13-1 12-18 9l-67-9q-22-4-42-22" fill="#fffefa"/>
+    <!-- Near leg, bent down to the pedal, with a webbed foot. -->
+    <path d="m412 376-4 70 74 106" fill="none" stroke="#e5aa50" stroke-width="16"/>
+    <path d="m480 547-3 26 44 1-8-12-18-5-5-12Z" fill="#f4bc5b"/>
+    <!-- Bill and broad throat pouch. -->
+    <path d="M501 169 722 190q-43 14-93 43-72 44-106 8-20-20-22-72Z" fill="#f3c268"/>
+    <path d="M521 188q8 55 42 59-37 5-47-29" fill="#e5a454" stroke="none"/>
+    <path d="M501 164q60-4 133 8l95 18q10 3 2 9l-229-8Z" fill="#ffd780"/>
+    <path d="m516 179 173 13" fill="none" stroke="#d99842" stroke-width="3"/>
+    <!-- Face and little swept crown feathers. -->
+    <path d="m450 117-8-17 22 11 2-21 15 22" fill="#fffefa"/>
+  </g>
+  <ellipse cx="485" cy="155" rx="7" ry="9" fill="#243e43"/>
+  <circle cx="487" cy="152" r="2.3" fill="#fff"/>
+  <path d="M471 136q9-6 17-1" fill="none" stroke="#243e43" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="480" cy="178" rx="10" ry="6" fill="#f1baa0"/>
+  <g fill="none" stroke="#91b2a3" stroke-width="4" stroke-linecap="round">
+    <path d="m137 643-8-17m8 17 10-24m589 24 8-21m-8 21-8-11"/>
+  </g>
+</svg>

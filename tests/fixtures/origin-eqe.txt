@@ -1,0 +1,9 @@
+Name	O 1-6 Light	Name	P 2-3 Dark
+Device	O1	Device	P2
+Point	1-6	Point	2-3
+Mode	Light	Mode	Dark
+Date	2026-09-23 10:30	Date	2026-09-23 10:35
+Lambda (nm)	EQE (%)	Lambda (nm)	EQE (%)
+400	12.5	410	2.5
+500	75.25	510	4.25
+600	86.75		

@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+Thumbs.db
+tests/fixtures/_verification.xlsx

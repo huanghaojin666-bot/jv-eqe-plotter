@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>JV · EQE 数据工作台</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css?v=20260918-2">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand-mark" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <div>
+      <p class="eyebrow">DEVICE CHARACTERIZATION</p>
+      <h1>JV · EQE 数据工作台</h1>
+    </div>
+    <div class="header-identity">
+      <img class="university-logo" src="assets/sztu-logo.svg" alt="深圳技术大学 Shenzhen Technology University" width="132" height="92">
+      <div class="privacy-note"><span class="status-dot"></span>数据仅在本机处理</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="section-kicker">PHOTOVOLTAIC CHARACTERIZATION · 光电表征</p>
+        <h2>读懂每一条曲线，<br><span>看见器件的表现。</span></h2>
+        <p class="hero-copy">自动识别 JV 与 EQE，拆分器件、点位及 light / dark 状态，并生成可缩放、可筛选、可导出的图。</p>
+      </div>
+
+      <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="上传数据文件">
+        <div class="upload-icon" aria-hidden="true">
+          <span class="upload-arrow">↑</span>
+        </div>
+        <strong>拖入 .txt 文件或文件夹</strong>
+        <span>支持一次导入多组 JV / EQE 数据</span>
+        <div class="upload-actions">
+          <button id="chooseFilesButton" class="button button-primary" type="button">选择文件</button>
+          <button id="chooseFolderButton" class="button button-secondary" type="button">选择文件夹</button>
+        </div>
+        <input id="fileInput" type="file" accept=".txt,text/plain" multiple hidden>
+        <input id="folderInput" type="file" accept=".txt,text/plain" webkitdirectory directory multiple hidden>
+      </div>
+    </section>
+
+    <section id="workspace" class="workspace is-empty">
+      <aside class="control-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">DATA CONTROL</p>
+            <h3>数据管理</h3>
+          </div>
+          <button id="clearButton" class="text-button" type="button">清空</button>
+        </div>
+
+        <div class="stat-grid">
+          <div><strong id="fileCount">0</strong><span>文件</span></div>
+          <div><strong id="jvCount">0</strong><span>JV 曲线</span></div>
+          <div><strong id="eqeCount">0</strong><span>EQE 曲线</span></div>
+        </div>
+
+        <div class="filter-block">
+          <div class="label-row">
+            <label>器件颜色与显示</label>
+            <button id="toggleDevicesButton" class="text-button" type="button">全部隐藏</button>
+          </div>
+          <div id="deviceStyleList" class="device-style-list">
+            <p class="empty-list">导入数据后，可在这里选择器件和颜色。</p>
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <label for="pointFilter">点位</label>
+          <select id="pointFilter">
+            <option value="all">全部点位</option>
+          </select>
+        </div>
+
+        <div class="filter-block">
+          <label for="illuminationFilter">测量状态</label>
+          <select id="illuminationFilter">
+            <option value="all">全部状态</option>
+          </select>
+        </div>
+
+        <div class="filter-block">
+          <div class="label-row">
+            <label>曲线</label>
+            <button id="toggleAllButton" class="text-button" type="button">全部隐藏</button>
+          </div>
+          <div id="curveList" class="curve-list">
+            <p class="empty-list">导入数据后，曲线会出现在这里。</p>
+          </div>
+        </div>
+      </aside>
+
+      <section class="chart-panel">
+        <div class="chart-toolbar">
+          <div class="tabs" role="tablist" aria-label="图表类型">
+            <button class="tab is-active" type="button" role="tab" data-view="JV">
+              JV <span id="jvTabCount">0</span>
+            </button>
+            <button class="tab" type="button" role="tab" data-view="EQE">
+              EQE <span id="eqeTabCount">0</span>
+            </button>
+          </div>
+
+          <div class="toolbar-actions">
+            <label id="scaleControl" class="compact-control">
+              <span>纵轴</span>
+              <select id="scaleSelect">
+                <option value="log">对数</option>
+                <option value="linear">线性</option>
+              </select>
+            </label>
+            <button id="downloadTxtButton" class="button button-secondary button-small" type="button" title="导出的 TXT 可直接重新导入本网站">导出 TXT</button>
+            <button id="downloadExcelButton" class="button button-secondary button-small" type="button" title="导出可直接拖入 Origin 作图的 Excel">导出 Excel（Origin）</button>
+            <button id="downloadPngButton" class="button button-dark button-small" type="button">导出图片</button>
+          </div>
+        </div>
+
+        <div class="chart-title-row">
+          <div>
+            <p id="chartEyebrow" class="section-kicker">CURRENT DENSITY</p>
+            <input id="chartTitle" class="chart-title-input" value="JV 曲线" aria-label="图表标题">
+          </div>
+          <p id="chartMeta">尚未导入数据</p>
+        </div>
+
+        <div class="gradient-panel">
+          <label class="gradient-toggle">
+            <input id="gradientToggle" type="checkbox">
+            <span>手动单器件渐变</span>
+          </label>
+          <label class="gradient-toggle">
+            <input id="deviceGradientToggle" type="checkbox">
+            <span>同器件同色渐变</span>
+          </label>
+          <label class="gradient-toggle">
+            <input id="lightDarkColorToggle" type="checkbox">
+            <span>同器件光暗同色</span>
+          </label>
+          <label class="gradient-color-control">
+            <span>主色</span>
+            <input id="gradientColor" type="color" value="#009E73">
+          </label>
+          <label class="gradient-text-control">
+            <span>变化条件</span>
+            <input id="gradientLabel" type="text" value="时间">
+          </label>
+          <label class="gradient-text-control">
+            <span>起点</span>
+            <input id="gradientStart" type="text" value="Day 1">
+          </label>
+          <label class="gradient-text-control">
+            <span>终点</span>
+            <input id="gradientEnd" type="text" value="Day 68">
+          </label>
+        </div>
+
+        <div class="coordinate-panel">
+          <div class="coordinate-heading">
+            <div>
+              <strong>坐标显示与导出</strong>
+              <span>标出的坐标会一起保存到导出的图片</span>
+            </div>
+            <label class="coordinate-toggle">
+              <input id="coordinateToggle" type="checkbox" checked>
+              <span>显示坐标</span>
+            </label>
+          </div>
+          <div class="coordinate-bar">
+            <label class="coordinate-input">
+              <span id="coordinateXLabel">横坐标 V</span>
+              <input id="coordinateX" type="number" step="any" placeholder="例如 0.5">
+            </label>
+            <label class="coordinate-size-control">
+              <span>坐标标注大小 <output id="coordinateSizeValue" for="coordinateSize">100%</output></span>
+              <input id="coordinateSize" type="range" min="60" max="200" step="10" value="100">
+            </label>
+            <button id="markAllCoordinatesButton" class="button button-primary button-small" type="button">显示该坐标</button>
+            <button id="clearCoordinatesButton" class="button button-secondary button-small" type="button">清除坐标</button>
+            <button id="resetCoordinatePositionsButton" class="button button-secondary button-small" type="button">重置位置</button>
+            <span class="coordinate-tip">点击曲线添加坐标 · 拖动标注调整位置 · 双击标注删除</span>
+          </div>
+        </div>
+
+        <div id="plot" class="plot" aria-label="数据图表"></div>
+
+        <div id="chartEmpty" class="chart-empty">
+          <div class="empty-orbit" aria-hidden="true"><span></span></div>
+          <strong>等待数据</strong>
+          <span>上传测试文件后，这里会自动生成曲线。</span>
+        </div>
+      </section>
+    </section>
+
+    <section class="recognition-panel">
+      <div class="recognition-heading">
+        <div>
+          <p class="section-kicker">RECOGNITION LOG</p>
+          <h3>识别结果</h3>
+        </div>
+        <p>识别不准确时，可直接修改器件、点位、测量状态和曲线名称。</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>类型</th>
+              <th>器件</th>
+              <th>点位</th>
+              <th>测量状态</th>
+              <th>曲线名称</th>
+              <th>数据点</th>
+              <th>来源文件</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="recognitionBody">
+            <tr class="empty-row">
+              <td colspan="8">还没有识别到数据。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="messagePanel" class="message-panel" aria-live="polite"></section>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <dialog id="exportDialog" class="export-dialog" aria-labelledby="exportDialogTitle">
+      <form id="exportForm" class="export-form">
+        <div class="export-dialog-heading">
+          <p class="section-kicker">EXPORT</p>
+          <h3 id="exportDialogTitle">导出文件</h3>
+        </div>
+        <label class="export-name-field" for="exportFileName">
+          <span>文件名</span>
+          <input id="exportFileName" type="text" maxlength="120" required autocomplete="off">
+        </label>
+        <fieldset id="exportFormatField" class="export-format-field">
+          <legend>图片格式</legend>
+          <div class="export-format-options">
+            <label>
+              <input type="radio" name="exportFormat" value="png" checked>
+              <span>高清 PNG（推荐）</span>
+            </label>
+            <label>
+              <input type="radio" name="exportFormat" value="svg">
+              <span>SVG 矢量（通常由浏览器打开）</span>
+            </label>
+          </div>
+        </fieldset>
+        <div class="export-dialog-actions">
+          <button id="cancelExportButton" class="button button-secondary" type="button">取消</button>
+          <button id="confirmExportButton" class="button button-dark" type="submit">导出到桌面</button>
+        </div>
+      </form>
+    </dialog>
+  </main>
+
+  <footer>
+    <span>JV · EQE LAB TOOL</span>
+    <span>支持仪器导出的制表符文本文件</span>
+  </footer>
+
+  <script src="vendor/plotly.min.js?v=20260613"></script>
+  <script src="parser.js?v=20260923-1"></script>
+  <script src="exporter.js?v=20260923-2"></script>
+  <script src="app.js?v=20260923-2"></script>
+</body>
+</html>

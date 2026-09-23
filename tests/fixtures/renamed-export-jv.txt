@@ -1,0 +1,10 @@
+Name	O 1-1 Dark		O 1-1 Light	
+Device	老化组-A		老化组-A	
+Point	位置-07		位置-07	
+Mode	Dark		Light	
+Time Stamp				
+[Result]	Volt. (V)	J (A/cm^2)	Volt. (V)	J (A/cm^2)
+[Raw Data]	0	0.001	0	0.01
+[Raw Data]	0.5	0.002	0.5	0.02
+[Raw Data]	1	0.003	1	0.03
+====
