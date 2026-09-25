@@ -8,7 +8,10 @@
 
 # Nano Photonics Group 标识
 
-- 使用文件：`nano-photonics-icon.png`
+- 网站使用文件：`nano-photonics-icon.svg`
+- 官方原始文件备份：`nano-photonics-original.png`（1308 × 1308）
 - 来源：Nano Photonics Group 官方网站 https://nanophotonics.cc/
-- 原始资源：https://nanophotonics.cc/media/icon_hu3c861dd92db2e8c6b96172937e5b3f16_84294_180x180_fill_lanczos_center_3.png
+- 官方源码仓库：https://github.com/Hoooid/HaodongTangGroup/blob/main/assets/media/icon.png
+- 官方原始资源：https://raw.githubusercontent.com/Hoooid/HaodongTangGroup/main/assets/media/icon.png
 - 获取日期：2026-09-25
+- 官方仓库未提供 SVG、AI、EPS 或 PDF 矢量文件。本站使用的 SVG 依据官方 1308 × 1308 PNG 提取轮廓重建，颜色、比例和字形均取自官方原图，内部不嵌入位图。
