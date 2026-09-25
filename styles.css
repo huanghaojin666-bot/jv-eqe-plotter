@@ -106,9 +106,16 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
   color: var(--muted);
   font-size: 11px;
+}
+
+.header-affiliations {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 20px;
+  margin-left: auto;
 }
 
 .header-identity {
@@ -117,7 +124,6 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin-left: auto;
 }
 
 .university-logo {
@@ -137,6 +143,57 @@ button {
 .header-email:hover,
 .header-email:focus-visible {
   text-decoration: underline;
+}
+
+.nano-identity {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 14px;
+  border: 1px solid rgba(139, 29, 36, 0.2);
+  border-radius: 14px;
+  color: #6f161c;
+  background: rgba(139, 29, 36, 0.045);
+  text-decoration: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.nano-identity:hover,
+.nano-identity:focus-visible {
+  border-color: rgba(139, 29, 36, 0.42);
+  box-shadow: 0 8px 24px rgba(111, 22, 28, 0.1);
+  transform: translateY(-1px);
+}
+
+.nano-mark {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 12px;
+  color: white;
+  background: linear-gradient(145deg, #9b232b, #641117);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.nano-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nano-copy strong {
+  max-width: 126px;
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.nano-copy > span {
+  color: #8b4e52;
+  font-size: 10px;
 }
 
 .status-dot {
@@ -1159,6 +1216,7 @@ footer {
   .site-header {
     padding-inline: 18px;
     gap: 10px;
+    flex-wrap: wrap;
   }
 
   .site-header .brand-mark { display: none; }
@@ -1166,7 +1224,33 @@ footer {
   .site-header .eyebrow { font-size: 8px; letter-spacing: 0.08em; }
   .university-logo { width: 90px; }
 
+  .header-affiliations {
+    width: 100%;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
   .header-email {
+    font-size: 9px;
+  }
+
+  .nano-identity {
+    min-height: 60px;
+    padding: 7px 10px;
+  }
+
+  .nano-mark {
+    width: 44px;
+    height: 44px;
+    font-size: 10px;
+  }
+
+  .nano-copy strong {
+    max-width: 108px;
+    font-size: 11px;
+  }
+
+  .nano-copy > span {
     font-size: 9px;
   }
 
