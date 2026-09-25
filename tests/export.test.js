@@ -116,12 +116,59 @@ async function main() {
   assert.match(originSheetXml, /<c r="C3" s="6"><v>510<\/v><\/c>/);
   assert.match(originSheetXml, /<c r="C4" s="6"\/>/);
 
+  const originBundle = exporter.buildOriginSkillBundle("JV", source.datasets, {
+    title: "JV Origin 联动验证",
+    axes: {
+      x: { title: "Voltage, V (V)", range: [-1.1, 1.1], majorStep: 0.2 },
+      y: { title: "Current density, |J| (A cm⁻²)", scale: "log", range: [1e-8, 1], majorStep: 1 }
+    },
+    plot: { legend: true, gradient: null },
+    curves: source.datasets.map((dataset, index) => ({
+      name: `${dataset.label} styled`,
+      color: index ? "#D62728" : "#164B9B",
+      lineStyle: "solid",
+      lineWidth: 2,
+      interpolation: "spline",
+      symbol: "none"
+    }))
+  }, {
+    exportedAt: new Date("2026-09-25T10:00:00+08:00")
+  });
+  assert.strictEqual(originBundle.type, "application/zip");
+  const originBundleBytes = Buffer.from(await originBundle.arrayBuffer());
+  const bundledWorkbook = storedZipEntry(originBundleBytes, "data.xlsx");
+  const bundledRecipe = JSON.parse(storedZipEntry(originBundleBytes, "origin-recipe.json").toString("utf8"));
+  assert.strictEqual(bundledWorkbook.subarray(0, 2).toString("ascii"), "PK");
+  assert.strictEqual(bundledRecipe.schemaVersion, "1.0");
+  assert.strictEqual(bundledRecipe.view, "JV");
+  assert.strictEqual(bundledRecipe.title, "JV Origin 联动验证");
+  assert.strictEqual(bundledRecipe.workbook.worksheet, "Origin作图");
+  assert.deepStrictEqual(bundledRecipe.axes.y, {
+    title: "Current density, |J| (A cm⁻²)",
+    scale: "log",
+    transform: "absolute",
+    range: [1e-8, 1],
+    majorStep: 1
+  });
+  assert.deepStrictEqual(bundledRecipe.curves.map((curve) => [
+    curve.index,
+    curve.xColumn,
+    curve.yColumn,
+    curve.xColumnName,
+    curve.yColumnName,
+    curve.color
+  ]), [
+    [1, 1, 2, "A", "B", "#164B9B"],
+    [2, 3, 4, "C", "D", "#D62728"]
+  ]);
+
   console.log("Export tests passed:", {
     jvCurves: roundTripJV.datasets.length,
     eqeCurves: roundTripEQE.datasets.length,
     workbookBytes: workbookBytes.length,
     originColumns: eqeDatasets.length * 2,
-    originRows: Math.max(...eqeDatasets.map((dataset) => dataset.x.length))
+    originRows: Math.max(...eqeDatasets.map((dataset) => dataset.x.length)),
+    originBundleBytes: originBundleBytes.length
   });
 }
 
