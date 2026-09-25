@@ -194,6 +194,7 @@
         background: "#FFFFFF",
         legend: input.plot && input.plot.legend === false ? false : true,
         curveOrder: curves.map((curve) => curve.index),
+        paperStyle: input.plot && input.plot.paperStyle ? input.plot.paperStyle : null,
         gradient: input.plot && input.plot.gradient ? input.plot.gradient : null
       },
       curves

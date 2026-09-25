@@ -68,7 +68,19 @@ try {
     }
 
     $version = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
-    Start-Process ($siteUrl + "?v=" + $version)
+    $launchUrl = $siteUrl + "?v=" + $version
+    $browserCandidates = @(
+        (Join-Path ${env:ProgramFiles} "Google\Chrome\Application\chrome.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "Microsoft\Edge\Application\msedge.exe"),
+        (Join-Path ${env:ProgramFiles} "Microsoft\Edge\Application\msedge.exe")
+    )
+    $browser = $browserCandidates | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
+    if ($browser) {
+        Start-Process -FilePath $browser -ArgumentList @($launchUrl)
+    }
+    else {
+        Start-Process -FilePath $launchUrl
+    }
 }
 catch {
     Show-LaunchError $_.Exception.Message

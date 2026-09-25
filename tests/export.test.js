@@ -122,7 +122,11 @@ async function main() {
       x: { title: "Voltage, V (V)", range: [-1.1, 1.1], majorStep: 0.2 },
       y: { title: "Current density, |J| (A cm⁻²)", scale: "log", range: [1e-8, 1], majorStep: 1 }
     },
-    plot: { legend: true, gradient: null },
+    plot: {
+      legend: true,
+      paperStyle: { preset: "wiley-jv-eqe", legendCorner: "bottom-right" },
+      gradient: null
+    },
     curves: source.datasets.map((dataset, index) => ({
       name: `${dataset.label} styled`,
       color: index ? "#D62728" : "#164B9B",
@@ -143,6 +147,7 @@ async function main() {
   assert.strictEqual(bundledRecipe.view, "JV");
   assert.strictEqual(bundledRecipe.title, "JV Origin 联动验证");
   assert.strictEqual(bundledRecipe.workbook.worksheet, "Origin作图");
+  assert.strictEqual(bundledRecipe.plot.paperStyle.legendCorner, "bottom-right");
   assert.deepStrictEqual(bundledRecipe.axes.y, {
     title: "Current density, |J| (A cm⁻²)",
     scale: "log",

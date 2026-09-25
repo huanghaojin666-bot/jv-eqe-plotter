@@ -131,6 +131,8 @@
   }
 
   function datasetDisplayLabel(dataset) {
+    const customName = String(dataset && dataset.legendName || "").trim();
+    if (customName) return customName;
     if (!dataset || dataset.illumination === "unknown" || !dataset.illumination) {
       return dataset ? dataset.label : "";
     }
@@ -435,19 +437,21 @@
       const displayLabel = datasetDisplayLabel(dataset);
       const colorLocked = state.gradient.enabled || state.deviceGradient.enabled || state.lightDarkSameColor;
       return `
-      <label class="curve-item">
+      <div class="curve-item">
         <input type="checkbox" data-curve-toggle="${dataset.id}" ${dataset.visible ? "checked" : ""}>
-        <span>
-          <strong title="${escapeHtml(displayLabel)}">${escapeHtml(displayLabel)}</strong>
+        <span class="curve-editor">
+          <span class="legend-name-editor">
+            <span class="curve-key" style="--curve-color:${style.color};--curve-dash:${style.cssDash}" aria-hidden="true">
+              <span class="curve-key-line"></span>
+            </span>
+            <input class="curve-name-input" type="text" data-curve-name="${dataset.id}"
+              value="${escapeHtml(displayLabel)}" aria-label="图例名称" title="输入图例中显示的名称">
+          </span>
           <small>${escapeHtml(dataset.device)} · 点位 ${escapeHtml(dataset.point)} · ${escapeHtml(illuminationLabel(dataset.illumination))}</small>
         </span>
         <input class="curve-color" type="color" data-curve-color="${dataset.id}"
-          value="${escapeHtml(displayColor)}" ${colorLocked ? "disabled" : ""} title="Curve color" aria-label="Curve color">
-        <span class="curve-key" style="--curve-color:${style.color};--curve-dash:${style.cssDash}">
-          <span class="curve-key-line"></span>
-          <span class="curve-key-marker">${style.glyph}</span>
-        </span>
-      </label>
+          value="${escapeHtml(displayColor)}" ${colorLocked ? "disabled" : ""} title="曲线颜色" aria-label="曲线颜色">
+      </div>
     `;
     }).join("");
 
@@ -701,11 +705,10 @@
   }
 
   function plotMargins(datasets, exportMode) {
-    const manyCurves = datasets.length > 10;
     const gradientMode = gradientEligible(datasets);
     return exportMode
-      ? { l: 155, r: manyCurves ? 330 : 285, t: 115, b: gradientMode ? 185 : 130 }
-      : { l: 112, r: manyCurves ? 215 : 190, t: 40, b: gradientMode ? 145 : 95 };
+      ? { l: 155, r: 95, t: 115, b: gradientMode ? 185 : 130 }
+      : { l: 112, r: 42, t: 40, b: gradientMode ? 145 : 95 };
   }
 
   function plotLayout(datasets, exportMode) {
@@ -747,19 +750,14 @@
       },
       showlegend: !gradientMode,
       legend: {
-        title: {
-          text: "<b>Device · Point</b>",
-          font: { size: exportMode ? 22 : 14, color: "#111111" }
-        },
         orientation: "v",
-        x: 1.02,
-        xanchor: "left",
-        y: 1,
-        yanchor: "top",
-        bgcolor: "rgba(255,255,255,0.96)",
-        bordercolor: "#222222",
-        borderwidth: 1,
-        itemwidth: exportMode ? 48 : 36,
+        x: 0.98,
+        xanchor: "right",
+        y: 0.03,
+        yanchor: "bottom",
+        bgcolor: "rgba(255,255,255,0)",
+        borderwidth: 0,
+        itemwidth: exportMode ? 54 : 42,
         itemsizing: "constant",
         tracegroupgap: 3,
         font: {
@@ -1528,14 +1526,14 @@
       title: elements.chartTitle.value.trim() || `${state.view} 曲线`,
       axes: {
         x: {
-          title: isJV ? "Voltage, V (V)" : "Wavelength, λ (nm)",
+          title: isJV ? "Voltage (V)" : "Wavelength (nm)",
           range: xAxis.range || null,
           majorStep: xAxis.dtick || null
         },
         y: {
           title: isJV
-            ? (useLog ? "Current density, |J| (A cm⁻²)" : "Current density, J (A cm⁻²)")
-            : "External quantum efficiency, EQE (%)",
+            ? "Current density (A/cm²)"
+            : "EQE (%)",
           scale: useLog ? "log" : "linear",
           range: useLog && Array.isArray(yAxis.range)
             ? yAxis.range.map((value) => 10 ** value)
@@ -1545,6 +1543,20 @@
       },
       plot: {
         legend: !gradientEligible(datasets),
+        paperStyle: {
+          preset: "wiley-jv-eqe",
+          font: "Arial",
+          axisTitleSize: 18,
+          tickLabelSize: 14,
+          legendSize: 12,
+          axisLineWidth: 1.5,
+          tickDirection: "in",
+          grid: false,
+          boxFrame: true,
+          legendCorner: "bottom-right",
+          pageWidth: 5000,
+          pageHeight: 4200
+        },
         gradient: gradientEligible(datasets) ? {
           enabled: true,
           color: state.gradient.color,
@@ -1559,8 +1571,8 @@
           name: datasetDisplayLabel(dataset),
           color: style.color,
           lineStyle: style.dash,
-          lineWidth: 2,
-          interpolation: "spline",
+          lineWidth: 3,
+          interpolation: "straight",
           symbol: "none"
         };
       })
@@ -1903,6 +1915,17 @@
   });
 
   elements.curveList.addEventListener("change", (event) => {
+    const nameId = event.target.dataset.curveName;
+    if (nameId) {
+      const dataset = state.datasets.find((item) => item.id === nameId);
+      if (dataset) {
+        dataset.legendName = event.target.value.trim();
+        renderCurveList();
+        renderPlot();
+      }
+      return;
+    }
+
     const colorId = event.target.dataset.curveColor;
     if (colorId) {
       state.curveStyles[colorId] = {
@@ -1919,6 +1942,22 @@
     if (dataset) dataset.visible = event.target.checked;
     renderCurveList();
     renderPlot();
+  });
+
+  elements.curveList.addEventListener("input", (event) => {
+    const nameId = event.target.dataset.curveName;
+    if (!nameId) return;
+    const dataset = state.datasets.find((item) => item.id === nameId);
+    if (!dataset) return;
+    dataset.legendName = event.target.value;
+    renderPlot();
+  });
+
+  elements.curveList.addEventListener("keydown", (event) => {
+    if (event.target.dataset.curveName != null && event.key === "Enter") {
+      event.preventDefault();
+      event.target.blur();
+    }
   });
 
   elements.toggleAllButton.addEventListener("click", () => {
