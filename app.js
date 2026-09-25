@@ -41,9 +41,9 @@
     gradient: {
       enabled: false,
       color: "#009E73",
-      label: "时间",
-      start: "Day 1",
-      end: "Day 68"
+      label: "",
+      start: "",
+      end: ""
     }
   };
 
@@ -1669,9 +1669,9 @@
   });
   [elements.gradientLabel, elements.gradientStart, elements.gradientEnd].forEach((input) => {
     input.addEventListener("input", () => {
-      state.gradient.label = elements.gradientLabel.value.trim() || "变化条件";
-      state.gradient.start = elements.gradientStart.value.trim() || "起点";
-      state.gradient.end = elements.gradientEnd.value.trim() || "终点";
+      state.gradient.label = elements.gradientLabel.value.trim();
+      state.gradient.start = elements.gradientStart.value.trim();
+      state.gradient.end = elements.gradientEnd.value.trim();
       renderPlot();
     });
   });
