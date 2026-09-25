@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <title>JV · EQE 数据工作台</title>
   <link rel="icon" type="image/svg+xml" href="assets/nano-photonics-icon.svg?v=blue-1">
-  <link rel="stylesheet" href="styles.css?v=20260925-6">
+  <link rel="stylesheet" href="styles.css?v=20260925-8">
 </head>
 <body>
   <header class="site-header">
@@ -55,6 +55,24 @@
         </div>
         <input id="fileInput" type="file" accept=".txt,text/plain" multiple hidden>
         <input id="folderInput" type="file" accept=".txt,text/plain" webkitdirectory directory multiple hidden>
+      </div>
+    </section>
+
+    <section class="origin-integration" aria-labelledby="originIntegrationTitle">
+      <div class="origin-integration-copy">
+        <p class="section-kicker">ORIGIN WORKFLOW</p>
+        <h3 id="originIntegrationTitle">从当前视图继续到 Origin</h3>
+        <p>Windows 本地版可直接生成并打开带可编辑图页的 Origin 工程，无需再导出 ZIP 后交给 Codex。ZIP 导出仍保留用于备份与跨电脑交接。</p>
+      </div>
+      <ol class="origin-steps" aria-label="Origin 联动步骤">
+        <li><span>1</span>导入数据</li>
+        <li><span>2</span>调整曲线</li>
+        <li><span>3</span>一键打开 Origin</li>
+      </ol>
+      <div class="origin-integration-actions">
+        <a class="button button-dark" href="downloads/origin-jv-eqe-skill.zip" download>安装 / 更新 Origin Skill</a>
+        <span class="origin-installed-note">本地一键打开会自动调用已安装或项目内置 Skill</span>
+        <a class="text-link" href="origin-skill/origin-jv-eqe/SKILL.md" target="_blank" rel="noopener noreferrer">查看技能说明 ↗</a>
       </div>
     </section>
 
@@ -130,6 +148,8 @@
             </label>
             <button id="downloadTxtButton" class="button button-secondary button-small" type="button" title="导出的 TXT 可直接重新导入本网站">导出 TXT</button>
             <button id="downloadExcelButton" class="button button-secondary button-small" type="button" title="导出可直接拖入 Origin 作图的 Excel">导出 Excel（Origin）</button>
+            <button id="openOriginButton" class="button button-primary button-small" type="button" title="生成可编辑 .opju 并用 Origin 打开">一键生成并打开 Origin</button>
+            <button id="downloadOriginBundleButton" class="button button-secondary button-small" type="button" title="导出用于备份或跨电脑交接的数据与配方 ZIP；它不是图片">导出 Origin ZIP</button>
             <button id="downloadPngButton" class="button button-dark button-small" type="button">导出图片</button>
           </div>
         </div>
@@ -269,6 +289,7 @@
             </label>
           </div>
         </fieldset>
+        <p id="exportHint" class="export-hint" hidden></p>
         <div class="export-dialog-actions">
           <button id="cancelExportButton" class="button button-secondary" type="button">取消</button>
           <button id="confirmExportButton" class="button button-dark" type="submit">导出到桌面</button>
@@ -284,7 +305,7 @@
 
   <script src="vendor/plotly.min.js?v=20260613"></script>
   <script src="parser.js?v=20260923-1"></script>
-  <script src="exporter.js?v=20260923-2"></script>
-  <script src="app.js?v=20260925-3"></script>
+  <script src="exporter.js?v=20260925-3"></script>
+  <script src="app.js?v=20260925-5"></script>
 </body>
 </html>

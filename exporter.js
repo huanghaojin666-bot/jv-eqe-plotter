@@ -124,6 +124,82 @@
     return output;
   }
 
+  function normalizeOriginRecipe(view, datasets, recipe, exportedAt) {
+    const input = recipe || {};
+    const inputCurves = Array.isArray(input.curves) ? input.curves : [];
+    const xTitle = view === "JV" ? "Voltage, V (V)" : "Wavelength, λ (nm)";
+    const yTitle = view === "JV"
+      ? (input.axes && input.axes.y && input.axes.y.scale === "log"
+        ? "Current density, |J| (A cm⁻²)"
+        : "Current density, J (A cm⁻²)")
+      : "External quantum efficiency, EQE (%)";
+    const optionalNumber = (value) => (
+      value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value))
+        ? Number(value)
+        : null
+    );
+    const curves = datasets.map((dataset, index) => {
+      const supplied = inputCurves[index] || {};
+      return {
+        index: index + 1,
+        name: supplied.name || datasetLabel(dataset),
+        device: dataset.device || "",
+        point: dataset.point || "",
+        illumination: dataset.illumination || "unknown",
+        source: dataset.source || "",
+        xColumn: (index * 2) + 1,
+        yColumn: (index * 2) + 2,
+        xColumnName: columnName(index * 2),
+        yColumnName: columnName((index * 2) + 1),
+        color: supplied.color || "#1F77B4",
+        lineStyle: supplied.lineStyle || "solid",
+        lineWidth: Number.isFinite(Number(supplied.lineWidth)) ? Number(supplied.lineWidth) : 2,
+        interpolation: supplied.interpolation || "spline",
+        symbol: supplied.symbol || "none"
+      };
+    });
+    const axes = input.axes || {};
+    const yAxis = axes.y || {};
+    return {
+      schemaVersion: "1.0",
+      generator: {
+        name: "JV · EQE 数据工作台",
+        format: "origin-skill-bundle",
+        exportedAt: exportedAt.toISOString()
+      },
+      view,
+      title: input.title || `${view} 曲线`,
+      workbook: {
+        file: "data.xlsx",
+        worksheet: "Origin作图",
+        headerRows: 1,
+        columnIndexBase: 1
+      },
+      axes: {
+        x: {
+          title: (axes.x && axes.x.title) || xTitle,
+          scale: "linear",
+          range: axes.x && Array.isArray(axes.x.range) ? axes.x.range : null,
+          majorStep: axes.x ? optionalNumber(axes.x.majorStep) : null
+        },
+        y: {
+          title: yAxis.title || yTitle,
+          scale: view === "JV" && yAxis.scale === "log" ? "log" : "linear",
+          transform: view === "JV" && yAxis.scale === "log" ? "absolute" : "identity",
+          range: Array.isArray(yAxis.range) ? yAxis.range : null,
+          majorStep: optionalNumber(yAxis.majorStep)
+        }
+      },
+      plot: {
+        background: "#FFFFFF",
+        legend: input.plot && input.plot.legend === false ? false : true,
+        curveOrder: curves.map((curve) => curve.index),
+        gradient: input.plot && input.plot.gradient ? input.plot.gradient : null
+      },
+      curves
+    };
+  }
+
   function cellXml(cell, rowIndex, columnIndex) {
     const reference = `${columnName(columnIndex)}${rowIndex + 1}`;
     const style = Number.isInteger(cell && cell.style) ? ` s="${cell.style}"` : "";
@@ -397,7 +473,7 @@
     return concatBytes([localData, centralDirectory, end]);
   }
 
-  function buildWorkbookBlob(view, datasets, options) {
+  function buildWorkbookBytes(view, datasets, options) {
     const selected = Array.from(datasets || []).filter((dataset) => dataset && dataset.type === view);
     const now = options && options.exportedAt instanceof Date ? options.exportedAt : new Date();
     const sheets = makeWorkbookSheets(view, selected, { ...(options || {}), exportedAt: now });
@@ -451,14 +527,37 @@
       { name: "xl/worksheets/sheet2.xml", data: sheets.summary },
       { name: "xl/worksheets/sheet3.xml", data: sheets.data }
     ];
-    return new Blob([zipStore(files, now)], {
+    return zipStore(files, now);
+  }
+
+  function buildWorkbookBlob(view, datasets, options) {
+    return new Blob([buildWorkbookBytes(view, datasets, options)], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     });
+  }
+
+  function buildOriginSkillBundle(view, datasets, recipe, options) {
+    const selected = Array.from(datasets || []).filter((dataset) => dataset && dataset.type === view);
+    if (!selected.length) throw new Error("Origin Skill 包至少需要一条曲线。");
+    const now = options && options.exportedAt instanceof Date ? options.exportedAt : new Date();
+    const normalizedRecipe = normalizeOriginRecipe(view, selected, recipe, now);
+    const workbookBytes = buildWorkbookBytes(view, selected, {
+      ...(options || {}),
+      chartTitle: normalizedRecipe.title,
+      exportedAt: now
+    });
+    const bundleBytes = zipStore([
+      { name: "data.xlsx", data: workbookBytes },
+      { name: "origin-recipe.json", data: `${JSON.stringify(normalizedRecipe, null, 2)}\n` }
+    ], now);
+    return new Blob([bundleBytes], { type: "application/zip" });
   }
 
   return {
     buildInstrumentText,
     buildWorkbookBlob,
+    buildOriginSkillBundle,
+    normalizeOriginRecipe,
     datasetLabel,
     illuminationChinese
   };

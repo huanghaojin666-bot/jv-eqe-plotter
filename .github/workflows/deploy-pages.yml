@@ -29,7 +29,7 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html app.js exporter.js parser.js styles.css _site/
-          cp -R assets vendor _site/
+          cp -R assets vendor origin-skill downloads _site/
           touch _site/.nojekyll
 
       - name: Configure Pages

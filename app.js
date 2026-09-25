@@ -70,12 +70,15 @@
     scaleSelect: document.getElementById("scaleSelect"),
     downloadTxtButton: document.getElementById("downloadTxtButton"),
     downloadExcelButton: document.getElementById("downloadExcelButton"),
+    openOriginButton: document.getElementById("openOriginButton"),
+    downloadOriginBundleButton: document.getElementById("downloadOriginBundleButton"),
     downloadPngButton: document.getElementById("downloadPngButton"),
     exportDialog: document.getElementById("exportDialog"),
     exportForm: document.getElementById("exportForm"),
     exportDialogTitle: document.getElementById("exportDialogTitle"),
     exportFileName: document.getElementById("exportFileName"),
     exportFormatField: document.getElementById("exportFormatField"),
+    exportHint: document.getElementById("exportHint"),
     cancelExportButton: document.getElementById("cancelExportButton"),
     confirmExportButton: document.getElementById("confirmExportButton"),
     chartEyebrow: document.getElementById("chartEyebrow"),
@@ -1386,7 +1389,7 @@
   function exportBaseName(value, fallback) {
     const cleanName = String(value || "")
       .trim()
-      .replace(/\.(txt|xlsx|png|svg)$/i, "")
+      .replace(/\.(txt|xlsx|zip|png|svg)$/i, "")
       .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
       .replace(/[. ]+$/g, "")
       .slice(0, 120);
@@ -1404,9 +1407,17 @@
     const chartTitle = elements.chartTitle.value.trim() || `${state.view}_曲线`;
     elements.exportDialogTitle.textContent = kind === "image"
       ? "导出图片"
-      : (kind === "xlsx" ? "导出 Excel（Origin）" : "导出可回导 TXT");
+      : (kind === "xlsx"
+        ? "导出 Excel（Origin）"
+        : (kind === "origin-bundle" ? "导出 Origin 数据包（ZIP）" : "导出可回导 TXT"));
     elements.exportFormatField.hidden = kind !== "image";
-    elements.exportFileName.value = kind === "image" ? chartTitle : `${state.view}_数据_${date}`;
+    elements.exportHint.hidden = kind !== "origin-bundle";
+    elements.exportHint.textContent = kind === "origin-bundle"
+      ? "这是交给 Origin Skill 的数据与作图配方，不是图片。Skill 会据此生成含图页的 .opju；如需 PNG/SVG，请点击“导出图片”。"
+      : "";
+    elements.exportFileName.value = kind === "image"
+      ? chartTitle
+      : (kind === "origin-bundle" ? `${state.view}_Origin作图_${date}` : `${state.view}_数据_${date}`);
     elements.exportDialog.showModal();
     window.setTimeout(() => {
       elements.exportFileName.focus();
@@ -1442,17 +1453,27 @@
     );
 
     if (isLocalServer) {
-      const response = await fetch(`/api/save?filename=${encodeURIComponent(fileName)}`, {
-        method: "POST",
-        headers: { "Content-Type": blob.type || "application/octet-stream" },
-        body: blob
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || "保存失败");
+      try {
+        const response = await fetch(`/api/save?filename=${encodeURIComponent(fileName)}`, {
+          method: "POST",
+          headers: { "Content-Type": blob.type || "application/octet-stream" },
+          body: blob
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "保存失败");
+        }
+        if (result.location === "project") {
+          showToast(`桌面直存不可用，已保存到项目 exports：${result.filename}`);
+        } else {
+          showToast(`已保存到桌面：${result.filename}`);
+        }
+        return;
+      } catch (_error) {
+        browserDownload(blob, fileName);
+        showToast(`桌面直存不可用，已改为浏览器下载：${fileName}`);
+        return;
       }
-      showToast(`已保存到桌面：${result.filename}`);
-      return;
     }
 
     if (window.showSaveFilePicker) {
@@ -1494,6 +1515,124 @@
       if (error && error.name !== "AbortError") {
         showToast(`Excel 保存失败：${error.message || "未知错误"}`, true);
       }
+    }
+  }
+
+  function buildOriginRecipe(datasets) {
+    const isJV = state.view === "JV";
+    const useLog = isJV && elements.scaleSelect.value === "log";
+    const xAxis = xAxisSettings(datasets, isJV, true);
+    const yAxis = yAxisSettings(datasets, isJV, useLog, true);
+    const ordered = plottedDatasets(datasets);
+    return {
+      title: elements.chartTitle.value.trim() || `${state.view} 曲线`,
+      axes: {
+        x: {
+          title: isJV ? "Voltage, V (V)" : "Wavelength, λ (nm)",
+          range: xAxis.range || null,
+          majorStep: xAxis.dtick || null
+        },
+        y: {
+          title: isJV
+            ? (useLog ? "Current density, |J| (A cm⁻²)" : "Current density, J (A cm⁻²)")
+            : "External quantum efficiency, EQE (%)",
+          scale: useLog ? "log" : "linear",
+          range: useLog && Array.isArray(yAxis.range)
+            ? yAxis.range.map((value) => 10 ** value)
+            : (yAxis.range || null),
+          majorStep: yAxis.dtick || null
+        }
+      },
+      plot: {
+        legend: !gradientEligible(datasets),
+        gradient: gradientEligible(datasets) ? {
+          enabled: true,
+          color: state.gradient.color,
+          label: state.gradient.label,
+          start: state.gradient.start,
+          end: state.gradient.end
+        } : null
+      },
+      curves: ordered.map((dataset) => {
+        const style = curveStyle(dataset);
+        return {
+          name: datasetDisplayLabel(dataset),
+          color: style.color,
+          lineStyle: style.dash,
+          lineWidth: 2,
+          interpolation: "spline",
+          symbol: "none"
+        };
+      })
+    };
+  }
+
+  async function downloadOriginBundle(fileName) {
+    const datasets = plottedDatasets(currentDatasets(false));
+    if (!datasets.length) return;
+    try {
+      const blob = exporter.buildOriginSkillBundle(
+        state.view,
+        datasets,
+        buildOriginRecipe(datasets),
+        { chartTitle: elements.chartTitle.value.trim() || `${state.view} 曲线` }
+      );
+      await saveBlob(blob, fileName);
+    } catch (error) {
+      if (error && error.name !== "AbortError") {
+        showToast(`Origin 作图包保存失败：${error.message || "未知错误"}`, true);
+      }
+    }
+  }
+
+  async function openCurrentViewInOrigin() {
+    const datasets = plottedDatasets(currentDatasets(false));
+    if (!datasets.length) {
+      showToast("当前没有可交给 Origin 的可见曲线。", true);
+      return;
+    }
+    const originalText = elements.openOriginButton.textContent;
+    try {
+      elements.openOriginButton.disabled = true;
+      elements.openOriginButton.textContent = "正在生成 Origin 工程...";
+      showToast("正在校验作图包并生成可编辑 Origin 工程，请稍等。");
+      const blob = exporter.buildOriginSkillBundle(
+        state.view,
+        datasets,
+        buildOriginRecipe(datasets),
+        { chartTitle: elements.chartTitle.value.trim() || `${state.view} 曲线` }
+      );
+      const date = new Date().toISOString().slice(0, 10);
+      const baseName = exportBaseName(
+        elements.chartTitle.value,
+        `${state.view}_Origin作图_${date}`
+      );
+      const response = await fetch(
+        `/api/open-origin?filename=${encodeURIComponent(`${baseName}.zip`)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/zip" },
+          body: blob
+        }
+      );
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Origin 工程创建失败");
+      const warningText = result.warnings && result.warnings.length
+        ? `（${result.warnings.length} 项样式提示）`
+        : "";
+      if (result.opened) {
+        showToast(`已生成并打开 Origin：${result.filename}${warningText}`);
+      } else {
+        showToast(`工程已生成：${result.filename}；请从保存目录双击打开。${warningText}`, true);
+      }
+    } catch (error) {
+      const detail = error && error.name === "TypeError"
+        ? "本地服务未连接，请双击“启动网站.bat”后重试"
+        : (error.message || "未知错误");
+      showToast(`Origin 一键打开失败：${detail}`, true);
+    } finally {
+      elements.openOriginButton.disabled = false;
+      elements.openOriginButton.textContent = originalText;
     }
   }
 
@@ -1604,17 +1743,27 @@
   elements.chartTitle.addEventListener("change", renderPlot);
   elements.downloadTxtButton.addEventListener("click", () => openExportDialog("txt"));
   elements.downloadExcelButton.addEventListener("click", () => openExportDialog("xlsx"));
+  elements.openOriginButton.addEventListener("click", openCurrentViewInOrigin);
+  elements.downloadOriginBundleButton.addEventListener("click", () => openExportDialog("origin-bundle"));
   elements.downloadPngButton.addEventListener("click", () => openExportDialog("image"));
   elements.cancelExportButton.addEventListener("click", () => elements.exportDialog.close());
   elements.exportDialog.addEventListener("close", () => {
     pendingExportKind = null;
   });
+
+  if (window.location.protocol === "https:") {
+    elements.openOriginButton.disabled = true;
+    elements.openOriginButton.textContent = "网页版请导出 Origin ZIP";
+    elements.openOriginButton.title = "GitHub Pages 无法直接启动本机 Origin，请使用右侧的“导出 Origin ZIP”";
+  }
   elements.exportForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const kind = pendingExportKind;
     if (!kind) return;
     const formatInput = elements.exportForm.querySelector('input[name="exportFormat"]:checked');
-    const format = kind === "image" && formatInput ? formatInput.value : kind;
+    const format = kind === "image" && formatInput
+      ? formatInput.value
+      : (kind === "origin-bundle" ? "zip" : kind);
     const fallback = kind === "image" ? `${state.view}_曲线` : `${state.view}_数据`;
     const fileName = `${exportBaseName(elements.exportFileName.value, fallback)}.${format}`;
     elements.exportDialog.close();
@@ -1622,6 +1771,8 @@
       await downloadImage(fileName, format);
     } else if (kind === "xlsx") {
       await downloadExcel(fileName);
+    } else if (kind === "origin-bundle") {
+      await downloadOriginBundle(fileName);
     } else {
       await downloadTxt(fileName);
     }

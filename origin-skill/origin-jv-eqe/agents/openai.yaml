@@ -1,0 +1,5 @@
+interface:
+  display_name: "Origin JV · EQE"
+  short_description: "将网站导出的 JV/EQE 作图包还原为 Origin 工程"
+  brand_color: "#164B9B"
+  default_prompt: "Use $origin-jv-eqe to turn my exported Origin plotting bundle into an editable Origin project."
