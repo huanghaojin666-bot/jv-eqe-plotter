@@ -147,51 +147,47 @@ button {
 
 .nano-identity {
   display: flex;
-  min-height: 72px;
+  min-height: 64px;
   align-items: center;
-  gap: 11px;
-  padding: 9px 14px;
-  border: 1px solid rgba(139, 29, 36, 0.2);
-  border-radius: 14px;
-  color: #6f161c;
-  background: rgba(139, 29, 36, 0.045);
+  justify-content: center;
+  gap: 10px;
+  padding: 5px 0 5px 20px;
+  border-left: 1px solid rgba(139, 29, 36, 0.3);
+  color: #8c1d24;
   text-decoration: none;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  transition: color 160ms ease, transform 160ms ease;
 }
 
 .nano-identity:hover,
 .nano-identity:focus-visible {
-  border-color: rgba(139, 29, 36, 0.42);
-  box-shadow: 0 8px 24px rgba(111, 22, 28, 0.1);
+  color: #641117;
   transform: translateY(-1px);
 }
 
-.nano-mark {
-  display: grid;
-  width: 52px;
-  height: 52px;
-  place-items: center;
-  border-radius: 12px;
-  color: white;
-  background: linear-gradient(145deg, #9b232b, #641117);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+.nano-logo {
+  display: block;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
 }
 
-.nano-copy {
+.nano-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: flex-start;
+  gap: 5px;
 }
 
-.nano-copy strong {
-  max-width: 126px;
-  font-size: 13px;
-  line-height: 1.15;
+.nano-wordmark {
+  font-family: "Arial Black", "Segoe UI", sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.nano-copy > span {
+.nano-details > span {
   color: #8b4e52;
   font-size: 10px;
 }
@@ -1236,21 +1232,20 @@ footer {
 
   .nano-identity {
     min-height: 60px;
-    padding: 7px 10px;
+    padding: 5px 0 5px 12px;
+    gap: 8px;
   }
 
-  .nano-mark {
-    width: 44px;
-    height: 44px;
-    font-size: 10px;
+  .nano-logo {
+    width: 36px;
+    height: 36px;
   }
 
-  .nano-copy strong {
-    max-width: 108px;
-    font-size: 11px;
+  .nano-wordmark {
+    font-size: 14px;
   }
 
-  .nano-copy > span {
+  .nano-details > span {
     font-size: 9px;
   }
 
