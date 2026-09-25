@@ -14,4 +14,4 @@
 - 官方源码仓库：https://github.com/Hoooid/HaodongTangGroup/blob/main/assets/media/icon.png
 - 官方原始资源：https://raw.githubusercontent.com/Hoooid/HaodongTangGroup/main/assets/media/icon.png
 - 获取日期：2026-09-25
-- 官方仓库未提供 SVG、AI、EPS 或 PDF 矢量文件。本站使用的 SVG 依据官方 1308 × 1308 PNG 提取轮廓重建，颜色、比例和字形均取自官方原图，内部不嵌入位图。
+- 官方仓库未提供 SVG、AI、EPS 或 PDF 矢量文件。本站使用的 SVG 依据官方 1308 × 1308 PNG 提取轮廓重建，比例和字形取自官方原图，内部不嵌入位图；页面版本按本站视觉系统将底色调整为深圳技术大学蓝。

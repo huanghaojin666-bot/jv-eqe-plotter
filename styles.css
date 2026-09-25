@@ -167,7 +167,7 @@ button {
   justify-content: center;
   gap: 7px;
   padding: 0 4px 0 18px;
-  color: #8c1d24;
+  color: #164b9b;
   text-decoration: none;
   transition: color 160ms ease, transform 160ms ease;
 }
@@ -184,7 +184,7 @@ button {
 
 .nano-identity:hover,
 .nano-identity:focus-visible {
-  color: #641117;
+  color: #103676;
   transform: translateY(-1px);
 }
 
@@ -212,7 +212,7 @@ button {
 }
 
 .nano-details > span {
-  color: #8b4e52;
+  color: #587397;
   font-size: 10px;
 }
 
