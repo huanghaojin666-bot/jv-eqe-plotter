@@ -120,6 +120,7 @@ def _apply_plot_style(plot, curve: dict, warnings: list[str]) -> None:
 def _paper_style(recipe: dict) -> dict:
     requested = recipe.get("plot", {}).get("paperStyle") or {}
     style = dict(PAPER_STYLE)
+    style["legendCorner"] = "bottom-left" if recipe.get("view") == "EQE" else "bottom-right"
     for key in (
         "axisTitleSize", "tickLabelSize", "legendSize", "axisLineWidth",
         "pageWidth", "pageHeight", "legendCorner",

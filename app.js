@@ -751,8 +751,8 @@
       showlegend: !gradientMode,
       legend: {
         orientation: "v",
-        x: 0.98,
-        xanchor: "right",
+        x: isJV ? 0.98 : 0.02,
+        xanchor: isJV ? "right" : "left",
         y: 0.03,
         yanchor: "bottom",
         bgcolor: "rgba(255,255,255,0)",
@@ -1553,7 +1553,7 @@
           tickDirection: "in",
           grid: false,
           boxFrame: true,
-          legendCorner: "bottom-right",
+          legendCorner: isJV ? "bottom-right" : "bottom-left",
           pageWidth: 5000,
           pageHeight: 4200
         },
