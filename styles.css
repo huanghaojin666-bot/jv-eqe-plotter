@@ -147,12 +147,13 @@ button {
 
 .nano-identity {
   display: flex;
-  min-height: 64px;
+  min-width: 156px;
+  min-height: 112px;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 5px 0 5px 20px;
-  border-left: 1px solid rgba(139, 29, 36, 0.3);
+  gap: 7px;
+  padding: 0;
   color: #8c1d24;
   text-decoration: none;
   transition: color 160ms ease, transform 160ms ease;
@@ -166,21 +167,21 @@ button {
 
 .nano-logo {
   display: block;
-  width: 44px;
-  height: 44px;
+  width: 72px;
+  height: 72px;
   flex: 0 0 auto;
 }
 
 .nano-details {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
+  align-items: center;
+  gap: 4px;
 }
 
 .nano-wordmark {
   font-family: "Arial Black", "Segoe UI", sans-serif;
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: -0.035em;
   line-height: 1;
@@ -1231,18 +1232,18 @@ footer {
   }
 
   .nano-identity {
-    min-height: 60px;
-    padding: 5px 0 5px 12px;
-    gap: 8px;
+    min-width: 126px;
+    min-height: 86px;
+    gap: 5px;
   }
 
   .nano-logo {
-    width: 36px;
-    height: 36px;
+    width: 52px;
+    height: 52px;
   }
 
   .nano-wordmark {
-    font-size: 14px;
+    font-size: 11px;
   }
 
   .nano-details > span {

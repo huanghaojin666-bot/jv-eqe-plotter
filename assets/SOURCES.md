@@ -10,5 +10,5 @@
 
 - 使用文件：`nano-photonics-icon.png`
 - 来源：Nano Photonics Group 官方网站 https://nanophotonics.cc/
-- 原始资源：https://nanophotonics.cc/media/icon_hu3c861dd92db2e8c6b96172937e5b3f16_84294_32x32_fill_lanczos_center_3.png
+- 原始资源：https://nanophotonics.cc/media/icon_hu3c861dd92db2e8c6b96172937e5b3f16_84294_180x180_fill_lanczos_center_3.png
 - 获取日期：2026-09-25
