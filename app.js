@@ -1528,14 +1528,14 @@
       title: elements.chartTitle.value.trim() || `${state.view} 曲线`,
       axes: {
         x: {
-          title: isJV ? "Voltage, V (V)" : "Wavelength, λ (nm)",
+          title: isJV ? "Voltage (V)" : "Wavelength (nm)",
           range: xAxis.range || null,
           majorStep: xAxis.dtick || null
         },
         y: {
           title: isJV
-            ? (useLog ? "Current density, |J| (A cm⁻²)" : "Current density, J (A cm⁻²)")
-            : "External quantum efficiency, EQE (%)",
+            ? "Current density (A/cm²)"
+            : "EQE (%)",
           scale: useLog ? "log" : "linear",
           range: useLog && Array.isArray(yAxis.range)
             ? yAxis.range.map((value) => 10 ** value)
@@ -1545,6 +1545,19 @@
       },
       plot: {
         legend: !gradientEligible(datasets),
+        paperStyle: {
+          preset: "wiley-jv-eqe",
+          font: "Arial",
+          axisTitleSize: 18,
+          tickLabelSize: 14,
+          legendSize: 12,
+          axisLineWidth: 1.5,
+          tickDirection: "in",
+          grid: false,
+          boxFrame: true,
+          pageWidth: 5000,
+          pageHeight: 4200
+        },
         gradient: gradientEligible(datasets) ? {
           enabled: true,
           color: state.gradient.color,
@@ -1559,8 +1572,8 @@
           name: datasetDisplayLabel(dataset),
           color: style.color,
           lineStyle: style.dash,
-          lineWidth: 2,
-          interpolation: "spline",
+          lineWidth: 3,
+          interpolation: "straight",
           symbol: "none"
         };
       })

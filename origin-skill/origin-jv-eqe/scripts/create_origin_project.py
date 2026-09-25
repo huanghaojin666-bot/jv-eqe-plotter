@@ -23,6 +23,20 @@ if VENDOR_DIR.is_dir() and str(VENDOR_DIR) not in sys.path:
 SHEET_XML = "xl/worksheets/sheet1.xml"
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
+PAPER_STYLE = {
+    "font": "Arial",
+    "axisTitleSize": 18,
+    "tickLabelSize": 14,
+    "legendSize": 12,
+    "axisLineWidth": 1.5,
+    "pageWidth": 5000,
+    "pageHeight": 4200,
+    "layerLeft": 18,
+    "layerTop": 8,
+    "layerWidth": 74,
+    "layerHeight": 78,
+}
+
 
 def _column_index(reference: str) -> int:
     match = re.match(r"([A-Z]+)", reference.upper())
@@ -102,6 +116,72 @@ def _apply_plot_style(plot, curve: dict, warnings: list[str]) -> None:
     )
 
 
+def _paper_style(recipe: dict) -> dict:
+    requested = recipe.get("plot", {}).get("paperStyle") or {}
+    style = dict(PAPER_STYLE)
+    for key in ("axisTitleSize", "tickLabelSize", "legendSize", "axisLineWidth", "pageWidth", "pageHeight"):
+        if key in requested:
+            style[key] = requested[key]
+    return style
+
+
+def _apply_paper_graph_style(graph, layer, recipe: dict, warnings: list[str], font_index: int) -> None:
+    style = _paper_style(recipe)
+    _try(warnings, "graph page width", lambda: graph.set_float("width", float(style["pageWidth"])))
+    _try(warnings, "graph page height", lambda: graph.set_float("height", float(style["pageHeight"])))
+    for prop in ("left", "top", "width", "height"):
+        key = f"layer{prop.title()}"
+        _try(warnings, f"layer {prop}", lambda prop=prop, key=key: layer.set_float(prop, float(style[key])))
+
+    for axis_name in ("x", "y"):
+        axis_label = axis_name.upper()
+        _try(warnings, f"{axis_label} axis color", lambda axis_name=axis_name: layer.set_int(f"{axis_name}.color", 1))
+        _try(warnings, f"{axis_label} axis frame", lambda axis_name=axis_name: layer.set_int(f"{axis_name}.showAxes", 3))
+        _try(warnings, f"{axis_label} tick labels", lambda axis_name=axis_name: layer.set_int(f"{axis_name}.showLabels", 1))
+        _try(warnings, f"{axis_label} grid", lambda axis_name=axis_name: layer.set_int(f"{axis_name}.showGrids", 0))
+        _try(warnings, f"{axis_label} inward ticks", lambda axis_name=axis_name: layer.set_int(f"{axis_name}.ticks", 5))
+        _try(warnings, f"{axis_label} axis width", lambda axis_name=axis_name: layer.set_float(f"{axis_name}.thickness", float(style["axisLineWidth"])))
+        _try(warnings, f"{axis_label} major tick width", lambda axis_name=axis_name: layer.set_float(f"{axis_name}.tickthickness", float(style["axisLineWidth"])))
+        _try(warnings, f"{axis_label} minor tick width", lambda axis_name=axis_name: layer.set_float(f"{axis_name}.mtickthickness", 1.0))
+        _try(warnings, f"{axis_label} major tick length", lambda axis_name=axis_name: layer.set_float(f"{axis_name}.ticklength", 5.0))
+        _try(warnings, f"{axis_label} minor tick length", lambda axis_name=axis_name: layer.set_float(f"{axis_name}.mticklength", 3.0))
+        _try(warnings, f"{axis_label} tick font", lambda axis_name=axis_name: layer.set_int(f"{axis_name}.label.font", font_index))
+        _try(warnings, f"{axis_label} tick size", lambda axis_name=axis_name: layer.set_float(f"{axis_name}.label.pt", float(style["tickLabelSize"])))
+        _try(warnings, f"{axis_label} tick weight", lambda axis_name=axis_name: layer.set_int(f"{axis_name}.label.bold", 0))
+
+    for label_name, description in (("xb", "X title"), ("yl", "Y title")):
+        label = layer.label(label_name)
+        if label:
+            _try(warnings, f"{description} font", lambda label=label: label.set_int("font", font_index))
+            _try(warnings, f"{description} size", lambda label=label: label.set_float("fsize", float(style["axisTitleSize"])))
+            _try(warnings, f"{description} background", lambda label=label: label.set_int("background", 0))
+            _try(warnings, f"{description} border", lambda label=label: label.set_float("lineWidth", 0))
+            _try(warnings, f"{description} shadow", lambda label=label: label.set_float("shadowWidth", 0))
+
+    for label_name in ("xt", "yr"):
+        opposite_title = layer.label(label_name)
+        if opposite_title:
+            _try(warnings, f"{label_name.upper()} title hide", lambda opposite_title=opposite_title: opposite_title.set_int("show", 0))
+
+    show_legend = bool(recipe.get("plot", {}).get("legend", True))
+    if show_legend:
+        _try(warnings, "legend rebuild", lambda: layer.lt_exec("legend -r"))
+        legend = layer.label("legend")
+        if legend:
+            _try(warnings, "legend font", lambda: legend.set_int("font", font_index))
+            _try(warnings, "legend size", lambda: legend.set_float("fsize", float(style["legendSize"])))
+            _try(warnings, "legend color", lambda: setattr(legend, "color", "black"))
+            _try(warnings, "legend frame", lambda: legend.set_int("background", 0))
+            _try(warnings, "legend border", lambda: legend.set_float("lineWidth", 0))
+            _try(warnings, "legend shadow", lambda: legend.set_float("shadowWidth", 0))
+            _try(warnings, "legend left", lambda: legend.set_float("left", float(style["pageWidth"]) * 0.65))
+            _try(warnings, "legend top", lambda: legend.set_float("top", float(style["pageHeight"]) * 0.12))
+    else:
+        legend = layer.label("legend")
+        if legend:
+            _try(warnings, "legend removal", legend.remove)
+
+
 def create_project(bundle_path: Path, output_path: Path, show: bool) -> list[str]:
     recipe = load_recipe(bundle_path)
     headers, columns = read_origin_sheet(bundle_path)
@@ -152,6 +232,8 @@ def create_project(bundle_path: Path, output_path: Path, show: bool) -> list[str
         _try(warnings, "Y axis range", lambda: layer.set_ylim(y_range[0], y_range[1], recipe["axes"]["y"].get("majorStep") or 0))
     if recipe["axes"]["y"]["scale"] == "log":
         _try(warnings, "Y log scale", lambda: setattr(layer.axis("y"), "scale", "log10"))
+    font_index = op.lt_int("font(Arial)") or 1
+    _apply_paper_graph_style(graph, layer, recipe, warnings, font_index)
     op.save(str(output_path))
     if external and not show:
         op.exit()
