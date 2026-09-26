@@ -103,9 +103,15 @@ def _try(warnings: list[str], label: str, operation) -> None:
         warnings.append(f"{label}: {error}")
 
 
+def _curve_line_width(curve: dict) -> float:
+    """Return the requested visual line width in points."""
+    return max(0.1, float(curve.get("lineWidth") or 3))
+
+
 def _apply_plot_style(plot, curve: dict, warnings: list[str]) -> None:
     _try(warnings, f"curve {curve['index']} color", lambda: setattr(plot, "color", curve["color"]))
-    width = max(0.1, float(curve.get("lineWidth") or 2))
+    width = _curve_line_width(curve)
+    _try(warnings, f"curve {curve['index']} width", lambda: plot.set_float("line.width", width))
     dash_codes = {"solid": 0, "dot": 2, "dash": 1, "dashdot": 3}
     dash_code = dash_codes.get(str(curve.get("lineStyle") or "solid").lower(), 0)
     # OriginLab Set command: -l 9 is Spline and -l 1 is Straight.
@@ -113,7 +119,7 @@ def _apply_plot_style(plot, curve: dict, warnings: list[str]) -> None:
     _try(
         warnings,
         f"curve {curve['index']} line",
-        lambda: plot.set_cmd(f"-w {width:g}", f"-d {dash_code}", f"-l {connect}"),
+        lambda: plot.set_cmd(f"-d {dash_code}", f"-l {connect}"),
     )
 
 
@@ -191,7 +197,7 @@ def _add_clean_legend(op, graph, layer, recipe: dict, style: dict, warnings: lis
         )
         if line:
             _try(warnings, f"legend line {curve['index']} color", lambda line=line, curve=curve: setattr(line, "color", curve["color"]))
-            _try(warnings, f"legend line {curve['index']} width", lambda line=line, curve=curve: setattr(line, "width", max(0.1, float(curve.get("lineWidth") or 2))))
+            _try(warnings, f"legend line {curve['index']} width", lambda line=line, curve=curve: setattr(line, "width", _curve_line_width(curve)))
         label = layer.add_label(
             str(curve["name"]),
             _axis_value(x_start, x_end, text_fraction),
@@ -228,6 +234,12 @@ def _apply_paper_graph_style(op, graph, layer, recipe: dict, warnings: list[str]
         _try(warnings, f"{axis_label} tick font", lambda axis_name=axis_name: layer.set_int(f"{axis_name}.label.font", font_index))
         _try(warnings, f"{axis_label} tick size", lambda axis_name=axis_name: layer.set_float(f"{axis_name}.label.pt", float(style["tickLabelSize"])))
         _try(warnings, f"{axis_label} tick weight", lambda axis_name=axis_name: layer.set_int(f"{axis_name}.label.bold", 0))
+
+    # Keep the four-sided publication frame, but show ticks only on the
+    # bottom and left axes, matching the reference-paper convention.
+    for opposite_axis in ("x2", "y2"):
+        opposite_label = opposite_axis.upper()
+        _try(warnings, f"{opposite_label} ticks hide", lambda opposite_axis=opposite_axis: layer.set_int(f"{opposite_axis}.ticks", 0))
 
     for label_name, description, title in (
         ("xb", "X title", recipe["axes"]["x"]["title"]),
