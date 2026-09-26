@@ -153,99 +153,6 @@ def _axis_value(start: float, end: float, fraction: float, logarithmic: bool = F
     return start + (end - start) * fraction
 
 
-def _mask_text_separator(op, graph, layer, label, recipe: dict, warnings: list[str], description: str) -> None:
-    """Cover a retained Origin paragraph separator with a white vector line.
-
-    Some user profiles retain the ``\\sep:50`` paragraph command for every new
-    text object. Origin does not expose that command through GraphObject.Text or
-    the object's theme tree, so it cannot be cleared through the normal Python
-    properties. The separator sits exactly on the text object's top edge. A
-    page-to-axis conversion lets us cover it without rasterizing the editable
-    text object.
-    """
-    if description in {"X title", "Y title"}:
-        try:
-            from originpro.base import Line
-
-            page_width = float(graph.get_float("width"))
-            page_height = float(graph.get_float("height"))
-            layer_left = float(layer.get_float("left")) / 100.0
-            layer_top = float(layer.get_float("top")) / 100.0
-            layer_width = float(layer.get_float("width")) / 100.0
-            layer_height = float(layer.get_float("height")) / 100.0
-            raw = layer.obj.GraphObjects.Add(4)
-            if not raw:
-                raise RuntimeError("unable to create page mask line")
-            mask = Line(raw, layer.obj)
-            mask.set_int("attach", 1)
-            if description == "X title":
-                center = layer_left + layer_width / 2.0
-                half = float(label.obj.Width) / page_width / 2.0
-                y = layer_top + layer_height + 0.055
-                mask.set_float("x1", center - half)
-                mask.set_float("y1", y)
-                mask.set_float("x2", center + half)
-                mask.set_float("y2", y)
-            else:
-                center = layer_top + layer_height / 2.0
-                half = float(label.obj.Height) / page_height / 2.0
-                title_gap = 0.096 if recipe["axes"]["y"]["scale"] == "log" else 0.078
-                x = layer_left - title_gap
-                mask.set_float("x1", x)
-                mask.set_float("y1", center - half)
-                mask.set_float("x2", x)
-                mask.set_float("y2", center + half)
-            mask.color = "white"
-            mask.width = 6
-            return
-        except Exception as error:
-            warnings.append(f"{description} page separator mask: {error}")
-
-    try:
-        page_width = float(graph.get_float("width"))
-        page_height = float(graph.get_float("height"))
-        layer_left = page_width * float(layer.get_float("left")) / 100.0
-        layer_top = page_height * float(layer.get_float("top")) / 100.0
-        layer_width = page_width * float(layer.get_float("width")) / 100.0
-        layer_height = page_height * float(layer.get_float("height")) / 100.0
-        if min(page_width, page_height, layer_width, layer_height) <= 0:
-            raise ValueError("invalid page or layer dimensions")
-
-        x_start = float(layer.get_float("x.from"))
-        x_end = float(layer.get_float("x.to"))
-        y_start = float(layer.get_float("y.from"))
-        y_end = float(layer.get_float("y.to"))
-        logarithmic_x = recipe["axes"]["x"]["scale"] == "log"
-        logarithmic_y = recipe["axes"]["y"]["scale"] == "log"
-
-        def page_x(value: float) -> float:
-            fraction = (value - layer_left) / layer_width
-            return _axis_value(x_start, x_end, fraction, logarithmic_x)
-
-        def page_y(value: float) -> float:
-            fraction = 1.0 - (value - layer_top) / layer_height
-            return _axis_value(y_start, y_end, fraction, logarithmic_y)
-
-        left = float(label.obj.Left)
-        top = float(label.obj.Top)
-        width = float(label.obj.Width)
-        height = float(label.obj.Height)
-        rotation = float(label.get_float("rotate"))
-        if not math.isfinite(rotation):
-            rotation = float(label.get_float("angle"))
-
-        if 45 <= abs(rotation) % 180 <= 135:
-            mask = layer.add_line(page_x(left), page_y(top), page_x(left), page_y(top + height))
-        else:
-            mask = layer.add_line(page_x(left), page_y(top), page_x(left + width), page_y(top))
-        if not mask:
-            raise RuntimeError("unable to create mask line")
-        mask.color = "white"
-        mask.width = 5
-    except Exception as error:
-        warnings.append(f"{description} separator mask: {error}")
-
-
 def _add_clean_legend(op, graph, layer, recipe: dict, style: dict, warnings: list[str], font_index: int) -> None:
     """Draw line samples and labels separately for Origin 2024 compatibility."""
     existing = layer.label("legend")
@@ -294,7 +201,6 @@ def _add_clean_legend(op, graph, layer, recipe: dict, style: dict, warnings: lis
             _try(warnings, f"legend label {curve['index']} font", lambda label=label: label.set_int("font", font_index))
             _try(warnings, f"legend label {curve['index']} size", lambda label=label: label.set_float("fsize", float(style["legendSize"])))
             _try(warnings, f"legend label {curve['index']} color", lambda label=label: setattr(label, "color", "black"))
-            _mask_text_separator(op, graph, layer, label, recipe, warnings, f"legend label {curve['index']}")
         if not label:
             warnings.append(f"legend label {curve['index']}: unable to create text object")
 
@@ -332,7 +238,6 @@ def _apply_paper_graph_style(op, graph, layer, recipe: dict, warnings: list[str]
             _try(warnings, f"{description} text", lambda label=label, title=title: setattr(label, "text", title))
             _try(warnings, f"{description} font", lambda label=label: label.set_int("font", font_index))
             _try(warnings, f"{description} size", lambda label=label: label.set_float("fsize", float(style["axisTitleSize"])))
-            _mask_text_separator(op, graph, layer, label, recipe, warnings, description)
 
     for label_name in ("xt", "yr"):
         opposite_title = layer.label(label_name)
@@ -361,50 +266,59 @@ def create_project(bundle_path: Path, output_path: Path, show: bool) -> list[str
 
     warnings: list[str] = []
     external = bool(getattr(op, "oext", False))
-    if external:
-        op.set_show(show)
-    # Keep new labels in ordinary single-column mode even when a user profile
-    # saved multi-column auto-alignment as its default.
-    op.lt_exec("SYSTEM.FONT.TEXTCNTRL=0; SYSTEM.LEGEND.TEXTCNTRL=0;")
-    workbook = op.new_book("w", lname=f"{recipe['view']} data")
-    worksheet = workbook[0]
-    worksheet.lname = recipe["workbook"]["worksheet"]
-    plotted_columns: list[tuple[int, int]] = []
-    absolute_y = recipe["axes"]["y"]["transform"] == "absolute"
-    for curve_index, curve in enumerate(recipe["curves"]):
-        source_x = curve["xColumn"] - 1
-        source_y = curve["yColumn"] - 1
-        if source_y >= len(columns):
-            raise ValueError(f"Curve {curve['index']} points outside the worksheet")
-        x_values, y_values = finite_pairs(columns[source_x], columns[source_y], absolute_y)
-        target_x = curve_index * 2
-        target_y = target_x + 1
-        worksheet.from_list(target_x, x_values, headers[source_x] or f"X{curve_index + 1}", axis="X")
-        worksheet.from_list(target_y, y_values, curve["name"], axis="Y")
-        plotted_columns.append((target_x, target_y))
+    attached = False
+    try:
+        if external:
+            # A fresh COM-created Origin 2024 process can render its built-in
+            # evaluation/OLE watermark as a horizontal bar over every text
+            # object.  Connecting to the normal single-instance Origin session
+            # uses the same licensed rendering path as manual graph editing.
+            op.attach()
+            attached = True
+            op.set_show(show)
+        # Keep new labels in ordinary single-column mode even when a user
+        # profile saved multi-column auto-alignment as its default.
+        op.lt_exec("SYSTEM.FONT.TEXTCNTRL=0; SYSTEM.LEGEND.TEXTCNTRL=0;")
+        workbook = op.new_book("w", lname=f"{recipe['view']} data")
+        worksheet = workbook[0]
+        worksheet.lname = recipe["workbook"]["worksheet"]
+        plotted_columns: list[tuple[int, int]] = []
+        absolute_y = recipe["axes"]["y"]["transform"] == "absolute"
+        for curve_index, curve in enumerate(recipe["curves"]):
+            source_x = curve["xColumn"] - 1
+            source_y = curve["yColumn"] - 1
+            if source_y >= len(columns):
+                raise ValueError(f"Curve {curve['index']} points outside the worksheet")
+            x_values, y_values = finite_pairs(columns[source_x], columns[source_y], absolute_y)
+            target_x = curve_index * 2
+            target_y = target_x + 1
+            worksheet.from_list(target_x, x_values, headers[source_x] or f"X{curve_index + 1}", axis="X")
+            worksheet.from_list(target_y, y_values, curve["name"], axis="Y")
+            plotted_columns.append((target_x, target_y))
 
-    graph = op.new_graph(template=_system_line_template(op), lname=recipe.get("title") or f"{recipe['view']} curves")
-    layer = graph[0]
-    plots = []
-    for curve, (column_x, column_y) in zip(recipe["curves"], plotted_columns):
-        plot = layer.add_plot(worksheet, coly=column_y, colx=column_x, type="l")
-        plots.append(plot)
-        _apply_plot_style(plot, curve, warnings)
-    layer.rescale()
-    x_range = recipe["axes"]["x"].get("range")
-    y_range = recipe["axes"]["y"].get("range")
-    if x_range:
-        _try(warnings, "X axis range", lambda: layer.set_xlim(x_range[0], x_range[1], recipe["axes"]["x"].get("majorStep") or 0))
-    if y_range:
-        _try(warnings, "Y axis range", lambda: layer.set_ylim(y_range[0], y_range[1], recipe["axes"]["y"].get("majorStep") or 0))
-    if recipe["axes"]["y"]["scale"] == "log":
-        _try(warnings, "Y log scale", lambda: setattr(layer.axis("y"), "scale", "log10"))
-    font_index = op.lt_int("font(Arial)") or 1
-    _apply_paper_graph_style(op, graph, layer, recipe, warnings, font_index)
-    op.save(str(output_path))
-    if external and not show:
-        op.exit()
-    return warnings
+        graph = op.new_graph(template=_system_line_template(op), lname=recipe.get("title") or f"{recipe['view']} curves")
+        layer = graph[0]
+        plots = []
+        for curve, (column_x, column_y) in zip(recipe["curves"], plotted_columns):
+            plot = layer.add_plot(worksheet, coly=column_y, colx=column_x, type="l")
+            plots.append(plot)
+            _apply_plot_style(plot, curve, warnings)
+        layer.rescale()
+        x_range = recipe["axes"]["x"].get("range")
+        y_range = recipe["axes"]["y"].get("range")
+        if x_range:
+            _try(warnings, "X axis range", lambda: layer.set_xlim(x_range[0], x_range[1], recipe["axes"]["x"].get("majorStep") or 0))
+        if y_range:
+            _try(warnings, "Y axis range", lambda: layer.set_ylim(y_range[0], y_range[1], recipe["axes"]["y"].get("majorStep") or 0))
+        if recipe["axes"]["y"]["scale"] == "log":
+            _try(warnings, "Y log scale", lambda: setattr(layer.axis("y"), "scale", "log10"))
+        font_index = op.lt_int("font(Arial)") or 1
+        _apply_paper_graph_style(op, graph, layer, recipe, warnings, font_index)
+        op.save(str(output_path))
+        return warnings
+    finally:
+        if external and attached:
+            op.detach()
 
 
 def main() -> int:

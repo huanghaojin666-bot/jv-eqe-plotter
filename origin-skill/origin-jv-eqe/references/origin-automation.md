@@ -16,8 +16,8 @@ If Origin is already open, save unrelated work before automation. The script cre
 6. Apply each curve's hex color, width, and interpolation. Show the legend when `plot.legend` is true.
 7. Save as `.opju` and compare curve count, title, scale, and colors against the recipe.
 
-## Retained text separator state
+## Origin 2024 text watermark
 
-Some Origin user profiles retain the paragraph separator command (`\\sep:50`) for newly created text objects. It appears as a horizontal line above axis titles and legend labels, but is not exposed through `GraphObject.Text` or the object theme tree. The automation keeps the text editable and adds page-attached white vector masks to axis titles plus scale-attached masks to legend labels, so exported figures remain clean without requiring an Origin upgrade.
+Origin 2024 can draw a horizontal bar above every graph text object when a newly created COM process uses the evaluation/OLE watermark rendering path. This is not an axis-title format, border, underline, or paragraph separator, so editing text properties cannot remove it. The automation connects to the normal single-instance Origin session used for manual graph editing and creates ordinary editable text objects there. It never covers the bar with white line objects. If a purchased Origin installation still shows the watermark, reactivate the license as described in OriginLab FAQ-4 or update to Origin 2024b or later for the related Origin 2024 rendering fix.
 
 Do not use the workbook's `概览` or `原始数据` sheets as plotting sources; those sheets are for review and long-form analysis.
