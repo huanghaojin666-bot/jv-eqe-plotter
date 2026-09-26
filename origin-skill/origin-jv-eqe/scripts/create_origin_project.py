@@ -7,13 +7,22 @@ import argparse
 import io
 import json
 import math
+import os
 import re
+import shutil
+import subprocess
 import sys
+import time
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from inspect_bundle import load_recipe, summary
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 VENDOR_DIR = SKILL_ROOT / "vendor"
@@ -47,6 +56,103 @@ def _column_index(reference: str) -> int:
     for char in match.group(1):
         value = value * 26 + ord(char) - 64
     return value - 1
+
+
+def _origin_processes() -> list[dict]:
+    """Return running Origin processes without importing the COM bridge."""
+    if os.name != "nt":
+        return []
+    powershell = shutil.which("powershell.exe") or shutil.which("pwsh.exe")
+    if not powershell:
+        return []
+    command = (
+        "$items = Get-CimInstance Win32_Process -Filter \"Name='Origin64.exe'\" "
+        "-ErrorAction SilentlyContinue | Select-Object ProcessId,ExecutablePath,CommandLine; "
+        "@($items) | ConvertTo-Json -Compress"
+    )
+    try:
+        result = subprocess.run(
+            [powershell, "-NoProfile", "-Command", command],
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=12,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            check=False,
+        )
+        if result.returncode != 0 or not result.stdout.strip():
+            return []
+        payload = json.loads(result.stdout)
+        if isinstance(payload, dict):
+            payload = [payload]
+        return [item for item in payload if isinstance(item, dict)]
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+        return []
+
+
+def _is_embedding_process(process: dict) -> bool:
+    return "-embedding" in str(process.get("CommandLine") or "").lower()
+
+
+def _find_origin_executable(processes: list[dict]) -> Path | None:
+    candidates: list[Path] = []
+    configured = os.environ.get("ORIGIN_EXE")
+    if configured:
+        candidates.append(Path(configured))
+    for process in processes:
+        executable = process.get("ExecutablePath")
+        if executable:
+            candidates.append(Path(str(executable)))
+    candidates.extend((
+        Path(r"D:\Origin2024\Origin64.exe"),
+        Path(r"C:\Program Files\OriginLab\Origin2024\Origin64.exe"),
+    ))
+    located = shutil.which("Origin64.exe")
+    if located:
+        candidates.append(Path(located))
+    for program_files_name in ("ProgramFiles", "ProgramFiles(x86)"):
+        program_files = os.environ.get(program_files_name)
+        if program_files:
+            candidates.extend(sorted(Path(program_files).glob("OriginLab/Origin*/Origin64.exe"), reverse=True))
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate.resolve()
+    return None
+
+
+def _ensure_normal_origin_session() -> None:
+    """Start or reuse a normal Origin UI session, never an OLE embedding one."""
+    if os.name != "nt":
+        return
+    processes = _origin_processes()
+    if any(_is_embedding_process(process) for process in processes):
+        raise RuntimeError(
+            "检测到旧自动化启动的 Origin (-Embedding)。请先保存并关闭该 Origin 窗口，"
+            "再重新生成；新版会使用普通 Origin 会话，坐标标题和图例文字不会出现横线。"
+        )
+    if any(not _is_embedding_process(process) for process in processes):
+        return
+    executable = _find_origin_executable(processes)
+    if not executable:
+        raise RuntimeError(
+            "未找到 Origin64.exe；请设置 ORIGIN_EXE，或确认 Origin 安装在 D:\\Origin2024。"
+        )
+    try:
+        subprocess.Popen(
+            [str(executable)],
+            cwd=str(executable.parent),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except OSError as error:
+        raise RuntimeError(f"无法正常启动 Origin: {error}") from error
+    deadline = time.monotonic() + 25
+    while time.monotonic() < deadline:
+        time.sleep(0.5)
+        processes = _origin_processes()
+        if any(not _is_embedding_process(process) for process in processes):
+            return
+    raise RuntimeError("Origin 已启动，但 25 秒内未能建立普通会话，请关闭 Origin 后重试。")
 
 
 def read_origin_sheet(bundle_path: Path) -> tuple[list[str], list[list[float | None]]]:
@@ -266,6 +372,7 @@ def _apply_paper_graph_style(op, graph, layer, recipe: dict, warnings: list[str]
 
 
 def create_project(bundle_path: Path, output_path: Path, show: bool) -> list[str]:
+    _ensure_normal_origin_session()
     recipe = load_recipe(bundle_path)
     headers, columns = read_origin_sheet(bundle_path)
     try:

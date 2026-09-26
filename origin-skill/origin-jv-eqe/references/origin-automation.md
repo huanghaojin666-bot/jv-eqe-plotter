@@ -4,7 +4,7 @@
 
 `scripts/create_origin_project.py` targets Origin versions that expose the official `originpro` Python package. Run it in an environment connected to the installed Origin application. The script creates one worksheet, assigns X/Y column designations, builds a line graph, applies supported recipe styling, rescales, and saves `.opju`.
 
-If Origin is already open, save unrelated work before automation. The script creates new workbook and graph pages; it does not close an interactive Origin session. Warnings mean that the data/project were created but one optional visual property needs review.
+If Origin is already open, save unrelated work before automation. The script creates new workbook and graph pages; it does not close an interactive Origin session. When Origin is closed, the script first launches `Origin64.exe` as a normal interactive session and only then attaches the automation bridge. It refuses to continue while a legacy `-Embedding` Origin process is present, because that rendering path adds horizontal bars to graph text. Save and close that legacy window once, then rerun the command. Set `ORIGIN_EXE` when Origin is installed outside the detected locations. Warnings mean that the data/project were created but one optional visual property needs review.
 
 ## Manual fallback
 
