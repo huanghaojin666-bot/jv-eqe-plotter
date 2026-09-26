@@ -168,29 +168,31 @@
             <span>手动单器件渐变</span>
           </label>
           <label class="gradient-toggle">
-            <input id="deviceGradientToggle" type="checkbox">
+            <input id="deviceGradientToggle" type="checkbox" aria-controls="gradientControls" aria-expanded="false">
             <span>同器件同色渐变</span>
           </label>
           <label class="gradient-toggle">
             <input id="lightDarkColorToggle" type="checkbox">
             <span>同器件光暗同色</span>
           </label>
-          <label class="gradient-color-control">
-            <span>主色</span>
-            <input id="gradientColor" type="color" value="#009E73">
-          </label>
-          <label class="gradient-text-control">
-            <span>变化条件</span>
-            <input id="gradientLabel" type="text">
-          </label>
-          <label class="gradient-text-control">
-            <span>起点</span>
-            <input id="gradientStart" type="text">
-          </label>
-          <label class="gradient-text-control">
-            <span>终点</span>
-            <input id="gradientEnd" type="text">
-          </label>
+          <div id="gradientControls" class="gradient-controls" hidden>
+            <label class="gradient-color-control">
+              <span>主色</span>
+              <input id="gradientColor" type="color" value="#009E73">
+            </label>
+            <label class="gradient-text-control">
+              <span>变化条件</span>
+              <input id="gradientLabel" type="text">
+            </label>
+            <label class="gradient-text-control">
+              <span>起点</span>
+              <input id="gradientStart" type="text">
+            </label>
+            <label class="gradient-text-control">
+              <span>终点</span>
+              <input id="gradientEnd" type="text">
+            </label>
+          </div>
         </div>
 
         <div class="coordinate-panel">

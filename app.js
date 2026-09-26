@@ -87,6 +87,7 @@
     gradientToggle: document.getElementById("gradientToggle"),
     deviceGradientToggle: document.getElementById("deviceGradientToggle"),
     lightDarkColorToggle: document.getElementById("lightDarkColorToggle"),
+    gradientControls: document.getElementById("gradientControls"),
     gradientColor: document.getElementById("gradientColor"),
     gradientLabel: document.getElementById("gradientLabel"),
     gradientStart: document.getElementById("gradientStart"),
@@ -108,6 +109,12 @@
 
   let toastTimer = null;
   let pendingExportKind = null;
+
+  function syncGradientControlsVisibility() {
+    const expanded = elements.deviceGradientToggle.checked;
+    elements.gradientControls.hidden = !expanded;
+    elements.deviceGradientToggle.setAttribute("aria-expanded", String(expanded));
+  }
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -1797,6 +1804,7 @@
       elements.deviceGradientToggle.checked = false;
       elements.lightDarkColorToggle.checked = false;
     }
+    syncGradientControlsVisibility();
     if (state.gradient.enabled && currentDatasets(false).length < 2) {
       showToast("请先在左侧勾选至少两条属于同一器件的曲线。", true);
     }
@@ -1811,6 +1819,7 @@
       elements.gradientToggle.checked = false;
       elements.lightDarkColorToggle.checked = false;
     }
+    syncGradientControlsVisibility();
     renderCurveList();
     renderPlot();
   });
@@ -1822,6 +1831,7 @@
       elements.gradientToggle.checked = false;
       elements.deviceGradientToggle.checked = false;
     }
+    syncGradientControlsVisibility();
     renderCurveList();
     renderPlot();
   });
@@ -2028,6 +2038,7 @@
   }, true);
   elements.plot.addEventListener("dblclick", removeCoordinateAnnotation, true);
 
+  syncGradientControlsVisibility();
   updateViewCopy();
   renderAll();
 }());

@@ -831,6 +831,14 @@ select {
   accent-color: var(--green);
 }
 
+.gradient-controls {
+  display: contents;
+}
+
+.gradient-controls[hidden] {
+  display: none;
+}
+
 .gradient-color-control,
 .gradient-text-control {
   display: block;
