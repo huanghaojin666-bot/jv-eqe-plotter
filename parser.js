@@ -81,6 +81,7 @@
 
     const prefixedName = name.match(/^([A-Za-z]+)\s*(\d+)-(\d+)$/);
     const numericName = name.match(/^(\d+)-(\d+)$/);
+    const namedDevice = name.match(/^(.+)-(\d+)$/);
     let device = "未识别";
     let point = name || "未识别";
     let family = "未分类";
@@ -101,6 +102,10 @@
       } else {
         device = `器件${numericName[1]}`;
       }
+    } else if (namedDevice) {
+      // Preserve the complete prefix: "5 1-5" and "10 1-5" are
+      // different devices. Explicit names take priority over folder hints.
+      device = namedDevice[1];
     }
 
     if (device === "未识别") {
