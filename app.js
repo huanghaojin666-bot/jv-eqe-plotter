@@ -711,19 +711,51 @@
     };
   }
 
-  function plotMargins(datasets, exportMode) {
+  function legendFontSize(datasets, exportMode) {
+    const manyCurves = datasets.length > 10;
+    return exportMode ? (manyCurves ? 15 : 19) : (manyCurves ? 10 : 13);
+  }
+
+  function plotGeometry(datasets, exportMode) {
     const gradientMode = gradientEligible(datasets);
-    return exportMode
+    const margin = exportMode
       ? { l: 155, r: 95, t: 115, b: gradientMode ? 185 : 130 }
       : { l: 112, r: 42, t: 40, b: gradientMode ? 145 : 95 };
+    const width = exportMode ? exportChartSize.width : (elements.plot.clientWidth || 960);
+    let height = exportMode ? exportChartSize.height : 650;
+    const innerHeight = height - margin.t - margin.b;
+    const legendGap = margin.b;
+    if (state.deviceGradient.enabled && !gradientMode) {
+      // Hidden traces still have clickable legend entries in the preview.
+      const legendDatasets = exportMode ? datasets : currentDatasets(true);
+      const fontSize = legendFontSize(datasets, exportMode);
+      textMeasureContext.font = `${fontSize}px Arial, Microsoft YaHei UI, sans-serif`;
+      const sampleWidth = exportMode ? 54 : 42;
+      const maxEntryWidth = legendDatasets.reduce((maximum, dataset) => {
+        const labelWidth = Math.max(...datasetDisplayLabel(dataset).split(/<br\s*\/?\s*>/i)
+          .map((line) => textMeasureContext.measureText(line.replace(/<[^>]*>/g, "")).width));
+        return Math.max(maximum, labelWidth + sampleWidth + 35);
+      }, sampleWidth + 35);
+      const columns = Math.max(1, Math.floor((width - margin.l - margin.r) / maxEntryWidth));
+      const rows = Math.ceil(legendDatasets.length / columns);
+      const maxLines = Math.max(1, ...legendDatasets.map((dataset) => (
+        datasetDisplayLabel(dataset).split(/<br\s*\/?\s*>/i).length
+      )));
+      const legendHeight = rows * (Math.max(20, fontSize * 1.3 * maxLines) + 6) + 20;
+      // Grow the page instead of shrinking the data area to fit the legend.
+      margin.b += legendHeight;
+      height += legendHeight;
+    }
+    return { width, height, margin, legendY: -legendGap / innerHeight };
   }
 
   function plotLayout(datasets, exportMode) {
     const isJV = state.view === "JV";
     const useLog = isJV && elements.scaleSelect.value === "log";
     const title = elements.chartTitle.value.trim() || (isJV ? "JV characteristics" : "EQE spectrum");
-    const manyCurves = datasets.length > 10;
     const gradientMode = gradientEligible(datasets);
+    const bottomLegend = state.deviceGradient.enabled && !gradientMode;
+    const geometry = plotGeometry(datasets, exportMode);
     const gradientAxes = gradientLegendAxisLayout(datasets);
     const coordinateAnnotationsList = datasets.length ? coordinateAnnotations(datasets, exportMode) : [{
       text: "当前筛选条件下没有可见曲线",
@@ -746,7 +778,8 @@
           color: "#111111"
         }
       },
-      margin: plotMargins(datasets, exportMode),
+      height: geometry.height,
+      margin: geometry.margin,
       paper_bgcolor: "#ffffff",
       plot_bgcolor: "#ffffff",
       hovermode: "closest",
@@ -757,11 +790,12 @@
       },
       showlegend: !gradientMode,
       legend: {
-        orientation: "v",
-        x: isJV ? 0.98 : 0.02,
-        xanchor: isJV ? "right" : "left",
-        y: 0.03,
-        yanchor: "bottom",
+        orientation: bottomLegend ? "h" : "v",
+        x: bottomLegend ? 0 : (isJV ? 0.98 : 0.02),
+        xanchor: bottomLegend ? "left" : (isJV ? "right" : "left"),
+        y: bottomLegend ? geometry.legendY : 0.03,
+        yanchor: bottomLegend ? "top" : "bottom",
+        ...(bottomLegend ? { maxheight: geometry.margin.b } : {}),
         bgcolor: "rgba(255,255,255,0)",
         borderwidth: 0,
         itemwidth: exportMode ? 54 : 42,
@@ -769,7 +803,7 @@
         tracegroupgap: 3,
         font: {
           family: "Arial, Microsoft YaHei UI, sans-serif",
-          size: exportMode ? (manyCurves ? 15 : 19) : (manyCurves ? 10 : 13),
+          size: legendFontSize(datasets, exportMode),
           color: "#111111"
         }
       },
@@ -813,11 +847,7 @@
   function coordinateAnnotationMetrics(datasets, exportMode) {
     const isJV = state.view === "JV";
     const useLog = isJV && elements.scaleSelect.value === "log";
-    const margins = plotMargins(datasets, exportMode);
-    const width = exportMode
-      ? exportChartSize.width
-      : Math.max(elements.plot.clientWidth || 960, 640);
-    const height = exportMode ? exportChartSize.height : 650;
+    const { margin: margins, width, height } = plotGeometry(datasets, exportMode);
     const xAxis = xAxisSettings(datasets, isJV, exportMode);
     const yAxis = yAxisSettings(datasets, isJV, useLog, exportMode);
     const innerWidth = Math.max(1, width - margins.l - margins.r);
@@ -1273,7 +1303,7 @@
   function renderPlot() {
     const datasets = currentDatasets(false);
     const traces = buildTraces(currentDatasets(true));
-    elements.plot.style.height = "650px";
+    elements.plot.style.height = `${plotGeometry(datasets, false).height}px`;
 
     elements.chartEmpty.hidden = state.datasets.length > 0;
     elements.plot.hidden = state.datasets.length === 0;
@@ -1661,7 +1691,7 @@
       showToast("当前图里没有可导出的可见曲线。", true);
       return;
     }
-    const { width, height } = exportChartSize;
+    const { width, height } = plotGeometry(datasets, true);
     const exportPlot = document.createElement("div");
     exportPlot.style.position = "fixed";
     exportPlot.style.left = "-10000px";
@@ -2037,6 +2067,17 @@
     if (event.button === 0 && event.detail === 2) removeCoordinateAnnotation(event);
   }, true);
   elements.plot.addEventListener("dblclick", removeCoordinateAnnotation, true);
+
+  // Reflow the bottom legend when the window or chart panel changes width.
+  if (window.ResizeObserver) {
+    let lastPlotWidth = elements.plot.clientWidth;
+    new window.ResizeObserver(() => {
+      const width = elements.plot.clientWidth;
+      if (width === lastPlotWidth) return;
+      lastPlotWidth = width;
+      if (state.plotReady && state.deviceGradient.enabled) renderPlot();
+    }).observe(elements.plot);
+  }
 
   syncGradientControlsVisibility();
   updateViewCopy();
