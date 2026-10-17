@@ -111,9 +111,12 @@
   let pendingExportKind = null;
 
   function syncGradientControlsVisibility() {
-    const expanded = elements.deviceGradientToggle.checked;
+    const expanded = elements.deviceGradientToggle.checked || elements.gradientToggle.checked;
     elements.gradientControls.hidden = !expanded;
     elements.deviceGradientToggle.setAttribute("aria-expanded", String(expanded));
+    elements.gradientColor.disabled = elements.deviceGradientToggle.checked;
+    elements.gradientColor.title = elements.deviceGradientToggle.checked
+      ? "同器件渐变的主色请在左侧器件列表中设置" : "设置手动渐变的主色";
   }
 
   function escapeHtml(value) {
@@ -240,10 +243,7 @@
     if (sameDevice.length <= 1) return getDeviceStyle(dataset).color;
     const index = Math.max(0, sameDevice.findIndex((item) => item.id === dataset.id));
     const ratio = sameDevice.length <= 1 ? 0.5 : index / (sameDevice.length - 1);
-    const base = hexToRgb(getDeviceStyle(dataset).color);
-    const light = mixColor(base, { r: 255, g: 255, b: 255 }, 0.18);
-    const dark = mixColor(base, { r: 18, g: 18, b: 18 }, 0.12);
-    return rgbToCss(mixColor(light, dark, ratio));
+    return gradientColorFromBase(getDeviceStyle(dataset).color, ratio);
   }
 
   function gradientEligible(datasets) {
@@ -251,10 +251,13 @@
   }
 
   function gradientColorAt(index, total) {
-    const base = hexToRgb(state.gradient.color);
+    return gradientColorFromBase(state.gradient.color, total <= 1 ? 1 : index / (total - 1));
+  }
+
+  function gradientColorFromBase(color, ratio) {
+    const base = hexToRgb(color);
     const light = mixColor(base, { r: 255, g: 255, b: 255 }, 0.72);
     const dark = mixColor(base, { r: 18, g: 18, b: 18 }, 0.18);
-    const ratio = total <= 1 ? 1 : index / (total - 1);
     return rgbToCss(mixColor(light, dark, ratio));
   }
 
@@ -647,68 +650,105 @@
     };
   }
 
-  function gradientLegendAnnotations(datasets, exportMode) {
-    if (!gradientEligible(datasets)) return [];
-    const fontSize = exportMode ? 15 : 11;
+  function gradientLegendBands(datasets) {
+    if (gradientEligible(datasets)) {
+      return [{
+        label: state.gradient.label || "变化条件",
+        start: state.gradient.start || "起点",
+        end: state.gradient.end || "终点",
+        colorAt: (ratio) => gradientColorFromBase(state.gradient.color, ratio)
+      }];
+    }
+    if (!state.deviceGradient.enabled) return [];
+    const devices = uniqueSorted(datasets.map((dataset) => dataset.device));
+    return devices.map((device) => {
+      const selected = datasets.filter((dataset) => dataset.device === device);
+      const all = sameDeviceDatasets(selected[0]);
+      const selectedIds = new Set(selected.map((dataset) => dataset.id));
+      const ordered = all.filter((dataset) => selectedIds.has(dataset.id));
+      const first = ordered[0];
+      const last = ordered[ordered.length - 1];
+      const firstRatio = all.length <= 1 ? 0 : all.indexOf(first) / (all.length - 1);
+      const lastRatio = all.length <= 1 ? 0 : all.indexOf(last) / (all.length - 1);
+      const base = getDeviceStyle(first).color;
+      return {
+        label: devices.length > 1 && state.gradient.label
+          ? `${device} · ${state.gradient.label}` : (state.gradient.label || device),
+        start: state.gradient.start || datasetDisplayLabel(first),
+        end: state.gradient.end || datasetDisplayLabel(last),
+        // Keep the same color mapping when curves are filtered or hidden.
+        colorAt: (ratio) => all.length <= 1 ? base
+          : gradientColorFromBase(base, firstRatio + (lastRatio - firstRatio) * ratio)
+      };
+    });
+  }
+
+  function gradientLegendAnnotations(geometry, exportMode) {
     const common = {
       showarrow: false,
       xref: "paper",
       yref: "paper",
-      font: { family: "Arial, Microsoft YaHei UI, sans-serif", size: fontSize, color: "#444444" }
+      font: { family: "Arial, Microsoft YaHei UI, sans-serif", size: exportMode ? 18 : 13, color: "#444444" }
     };
-    return [
-      {
-        ...common,
-        x: 0.12,
-        y: 0.032,
-        xanchor: "right",
-        text: escapeHtml(state.gradient.label || "变化条件")
-      },
-      {
-        ...common,
-        x: 0.18,
-        y: -0.018,
-        xanchor: "center",
-        text: escapeHtml(state.gradient.start || "起点")
-      },
-      {
-        ...common,
-        x: 0.82,
-        y: -0.018,
-        xanchor: "center",
-        text: escapeHtml(state.gradient.end || "终点")
-      }
-    ];
+    return geometry.bands.flatMap((band, index) => {
+      const top = geometry.bandTop + index * geometry.bandRowHeight;
+      const centerY = -(top + geometry.barHeight / 2) / geometry.innerHeight;
+      const labelY = -(top + geometry.barHeight + 7) / geometry.innerHeight;
+      return [
+        {
+          ...common,
+          name: `gradient-label-${index}`,
+          x: 0.14,
+          y: centerY,
+          xanchor: "right",
+          yanchor: "middle",
+          text: escapeHtml(band.label)
+        },
+        {
+          ...common,
+          name: `gradient-start-${index}`,
+          x: 0.18,
+          y: labelY,
+          xanchor: "left",
+          yanchor: "top",
+          text: escapeHtml(band.start)
+        },
+        {
+          ...common,
+          name: `gradient-end-${index}`,
+          x: 0.94,
+          y: labelY,
+          xanchor: "right",
+          yanchor: "top",
+          text: escapeHtml(band.end)
+        }
+      ];
+    });
   }
 
-  function gradientLegendAxisLayout(datasets) {
-    if (!gradientEligible(datasets)) return {};
-    return {
-      yaxis: {
-        ...yAxisSettings(datasets, state.view === "JV", state.view === "JV" && elements.scaleSelect.value === "log", false),
-        domain: [0.16, 1]
-      },
-      xaxis2: {
-        domain: [0.18, 0.82],
-        range: [0, 1],
-        fixedrange: true,
-        showgrid: false,
-        showline: false,
-        zeroline: false,
-        showticklabels: false,
-        ticks: ""
-      },
-      yaxis2: {
-        domain: [0.02, 0.065],
-        range: [0, 1],
-        fixedrange: true,
-        showgrid: false,
-        showline: false,
-        zeroline: false,
-        showticklabels: false,
-        ticks: ""
-      }
-    };
+  function gradientLegendImages(geometry) {
+    return geometry.bands.map((band, row) => {
+      const top = geometry.bandTop + row * geometry.bandRowHeight;
+      // A real SVG gradient stays smooth in both PNG and vector SVG exports.
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="8">` +
+        `<defs><linearGradient id="ramp"><stop stop-color="${band.colorAt(0)}"/>` +
+        `<stop offset="1" stop-color="${band.colorAt(1)}"/></linearGradient></defs>` +
+        `<rect width="256" height="8" fill="url(#ramp)"/></svg>`;
+      return {
+        source: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
+        xref: "paper",
+        yref: "paper",
+        x: 0.18,
+        y: -top / geometry.innerHeight,
+        sizex: 0.76,
+        sizey: geometry.barHeight / geometry.innerHeight,
+        xanchor: "left",
+        yanchor: "top",
+        sizing: "stretch",
+        opacity: 0.74,
+        layer: "above"
+      };
+    });
   }
 
   function legendFontSize(datasets, exportMode) {
@@ -717,36 +757,21 @@
   }
 
   function plotGeometry(datasets, exportMode) {
-    const gradientMode = gradientEligible(datasets);
     const margin = exportMode
-      ? { l: 155, r: 95, t: 115, b: gradientMode ? 185 : 130 }
-      : { l: 112, r: 42, t: 40, b: gradientMode ? 145 : 95 };
+      ? { l: 155, r: 95, t: 115, b: 130 }
+      : { l: 112, r: 42, t: 40, b: 95 };
     const width = exportMode ? exportChartSize.width : (elements.plot.clientWidth || 960);
     let height = exportMode ? exportChartSize.height : 650;
     const innerHeight = height - margin.t - margin.b;
-    const legendGap = margin.b;
-    if (state.deviceGradient.enabled && !gradientMode) {
-      // Hidden traces still have clickable legend entries in the preview.
-      const legendDatasets = exportMode ? datasets : currentDatasets(true);
-      const fontSize = legendFontSize(datasets, exportMode);
-      textMeasureContext.font = `${fontSize}px Arial, Microsoft YaHei UI, sans-serif`;
-      const sampleWidth = exportMode ? 54 : 42;
-      const maxEntryWidth = legendDatasets.reduce((maximum, dataset) => {
-        const labelWidth = Math.max(...datasetDisplayLabel(dataset).split(/<br\s*\/?\s*>/i)
-          .map((line) => textMeasureContext.measureText(line.replace(/<[^>]*>/g, "")).width));
-        return Math.max(maximum, labelWidth + sampleWidth + 35);
-      }, sampleWidth + 35);
-      const columns = Math.max(1, Math.floor((width - margin.l - margin.r) / maxEntryWidth));
-      const rows = Math.ceil(legendDatasets.length / columns);
-      const maxLines = Math.max(1, ...legendDatasets.map((dataset) => (
-        datasetDisplayLabel(dataset).split(/<br\s*\/?\s*>/i).length
-      )));
-      const legendHeight = rows * (Math.max(20, fontSize * 1.3 * maxLines) + 6) + 20;
-      // Grow the page instead of shrinking the data area to fit the legend.
-      margin.b += legendHeight;
-      height += legendHeight;
-    }
-    return { width, height, margin, legendY: -legendGap / innerHeight };
+    const bandTop = margin.b;
+    const bands = gradientLegendBands(datasets);
+    const bandRowHeight = exportMode ? 84 : 64;
+    const barHeight = exportMode ? 24 : 18;
+    // One compact color strip per device, independent of the curve count.
+    const extraHeight = bands.length * bandRowHeight;
+    margin.b += extraHeight;
+    height += extraHeight;
+    return { width, height, margin, innerHeight, bands, bandTop, bandRowHeight, barHeight };
   }
 
   function plotLayout(datasets, exportMode) {
@@ -754,9 +779,7 @@
     const useLog = isJV && elements.scaleSelect.value === "log";
     const title = elements.chartTitle.value.trim() || (isJV ? "JV characteristics" : "EQE spectrum");
     const gradientMode = gradientEligible(datasets);
-    const bottomLegend = state.deviceGradient.enabled && !gradientMode;
     const geometry = plotGeometry(datasets, exportMode);
-    const gradientAxes = gradientLegendAxisLayout(datasets);
     const coordinateAnnotationsList = datasets.length ? coordinateAnnotations(datasets, exportMode) : [{
       text: "当前筛选条件下没有可见曲线",
       showarrow: false,
@@ -788,14 +811,13 @@
         bordercolor: "#111111",
         font: { family: "Arial, Microsoft YaHei UI, sans-serif", size: 13, color: "#111111" }
       },
-      showlegend: !gradientMode,
+      showlegend: !gradientMode && !state.deviceGradient.enabled,
       legend: {
-        orientation: bottomLegend ? "h" : "v",
-        x: bottomLegend ? 0 : (isJV ? 0.98 : 0.02),
-        xanchor: bottomLegend ? "left" : (isJV ? "right" : "left"),
-        y: bottomLegend ? geometry.legendY : 0.03,
-        yanchor: bottomLegend ? "top" : "bottom",
-        ...(bottomLegend ? { maxheight: geometry.margin.b } : {}),
+        orientation: "v",
+        x: isJV ? 0.98 : 0.02,
+        xanchor: isJV ? "right" : "left",
+        y: 0.03,
+        yanchor: "bottom",
         bgcolor: "rgba(255,255,255,0)",
         borderwidth: 0,
         itemwidth: exportMode ? 54 : 42,
@@ -809,13 +831,13 @@
       },
       xaxis: xAxisSettings(datasets, isJV, exportMode),
       yaxis: yAxisSettings(datasets, isJV, useLog, exportMode),
-      ...gradientAxes,
       font: {
         family: "Arial, Microsoft YaHei UI, sans-serif",
         size: exportMode ? 20 : 14,
         color: "#111111"
       },
-      annotations: coordinateAnnotationsList.concat(gradientLegendAnnotations(datasets, exportMode))
+      images: gradientLegendImages(geometry),
+      annotations: coordinateAnnotationsList.concat(gradientLegendAnnotations(geometry, exportMode))
     };
   }
 
@@ -852,7 +874,6 @@
     const yAxis = yAxisSettings(datasets, isJV, useLog, exportMode);
     const innerWidth = Math.max(1, width - margins.l - margins.r);
     const innerHeight = Math.max(1, height - margins.t - margins.b);
-    const yDomainStart = gradientEligible(datasets) ? 0.16 : 0;
 
     return {
       width,
@@ -860,9 +881,9 @@
       left: margins.l,
       right: width - margins.r,
       top: margins.t,
-      bottom: margins.t + innerHeight * (1 - yDomainStart),
+      bottom: margins.t + innerHeight,
       innerWidth,
-      innerHeight: innerHeight * (1 - yDomainStart),
+      innerHeight,
       xRange: xAxis.range,
       yRange: yAxis.range,
       useLog
@@ -1110,27 +1131,6 @@
       .filter(Boolean);
   }
 
-  function gradientLegendTraces(datasets, exportMode) {
-    if (!gradientEligible(datasets)) return [];
-    const steps = 72;
-    const lineWidth = exportMode ? 24 : 18;
-    return Array.from({ length: steps }, (_unused, index) => ({
-      x: [index / steps, (index + 1) / steps],
-      y: [0.5, 0.5],
-      xaxis: "x2",
-      yaxis: "y2",
-      type: "scatter",
-      mode: "lines",
-      showlegend: false,
-      hoverinfo: "skip",
-      line: {
-        color: gradientColorAt(index, steps),
-        width: lineWidth,
-        shape: "linear"
-      }
-    }));
-  }
-
   function addCoordinateMark(datasetId, index) {
     if (!datasetId || !Number.isInteger(index)) return;
     const duplicate = state.coordinateMarks.some((mark) => (
@@ -1262,7 +1262,6 @@
   function buildTraces(datasets, exportMode) {
     const isJV = state.view === "JV";
     const useLog = isJV && elements.scaleSelect.value === "log";
-    const useGradient = gradientEligible(datasets);
     const traces = plottedDatasets(datasets).map((dataset) => {
       const style = curveStyle(dataset);
       return {
@@ -1295,9 +1294,7 @@
             "<br>λ = %{x:.0f} nm<br>EQE = %{y:.2f}%<extra></extra>"
       };
     });
-    return traces.concat(
-      gradientLegendTraces(datasets.filter((item) => item.visible), Boolean(exportMode))
-    );
+    return traces;
   }
 
   function renderPlot() {
