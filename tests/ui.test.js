@@ -18,5 +18,7 @@ assert.match(app, /function syncGradientControlsVisibility\(\)/);
 assert.match(app, /const expanded = elements\.deviceGradientToggle\.checked/);
 assert.match(app, /elements\.gradientControls\.hidden = !expanded/);
 assert.match(styles, /\.gradient-controls\[hidden\]\s*\{\s*display:\s*none;/);
+assert.match(html, /id="variableColorToggle" type="checkbox"/);
+assert.match(html, /<span>同变量器件同色<\/span>/);
 
 console.log("UI visibility tests passed");

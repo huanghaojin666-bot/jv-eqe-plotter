@@ -37,6 +37,8 @@
       enabled: false
     },
     lightDarkSameColor: false,
+    variableSameColor: false,
+    variableColors: new Map(),
     coordinateMarks: [],
     gradient: {
       enabled: false,
@@ -87,6 +89,7 @@
     gradientToggle: document.getElementById("gradientToggle"),
     deviceGradientToggle: document.getElementById("deviceGradientToggle"),
     lightDarkColorToggle: document.getElementById("lightDarkColorToggle"),
+    variableColorToggle: document.getElementById("variableColorToggle"),
     gradientControls: document.getElementById("gradientControls"),
     gradientColor: document.getElementById("gradientColor"),
     gradientLabel: document.getElementById("gradientLabel"),
@@ -205,6 +208,31 @@
     };
   }
 
+  function deviceVariablePrefix(device) {
+    const name = String(device || "未识别").normalize("NFKC").trim().replace(/\s+/g, " ");
+    // Numeric names synthesized by the parser must not all become "器件".
+    const numericDevice = name.match(/^器件(\d+)$/);
+    if (numericDevice) return numericDevice[1];
+    const separated = name.match(/^(.+?)[\s_-]+\d+$/);
+    const compact = name.match(/^([^\d\s]+?)\d+$/);
+    return (separated ? separated[1] : compact ? compact[1] : name).toUpperCase();
+  }
+
+  function variableColor(device) {
+    const prefix = deviceVariablePrefix(device);
+    if (!state.variableColors.has(prefix)) {
+      // Register all imported variables, not just visible curves, so filtering
+      // and switching JV/EQE cannot reassign a variable's color.
+      uniqueSorted(state.datasets.map((dataset) => deviceVariablePrefix(dataset.device)))
+        .forEach((variable) => {
+          if (!state.variableColors.has(variable)) {
+            state.variableColors.set(variable, palette[state.variableColors.size % palette.length]);
+          }
+        });
+    }
+    return state.variableColors.get(prefix) || palette[0];
+  }
+
   function rgbToCss(color) {
     return `rgb(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)})`;
   }
@@ -305,6 +333,7 @@
     let normalColor = curveDisplayColor(dataset);
     if (state.deviceGradient.enabled) normalColor = deviceGradientColor(dataset);
     if (state.lightDarkSameColor) normalColor = getDeviceStyle(dataset).color;
+    if (state.variableSameColor) normalColor = variableColor(dataset.device);
     return {
       color: useGradient ? gradientColorAt(safeGradientIndex, gradientTotal) : normalColor,
       dash: "solid",
@@ -368,13 +397,17 @@
     elements.deviceStyleList.innerHTML = devices.map((device) => {
       const key = deviceStyleKey(state.view, device);
       const style = state.deviceStyles[key];
+      const displayColor = state.variableSameColor ? variableColor(device) : style.color;
+      const colorTitle = state.variableSameColor
+        ? `变量 ${deviceVariablePrefix(device)} 的颜色（同变量器件一起修改）`
+        : `选择 ${device} 的颜色`;
       return `
         <label class="device-style-item">
           <input type="checkbox" data-device-visible="${escapeHtml(key)}" ${style.visible ? "checked" : ""}>
           <input class="device-name-input" type="text" data-device-name="${escapeHtml(device)}"
             value="${escapeHtml(device)}" aria-label="修改器件名称" title="修改器件名称">
           <input class="device-color" type="color" data-device-color="${escapeHtml(key)}"
-            value="${escapeHtml(style.color)}" title="选择 ${escapeHtml(device)} 的颜色">
+            value="${escapeHtml(displayColor)}" title="${escapeHtml(colorTitle)}">
         </label>
       `;
     }).join("");
@@ -443,9 +476,9 @@
 
     elements.curveList.innerHTML = datasets.map((dataset) => {
       const style = curveStyle(dataset);
-      const displayColor = curveDisplayColor(dataset);
+      const displayColor = state.variableSameColor ? variableColor(dataset.device) : curveDisplayColor(dataset);
       const displayLabel = datasetDisplayLabel(dataset);
-      const colorLocked = state.gradient.enabled || state.deviceGradient.enabled || state.lightDarkSameColor;
+      const colorLocked = state.gradient.enabled || state.deviceGradient.enabled || state.lightDarkSameColor || state.variableSameColor;
       return `
       <div class="curve-item">
         <input type="checkbox" data-curve-toggle="${dataset.id}" ${dataset.visible ? "checked" : ""}>
@@ -1828,13 +1861,16 @@
     if (state.gradient.enabled) {
       state.deviceGradient.enabled = false;
       state.lightDarkSameColor = false;
+      state.variableSameColor = false;
       elements.deviceGradientToggle.checked = false;
       elements.lightDarkColorToggle.checked = false;
+      elements.variableColorToggle.checked = false;
     }
     syncGradientControlsVisibility();
     if (state.gradient.enabled && currentDatasets(false).length < 2) {
       showToast("请先在左侧勾选至少两条属于同一器件的曲线。", true);
     }
+    renderDeviceStyles();
     renderCurveList();
     renderPlot();
   });
@@ -1843,10 +1879,13 @@
     if (state.deviceGradient.enabled) {
       state.gradient.enabled = false;
       state.lightDarkSameColor = false;
+      state.variableSameColor = false;
       elements.gradientToggle.checked = false;
       elements.lightDarkColorToggle.checked = false;
+      elements.variableColorToggle.checked = false;
     }
     syncGradientControlsVisibility();
+    renderDeviceStyles();
     renderCurveList();
     renderPlot();
   });
@@ -1855,10 +1894,28 @@
     if (state.lightDarkSameColor) {
       state.gradient.enabled = false;
       state.deviceGradient.enabled = false;
+      state.variableSameColor = false;
       elements.gradientToggle.checked = false;
       elements.deviceGradientToggle.checked = false;
+      elements.variableColorToggle.checked = false;
     }
     syncGradientControlsVisibility();
+    renderDeviceStyles();
+    renderCurveList();
+    renderPlot();
+  });
+  elements.variableColorToggle.addEventListener("change", () => {
+    state.variableSameColor = elements.variableColorToggle.checked;
+    if (state.variableSameColor) {
+      state.gradient.enabled = false;
+      state.deviceGradient.enabled = false;
+      state.lightDarkSameColor = false;
+      elements.gradientToggle.checked = false;
+      elements.deviceGradientToggle.checked = false;
+      elements.lightDarkColorToggle.checked = false;
+    }
+    syncGradientControlsVisibility();
+    renderDeviceStyles();
     renderCurveList();
     renderPlot();
   });
@@ -1922,7 +1979,11 @@
       renderPlot();
     }
     if (colorKey && state.deviceStyles[colorKey]) {
-      state.deviceStyles[colorKey].color = event.target.value;
+      if (state.variableSameColor) {
+        state.variableColors.set(deviceVariablePrefix(colorKey), event.target.value);
+      } else {
+        state.deviceStyles[colorKey].color = event.target.value;
+      }
       renderDeviceStyles();
       renderCurveList();
       renderPlot();
@@ -2037,8 +2098,11 @@
     state.deviceStyles = {};
     state.curveStyles = {};
     state.lightDarkSameColor = false;
+    state.variableSameColor = false;
+    state.variableColors.clear();
     state.coordinateMarks = [];
     elements.lightDarkColorToggle.checked = false;
+    elements.variableColorToggle.checked = false;
     elements.fileInput.value = "";
     elements.folderInput.value = "";
     renderAll();
