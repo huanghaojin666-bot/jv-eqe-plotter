@@ -563,6 +563,14 @@
     return 200;
   }
 
+  function readableTickStep(span, maxIntervals) {
+    const minimumStep = span / maxIntervals;
+    const magnitude = 10 ** Math.floor(Math.log10(minimumStep));
+    const normalized = minimumStep / magnitude;
+    const multiple = [1, 2, 2.5, 5, 10].find((value) => value >= normalized);
+    return multiple * magnitude;
+  }
+
   function coordinateSizeScale() {
     const percentage = Number(elements.coordinateSize.value);
     return Math.min(2, Math.max(0.6, percentage / 100));
@@ -624,6 +632,9 @@
       const positive = rawValues.map(Math.abs).filter((value) => value > 0);
       const minimum = positive.length ? Math.min(...positive) : 1e-12;
       const maximum = positive.length ? Math.max(...positive) : 1;
+      const range = [Math.floor(Math.log10(minimum)), Math.ceil(Math.log10(maximum))];
+      // Keep wide log ranges readable too: e.g. 10^-12..10^0 every two decades.
+      const majorStep = Math.max(1, Math.ceil((range[1] - range[0]) / 8));
       return {
         ...common,
         title: {
@@ -632,12 +643,13 @@
           font: { size: exportMode ? 25 : 18, color: "#111111" }
         },
         type: "log",
-        range: [Math.floor(Math.log10(minimum)), Math.ceil(Math.log10(maximum))],
+        range,
         exponentformat: "power",
         showexponent: "all",
-        dtick: 1,
+        tick0: 0,
+        dtick: majorStep,
         minor: {
-          ticks: "outside",
+          ticks: majorStep > 1 ? "" : "outside",
           ticklen: exportMode ? 5 : 3,
           tickcolor: "#666666",
           showgrid: false
@@ -675,7 +687,9 @@
       type: "linear",
       range: [0, upper],
       rangemode: "tozero",
-      dtick: upper <= 60 ? 10 : 20,
+      tick0: 0,
+      // About 5–7 major labels, even when EQE reaches thousands of percent.
+      dtick: upper <= 60 ? 10 : readableTickStep(upper, 6),
       tickformat: ".0f",
       zeroline: true,
       zerolinecolor: "#111111",
