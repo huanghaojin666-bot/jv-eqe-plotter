@@ -110,3 +110,45 @@ test("device gradient is one signed numeric scale across files, with equal color
   datasets.find(item => item.label === "-0.50").visible = false;
   assert.equal(chart.buildTraces([negative], false)[0].line.color, color);
 });
+
+test("both gradient modes reverse curve and strip colors without changing names, order or data", () => {
+  for (const mode of ["device", "manual"]) {
+    const datasets = parser.parseFile(eqeText(["-0.50", "0.00", "0.50"]), { name: "direction.txt" }).datasets;
+    const chart = chartHarness(datasets);
+    chart.state.deviceGradient.enabled = mode === "device";
+    chart.state.gradient.enabled = mode === "manual";
+    chart.state.gradient.start = "起始电压";
+    chart.state.gradient.end = "终止电压";
+    const originalData = JSON.stringify(datasets);
+    const forward = chart.buildTraces(datasets, false);
+    const forwardLayout = chart.plotLayout(datasets, false);
+    const strip = layout => [...decodeURIComponent(layout.images[0].source.split(",")[1]).matchAll(/stop-color="([^"]+)"/g)].map(match => match[1]);
+    chart.state.gradient.reversed = true;
+    for (const exportMode of [false, true]) {
+      const reversed = chart.buildTraces(datasets, exportMode);
+      assert.deepEqual(Array.from(reversed, trace => trace.line.color), Array.from(forward, trace => trace.line.color).reverse());
+      assert.deepEqual(Array.from(reversed, trace => trace.name), Array.from(forward, trace => trace.name));
+      const reversedLayout = chart.plotLayout(datasets, exportMode);
+      assert.deepEqual(strip(reversedLayout), strip(forwardLayout).reverse());
+      assert.deepEqual(Array.from(reversedLayout.annotations, item => item.text), Array.from(forwardLayout.annotations, item => item.text));
+      assert.deepEqual(Array.from(chart.buildOriginRecipe(datasets).curves, curve => curve.color), Array.from(reversed, trace => trace.line.color));
+    }
+    chart.state.gradient.reversed = false;
+    assert.deepEqual(Array.from(chart.buildTraces(datasets, false), trace => trace.line.color), Array.from(forward, trace => trace.line.color));
+    assert.equal(JSON.stringify(datasets), originalData);
+  }
+});
+
+test("direction does not alter ordinary colors or single-curve device colors", () => {
+  const datasets = parser.parseFile(eqeText(["-0.50", "0.50"]), { name: "ordinary.txt" }).datasets;
+  const chart = chartHarness(datasets);
+  chart.state.deviceGradient.enabled = false;
+  const forward = chart.buildTraces(datasets, false).map(trace => trace.line.color);
+  chart.state.gradient.reversed = true;
+  assert.deepEqual(chart.buildTraces(datasets, false).map(trace => trace.line.color), forward);
+  chart.state.datasets = [datasets[0]];
+  chart.state.deviceGradient.enabled = true;
+  const single = chart.buildTraces(chart.state.datasets, false)[0].line.color;
+  chart.state.gradient.reversed = false;
+  assert.equal(chart.buildTraces(chart.state.datasets, false)[0].line.color, single);
+});

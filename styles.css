@@ -861,7 +861,8 @@ select {
   background: white;
 }
 
-.gradient-text-control input {
+.gradient-text-control input,
+.gradient-text-control select {
   width: 104px;
   min-height: 38px;
   padding: 7px 9px;

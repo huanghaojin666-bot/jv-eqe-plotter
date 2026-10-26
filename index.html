@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <title>JV · EQE 数据工作台</title>
   <link rel="icon" type="image/svg+xml" href="assets/nano-photonics-icon.svg?v=blue-1">
-  <link rel="stylesheet" href="styles.css?v=20260925-8">
+  <link rel="stylesheet" href="styles.css?v=20261026-1">
 </head>
 <body>
   <header class="site-header">
@@ -180,6 +180,13 @@
             <span>同变量器件同色</span>
           </label>
           <div id="gradientControls" class="gradient-controls" hidden>
+            <label class="gradient-text-control">
+              <span>渐变方向</span>
+              <select id="gradientDirection" title="只反转颜色深浅，不改变曲线顺序和起止标签">
+                <option value="light-to-dark">浅 → 深</option>
+                <option value="dark-to-light">深 → 浅</option>
+              </select>
+            </label>
             <label class="gradient-color-control">
               <span>主色</span>
               <input id="gradientColor" type="color" value="#009E73">
@@ -312,6 +319,6 @@
   <script src="vendor/plotly.min.js?v=20260613"></script>
   <script src="parser.js?v=20261026-1"></script>
   <script src="exporter.js?v=20260925-4"></script>
-  <script src="app.js?v=20261026-1"></script>
+  <script src="app.js?v=20261026-2"></script>
 </body>
 </html>

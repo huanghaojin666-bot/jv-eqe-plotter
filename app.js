@@ -42,6 +42,7 @@
     coordinateMarks: [],
     gradient: {
       enabled: false,
+      reversed: false,
       color: "#009E73",
       label: "",
       start: "",
@@ -92,6 +93,7 @@
     variableColorToggle: document.getElementById("variableColorToggle"),
     gradientControls: document.getElementById("gradientControls"),
     gradientColor: document.getElementById("gradientColor"),
+    gradientDirection: document.getElementById("gradientDirection"),
     gradientLabel: document.getElementById("gradientLabel"),
     gradientStart: document.getElementById("gradientStart"),
     gradientEnd: document.getElementById("gradientEnd"),
@@ -320,7 +322,7 @@
     const base = hexToRgb(color);
     const light = mixColor(base, { r: 255, g: 255, b: 255 }, 0.72);
     const dark = mixColor(base, { r: 18, g: 18, b: 18 }, 0.18);
-    return rgbToCss(mixColor(light, dark, ratio));
+    return rgbToCss(mixColor(light, dark, state.gradient.reversed ? 1 - ratio : ratio));
   }
 
   function median(values) {
@@ -1973,6 +1975,11 @@
     }
     syncGradientControlsVisibility();
     renderDeviceStyles();
+    renderCurveList();
+    renderPlot();
+  });
+  elements.gradientDirection.addEventListener("change", () => {
+    state.gradient.reversed = elements.gradientDirection.value === "dark-to-light";
     renderCurveList();
     renderPlot();
   });

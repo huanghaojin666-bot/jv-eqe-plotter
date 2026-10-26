@@ -20,5 +20,8 @@ assert.match(app, /elements\.gradientControls\.hidden = !expanded/);
 assert.match(styles, /\.gradient-controls\[hidden\]\s*\{\s*display:\s*none;/);
 assert.match(html, /id="variableColorToggle" type="checkbox"/);
 assert.match(html, /<span>同变量器件同色<\/span>/);
+assert.match(html, /<select id="gradientDirection"/);
+assert.match(html, /<option value="light-to-dark">浅 → 深<\/option>/);
+assert.match(html, /<option value="dark-to-light">深 → 浅<\/option>/);
 
 console.log("UI visibility tests passed");
