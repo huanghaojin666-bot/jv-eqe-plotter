@@ -32,6 +32,7 @@
 
   function normalizeName(value) {
     return cleanText(value)
+      .replace(/[−﹣－]/g, "-")
       .replace(/[＿_]/g, "-")
       .replace(/\s*-\s*/g, "-")
       .replace(/\s+/g, " ");
@@ -59,7 +60,11 @@
     return normalizeName(value)
       .replace(/(^|[^a-z])(light|dark)(?=$|[^a-z])/ig, "$1")
       .replace(/光电流|暗电流|光照|亮态|暗态/g, "")
-      .replace(/^[\s·,;:/\\_()-]+|[\s·,;:/\\_()-]+$/g, "")
+      .replace(/^[\s·,;:/\\_()-]+/, (prefix, _offset, name) => (
+        // A leading minus before a number is a sign, not a separator.
+        prefix.endsWith("-") && /^(?:\d|\.\d)/.test(name.slice(prefix.length)) ? "-" : ""
+      ))
+      .replace(/[\s·,;:/\\_()-]+$/g, "")
       .replace(/\s+/g, " ");
   }
 
@@ -278,7 +283,9 @@
 
   function eqeBaseName(fileName) {
     return String(fileName || "")
-      .replace(/_Raw(?=\.txt$)/i, "")
+      // The instrument can insert _Raw before the first dot in a basename,
+      // e.g. 10_Raw.19_...txt is the Raw partner of 10.19_...txt.
+      .replace(/_Raw(?=\.[^\\/]*$)/i, "")
       .replace(/\.txt$/i, "")
       .toLowerCase();
   }

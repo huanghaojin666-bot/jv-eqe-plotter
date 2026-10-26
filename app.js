@@ -152,12 +152,31 @@
     return `${dataset.label} · ${dataset.illumination}`;
   }
 
+  function numericConditionValue(name) {
+    const text = String(name || "").trim().replace(/[−﹣－]/g, "-");
+    // Do not interpret device/replicate names such as "0 2" as a voltage.
+    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?\s*V?$/i.test(text)) return null;
+    const value = Number(text.replace(/\s*V$/i, ""));
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function compareConditionNames(left, right) {
+    const leftValue = numericConditionValue(left);
+    const rightValue = numericConditionValue(right);
+    if (leftValue !== null && rightValue !== null) return leftValue - rightValue;
+    if (leftValue !== null) return -1;
+    if (rightValue !== null) return 1;
+    return 0;
+  }
+
   function sortDatasets() {
     state.datasets.sort((left, right) => {
       const typeOrder = left.type.localeCompare(right.type);
       if (typeOrder) return typeOrder;
       const deviceOrder = left.device.localeCompare(right.device, "zh-CN", { numeric: true });
       if (deviceOrder) return deviceOrder;
+      const conditionOrder = compareConditionNames(left.label, right.label);
+      if (conditionOrder) return conditionOrder;
       const pointOrder = left.point.localeCompare(right.point, "zh-CN", { numeric: true });
       if (pointOrder) return pointOrder;
       const illuminationOrder = String(left.illumination).localeCompare(String(right.illumination));
@@ -263,14 +282,29 @@
   function sameDeviceDatasets(dataset) {
     return state.datasets.filter((item) => (
       item.type === dataset.type && item.device === dataset.device
-    ));
+    )).sort((left, right) => compareConditionNames(left.label, right.label));
+  }
+
+  function deviceGradientRatio(dataset) {
+    const sameDevice = sameDeviceDatasets(dataset);
+    const values = sameDevice.map((item) => numericConditionValue(item.label)).filter((value) => value !== null);
+    if (values.length >= 2) {
+      const value = numericConditionValue(dataset.label);
+      if (value === null) return null;
+      const minimum = Math.min(...values);
+      const maximum = Math.max(...values);
+      // Use signed values, not magnitude or file order; repeated 0 V is one color.
+      return maximum === minimum ? 0.5 : (value - minimum) / (maximum - minimum);
+    }
+    const index = Math.max(0, sameDevice.findIndex((item) => item.id === dataset.id));
+    return sameDevice.length <= 1 ? 0.5 : index / (sameDevice.length - 1);
   }
 
   function deviceGradientColor(dataset) {
     const sameDevice = sameDeviceDatasets(dataset);
     if (sameDevice.length <= 1) return getDeviceStyle(dataset).color;
-    const index = Math.max(0, sameDevice.findIndex((item) => item.id === dataset.id));
-    const ratio = sameDevice.length <= 1 ? 0.5 : index / (sameDevice.length - 1);
+    const ratio = deviceGradientRatio(dataset);
+    if (ratio === null) return getDeviceStyle(dataset).color;
     return gradientColorFromBase(getDeviceStyle(dataset).color, ratio);
   }
 
@@ -312,7 +346,14 @@
   }
 
   function plottedDatasets(datasets) {
-    return gradientEligible(datasets) ? gradientOrderedDatasets(datasets) : datasets;
+    if (gradientEligible(datasets)) return gradientOrderedDatasets(datasets);
+    if (state.deviceGradient.enabled) {
+      return datasets.slice().sort((left, right) => (
+        left.device.localeCompare(right.device, "zh-CN", { numeric: true }) ||
+        compareConditionNames(left.label, right.label)
+      ));
+    }
+    return datasets;
   }
 
   function curveColor(dataset) {
@@ -713,10 +754,12 @@
       const all = sameDeviceDatasets(selected[0]);
       const selectedIds = new Set(selected.map((dataset) => dataset.id));
       const ordered = all.filter((dataset) => selectedIds.has(dataset.id));
-      const first = ordered[0];
-      const last = ordered[ordered.length - 1];
-      const firstRatio = all.length <= 1 ? 0 : all.indexOf(first) / (all.length - 1);
-      const lastRatio = all.length <= 1 ? 0 : all.indexOf(last) / (all.length - 1);
+      const gradientMembers = ordered.filter((dataset) => deviceGradientRatio(dataset) !== null);
+      const endpoints = gradientMembers.length ? gradientMembers : ordered;
+      const first = endpoints[0];
+      const last = endpoints[endpoints.length - 1];
+      const firstRatio = deviceGradientRatio(first);
+      const lastRatio = deviceGradientRatio(last);
       const base = getDeviceStyle(first).color;
       return {
         label: devices.length > 1 && state.gradient.label
@@ -724,7 +767,7 @@
         start: state.gradient.start || datasetDisplayLabel(first),
         end: state.gradient.end || datasetDisplayLabel(last),
         // Keep the same color mapping when curves are filtered or hidden.
-        colorAt: (ratio) => all.length <= 1 ? base
+        colorAt: (ratio) => all.length <= 1 || firstRatio === null || lastRatio === null ? base
           : gradientColorFromBase(base, firstRatio + (lastRatio - firstRatio) * ratio)
       };
     });
