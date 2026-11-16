@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Br 实验 · EQE 对比</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验 <span>EQE 对比</span></h1></div>
+    <div class="header-meta"><span id="inventory"></span><span class="local-status"><i data-lucide="hard-drive"></i>实验数据</span></div>
+  </header>
+  <main class="workspace">
+    <section class="matrix-section" aria-labelledby="matrix-title">
+      <div class="section-heading"><div><h2 id="matrix-title">峰位均值</h2><span class="subtle">λ̄<sub>peak</sub> / nm</span></div><button type="button" id="all-groups" class="primary command"><i data-lucide="layers"></i>集总曲线</button></div>
+      <div class="version-control segmented" aria-label="数据版本"><button id="version-selected" aria-pressed="true">筛选数据</button><button id="version-all" aria-pressed="false">all 版本 <span class="count">5</span></button></div>
+      <div class="matrix-scroll"><table id="matrix" aria-label="日期与变量的峰位均值"></table></div>
+      <div class="matrix-key"><span><b class="key-all"></b>另有 all</span><span><b class="key-active"></b>当前对比</span><button class="text-command" id="method-button"><i data-lucide="calculator"></i>核算口径</button></div>
+      <div class="selection-summary"><span class="overline">当前选择</span><h3 id="selection-label"></h3><div id="selection-meta" class="subtle"></div></div>
+      <div class="batch-notes"><i data-lucide="flask-conical"></i><div><strong>10.12</strong><span>f / 5 / 10 与 20 / DMF 为两次 ink</span></div></div>
+      <details class="source-disclosure"><summary><i data-lucide="folder-open"></i>数据目录与版本</summary><div id="source-list"></div></details>
+    </section>
+    <section class="viewer-section" aria-labelledby="viewer-title">
+      <div class="viewer-heading"><div><span class="overline" id="view-category">单组数据</span><h2 id="viewer-title"></h2></div><div class="viewer-actions"><button class="icon-button" id="reset-axes" title="重置坐标" aria-label="重置坐标"><i data-lucide="scan"></i></button><details id="export-menu" class="menu"><summary class="command"><i data-lucide="download"></i>导出<i data-lucide="chevron-down"></i></summary><div class="menu-content"><button data-export="png"><i data-lucide="image"></i>PNG 图片</button><button data-export="svg"><i data-lucide="file-image"></i>SVG 矢量图</button><button data-export="csv"><i data-lucide="table-2"></i>CSV 曲线与峰位</button><a id="source-download" download><i data-lucide="file-text"></i>源 TXT</a></div></details></div></div>
+      <div class="plot-toolbar"><div class="segmented view-mode" aria-label="视图"><button id="show-original" aria-pressed="true"><i data-lucide="image"></i>保存原图</button><button id="show-comparison" aria-pressed="false"><i data-lucide="chart-line"></i>均值对比</button></div><div class="plot-options"><select id="scale-mode" aria-label="纵轴模式"><option value="normalized">归一化 EQE</option><option value="raw">EQE (%)</option></select><select id="range-mode" aria-label="波长范围"><option value="nir">980–1450 nm</option><option value="full">全波段</option></select><details id="options-menu" class="menu"><summary class="icon-button" title="曲线选项" aria-label="曲线选项"><i data-lucide="sliders-horizontal"></i></summary><div class="menu-content option-content"><label><input id="show-individual" type="checkbox" checked>单条曲线</label><label><input id="show-peaks" type="checkbox">均值峰位标记</label><label><input id="show-pooled" type="checkbox">集总均值</label></div></details></div></div>
+      <div id="version-notice" class="version-notice" hidden></div>
+      <div id="plot-surface"><div id="original-surface"><img id="original-image" alt=""></div><div id="plot" hidden></div><div id="chart-error" role="alert" hidden></div></div>
+      <div id="plot-caption" class="plot-caption"></div>
+      <section class="statistics" aria-labelledby="statistics-title"><div class="statistics-heading"><h3 id="statistics-title">当前曲线</h3><span class="subtle">峰位均值 ± 样本标准差</span></div><div class="stats-scroll"><table><thead><tr><th>日期 / 变量</th><th>版本</th><th>条数</th><th>峰位均值 / nm</th><th>均值曲线峰 / nm</th></tr></thead><tbody id="stats-body"></tbody></table></div></section>
+    </section>
+  </main>
+  <dialog id="method-dialog"><div class="dialog-heading"><h2>峰位核算口径</h2><button class="icon-button" id="close-method" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button></div><dl><dt>表格中的数值</dt><dd>先在 980–1450 nm 内逐条取 EQE 最大值对应的波长，再对这些峰位求算术平均。小数保留到 0.1 nm，仅为显示精度。</dd><dt>粗线与浅线</dt><dd>归一化模式下，每条曲线除以自身在 980–1450 nm 内的最大 EQE。浅线保留各条原始采样点；粗线为同组在共同波长点上的算术均值，不平滑、不插值。</dd><dt>两种“峰位”</dt><dd>各条曲线峰位的均值，不一定等于平均曲线的峰位。页面分别列示，不把二者混为一项。</dd><dt>all 版本</dt><dd>仅使用“新建文件夹/all”中另外保存的文件。有 all 的组被替换；未另存 all 的组沿用筛选数据，并逐组注明。默认筛选视图不读取 all 曲线。</dd><dt>n 参考</dt><dd>1300 nm 为你确认的参考值，没有关联曲线，不参与任何曲线平均。</dd><dt>集总</dt><dd>默认叠加所有“日期 × 变量”组的均值曲线。可额外显示“集总均值”：对当前全部实际选用的单条曲线等权平均，因此不同组的条数会影响权重。</dd><dt>手写表的取整</dt><dd>页面依据 TXT 重算。1122.5、1175.7、1186.7 nm 等保留计算结果，不用手记中的取整值覆盖。各组源文件保留不变。</dd></dl><a href="峰位核算.csv" download class="command"><i data-lucide="download"></i>下载峰位核算表</a></dialog>
+  <div id="toast" role="status" hidden></div>
+  <script src="assets/plotly.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+  <script src="data.js"></script>
+  <script src="model.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
