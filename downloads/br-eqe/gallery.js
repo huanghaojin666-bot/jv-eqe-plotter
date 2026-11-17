@@ -123,12 +123,12 @@
     $('gallery-download-svg').hidden = multiple;
     const reference = new URLSearchParams(record.group === 'n' && state.type !== 'all'
       ? { type: 'date', key: record.date } : { type: state.type, key: state.type === 'cell' ? record.date+'_'+record.group : state.key });
-    document.querySelector('[data-eqe-gallery-link]').href = 'index.html#'+reference.toString();
-    document.querySelector('[data-jv-gallery-link]').href = 'jv.html#'+reference.toString();
+    document.querySelector('[data-eqe-gallery-link]').href = window.ReportNavigation.href('index.html', reference);
+    document.querySelector('[data-jv-gallery-link]').href = window.ReportNavigation.href('jv.html', reference);
     for (const link of document.querySelectorAll('[data-other-metric]')) {
-      link.href = link.dataset.otherMetric+'.html#'
-        +new URLSearchParams(state.type === 'group' || state.type === 'all' ? { type: state.type, key: state.key }
-          : { date: record.date, group: record.group || '', category: record.category === 'individual' ? 'individual' : 'comparison' });
+      link.href = window.ReportNavigation.href(link.dataset.otherMetric+'.html',
+        new URLSearchParams(state.type === 'group' || state.type === 'all' ? { type: state.type, key: state.key }
+          : { date: record.date, group: record.group || '', category: record.category === 'individual' ? 'individual' : 'comparison' }));
     }
     const image = $('gallery-image');
     $('gallery-error').hidden = true;
