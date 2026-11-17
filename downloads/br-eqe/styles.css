@@ -1,4 +1,5 @@
 :root{font-family:Arial,"Microsoft YaHei",sans-serif;color:#20292c;background:#fff;font-synthesis:none;letter-spacing:0;--line:#dce2e4;--muted:#647278;--accent:#137b72;--light:#f4f7f7}
+.abs-phase-tabs{margin-top:18px}.abs-phase-tabs a{padding:7px 14px;font-size:12px;min-height:30px;display:flex;align-items:center;border-radius:2px;color:#65777c}.abs-phase-tabs a[aria-current=page]{background:#fff;color:#126e66;box-shadow:0 1px 3px #20363a1a;font-weight:600}.abs-phase-tabs+.metric-version{margin-top:14px}
 @media(max-width:700px){.app-header .local-status{font-size:0;gap:0}}
 .metric-comparison-views{margin-bottom:16px}.metric-workspace .metric-comparison-views[hidden]{display:none}
 .metric-cell-stack{display:flex;flex-direction:column;height:100%;min-height:66px}#matrix .metric-cell-stack>.cell{flex:1;height:auto;min-height:65px}#matrix .metric-cell-stack>.cell+.cell{border-top:1px solid var(--line)}
