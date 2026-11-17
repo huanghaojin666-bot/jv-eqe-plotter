@@ -72,6 +72,7 @@
     scaleControl: document.getElementById("scaleControl"),
     scaleSelect: document.getElementById("scaleSelect"),
     downloadTxtButton: document.getElementById("downloadTxtButton"),
+    darkFitButton: document.getElementById("darkFitButton"),
     downloadExcelButton: document.getElementById("downloadExcelButton"),
     openOriginButton: document.getElementById("openOriginButton"),
     downloadOriginBundleButton: document.getElementById("downloadOriginBundleButton"),
@@ -1423,6 +1424,7 @@
 
   function updateViewCopy() {
     const isJV = state.view === "JV";
+    elements.darkFitButton.hidden = !isJV;
     elements.chartEyebrow.textContent = isJV ? "CURRENT DENSITY" : "EXTERNAL QUANTUM EFFICIENCY";
     elements.chartTitle.value = isJV ? "JV 曲线" : "EQE 光谱";
     elements.scaleControl.hidden = !isJV;
@@ -1879,6 +1881,9 @@
   });
   elements.scaleSelect.addEventListener("change", renderPlot);
   elements.chartTitle.addEventListener("change", renderPlot);
+  elements.darkFitButton.addEventListener("click", () => {
+    window.JVEQEDarkFit.open({ datasets: currentDatasets(false) });
+  });
   elements.downloadTxtButton.addEventListener("click", () => openExportDialog("txt"));
   elements.downloadExcelButton.addEventListener("click", () => openExportDialog("xlsx"));
   elements.openOriginButton.addEventListener("click", openCurrentViewInOrigin);

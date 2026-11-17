@@ -1,0 +1,9 @@
+# 暗电流拟合
+
+本模块集成用户于 2026-11-17 提供的 `f/f` 源码。`engine/fit/`、`engine/config.py`、`engine/app/api_utils.py`、`engine/ml/record_schema.py`、`engine/app_services/product_modes.py` 原样复制，来源 SHA-256 记录在 `engine/manifest.json`。仅三个包入口使用最小声明，避免加载未使用的训练记录服务；`web_bridge.py` 为网站新增的数组与结果适配层。
+
+模型为原程序的隐式二极管、串联电阻、并联电阻与非欧姆分量；不替换优化器或诊断模型选择规则。快速/诊断模式沿用原 `product_modes.py`。诊断结果的模型身份、参数名称、候选状态和手动求值权限沿用原结果契约。当前界面接入曲线选择、窗口、温度、n/m、拟合、候选查看、分量及残差、手动预览和 CSV/JSON/图片导出；不接入原程序的 ML 训练及独立多条件实验分析。
+
+所有计算在浏览器 Worker 内运行 Python/NumPy/SciPy，测量数据不上传。本地服务和 GitHub Pages 使用相同代码。`vendor/pyodide/` 固定 Pyodide 0.27.7 官方发行资源（https://cdn.jsdelivr.net/pyodide/v0.27.7/full/），NumPy/SciPy/OpenBLAS 校验值来自该版官方 lock 文件，使用时无需连接外部 CDN。点击“停止”会终止 Worker，下次运行重新加载。
+
+从工作台 JV 视图点击“暗电流拟合”，然后选择暗态曲线。未识别状态的曲线须勾选确认；光照曲线不会进入暗电流模型。JV 源数据单位为 V 与有符号 A/cm²，`Rs/Rsh` 对应面积归一化电阻，`k` 为随 m 变化单位的模型有效参数。显示对数图时仅取绝对值，拟合使用有符号原数据。零点相对误差剔除、噪声下限和诊断规则使用原源码逻辑。

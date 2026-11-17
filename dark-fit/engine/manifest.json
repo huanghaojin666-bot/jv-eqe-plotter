@@ -1,0 +1,90 @@
+{
+  "source": "User-provided dark-current fitting source (f/f)",
+  "version": "2026-11-17",
+  "files": [
+    {
+      "path": "config.py",
+      "sha256": "f735b1c2e573ec44feed66bdf10d8c43d498a2920cf5b57641a2fd728611d043"
+    },
+    {
+      "path": "app/api_utils.py",
+      "sha256": "af6eae799b2201c90dd0d4a742d4b134833196bfdead6260514762195ed132d8"
+    },
+    {
+      "path": "ml/record_schema.py",
+      "sha256": "4b68eb6d26571b5fea31e69436823872b81af4b757df1ad34c7e3acb7aa8131c"
+    },
+    {
+      "path": "app_services/product_modes.py",
+      "sha256": "4a605950a09377876452406921149d9f6b376bb7a4d97a958fe95d6378423270"
+    },
+    {
+      "path": "fit/__init__.py",
+      "sha256": "a122c03742ff42610dad7b13a172ccdcaa61c6e26b0bb35ec833aabedd352302"
+    },
+    {
+      "path": "fit/advice.py",
+      "sha256": "4dfb1b54d7b7ae7320b755feba5706f9b55eca0bc397637a9454ca4f8ab3168a"
+    },
+    {
+      "path": "fit/conditioned.py",
+      "sha256": "9e31bce294b3533137ac2c5a14c71218dd14e63c1f277ff7a3ab50a7f1ba2c5e"
+    },
+    {
+      "path": "fit/core.py",
+      "sha256": "8b9362452d00fce4436d7b4fb4b03a1a14baa1756c85821a37d72f4db91c3ad7"
+    },
+    {
+      "path": "fit/cqd_heterointerface.py",
+      "sha256": "8a7e9c271def6c1364c9b910a2495df36045020f1e0ac8a038d0ae8917aa0e38"
+    },
+    {
+      "path": "fit/evidence.py",
+      "sha256": "fec2ce620f6d9b4bfe13cb87106a8e534db94b6c92d0a20437c6e1c078d2d850"
+    },
+    {
+      "path": "fit/initialize_parameters.py",
+      "sha256": "1f6dac4afcb17a0263350c00887d7e704526a9a22f568f8714010fe044ef5e8f"
+    },
+    {
+      "path": "fit/model.py",
+      "sha256": "dcb57879941e093026083c31befbe72cce226248b905b6e8aeb6c4ac8c28db4c"
+    },
+    {
+      "path": "fit/optimization.py",
+      "sha256": "e7b0c73e6a55a3defb3ffb9421c82a011f970808ad8a82c37f532b6cf084c7ca"
+    },
+    {
+      "path": "fit/parameter_schema.py",
+      "sha256": "fd588e448fe099f6107b87ad5c7ef9036056bae22e1af8e400c63dc849d5f454"
+    },
+    {
+      "path": "fit/post_fit.py",
+      "sha256": "c661930130fb070d6adc6c4120b441e5c2430af47cfac5083f2d3696ad746922"
+    },
+    {
+      "path": "fit/reference_oracles.py",
+      "sha256": "f53cf0fadadd24e54f5e72d278cc891235a864449a50d05d8a62b227f7738da0"
+    },
+    {
+      "path": "fit/refinement.py",
+      "sha256": "2e1bfa738e0300a2da9b85d227224c2ad1476e9dfbb74799c5af7cb67cfa7b3e"
+    },
+    {
+      "path": "fit/region_stats.py",
+      "sha256": "f73d5c2e9b9eec37c30fe84cd22fafd0e269fc0a8f5bafa0a58d392b2cec10a8"
+    },
+    {
+      "path": "fit/scoring.py",
+      "sha256": "b9265756c60425255fec2c24c016c3f4c665251282dd0ecc7bc35a5ecb8d06f7"
+    },
+    {
+      "path": "fit/strategy.py",
+      "sha256": "2bde21f70b79785b853adcdc66fc60773f7c0b085d27fa8f929a056fd7bc5e84"
+    },
+    {
+      "path": "fit/workflow.py",
+      "sha256": "a3c06c4248c89a8cae384bb89078c685988ee9fbf4fd6295d18fe94f3ff968dd"
+    }
+  ]
+}
