@@ -9,9 +9,8 @@
 # Nano Photonics Group 标识
 
 - 网站使用文件：`nano-photonics-icon.svg`
-- 官方原始文件备份：`nano-photonics-original.png`（1308 × 1308）
-- 来源：Nano Photonics Group 官方网站 https://nanophotonics.cc/
-- 官方源码仓库：https://github.com/Hoooid/HaodongTangGroup/blob/main/assets/media/icon.png
-- 官方原始资源：https://raw.githubusercontent.com/Hoooid/HaodongTangGroup/main/assets/media/icon.png
-- 获取日期：2026-09-25
-- 官方仓库未提供 SVG、AI、EPS 或 PDF 矢量文件。本站使用的 SVG 依据官方 1308 × 1308 PNG 提取轮廓重建，比例和字形取自官方原图，内部不嵌入位图；页面版本按本站视觉系统将底色调整为深圳技术大学蓝。
+- 来源：用户提供的 `NANO_Group_Logo_Vector.svg`。
+- 更新日期：2026-11-17。
+- 保留原 SVG 的四个字母路径、位置、400 × 400 比例和圆角，将底色 `#ed2b0b` 改为网站蓝色 `#164b9b`，字母保持白色；不嵌入位图。
+- 浏览器标签页图标和页面内 Nano Photonics Group Logo 共用此矢量文件。
+- 旧版 PNG 参考文件仍保留：`nano-photonics-original.png`、`nano-photonics-icon.png`，页面不再引用。历史来源为 https://nanophotonics.cc/ 的官方仓库 https://github.com/Hoooid/HaodongTangGroup/blob/main/assets/media/icon.png （2026-09-25 获取）。
