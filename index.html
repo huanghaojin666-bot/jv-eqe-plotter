@@ -7,7 +7,7 @@
   <title>JV · EQE 数据工作台</title>
   <link rel="icon" type="image/svg+xml" href="assets/nano-photonics-icon.svg?v=20261117-1">
   <link rel="stylesheet" href="styles.css?v=20261026-1">
-  <link rel="stylesheet" href="dark-fit/styles.css?v=20261117-2">
+  <link rel="stylesheet" href="dark-fit/styles.css?v=20261117-3">
 </head>
 <body>
   <header class="site-header">
@@ -147,7 +147,6 @@
                 <option value="linear">线性</option>
               </select>
             </label>
-            <button id="darkFitButton" class="button button-primary button-small" type="button" aria-pressed="false" aria-controls="darkFitMount">暗电流拟合</button>
             <button id="downloadTxtButton" class="button button-secondary button-small" type="button" title="导出的 TXT 可直接重新导入本网站">导出 TXT</button>
             <button id="downloadExcelButton" class="button button-secondary button-small" type="button" title="导出可直接拖入 Origin 作图的 Excel">导出 Excel（Origin）</button>
             <button id="openOriginButton" class="button button-primary button-small" type="button" title="生成可编辑 .opju 并用 Origin 打开">一键生成并打开 Origin</button>
@@ -159,9 +158,15 @@
         <div class="chart-title-row">
           <div>
             <p id="chartEyebrow" class="section-kicker">CURRENT DENSITY</p>
-            <input id="chartTitle" class="chart-title-input" value="JV 曲线" aria-label="图表标题">
-            <button id="restoreJVButton" class="chart-title-input chart-mode-back" type="button" title="点击恢复原来的 JV 曲线" hidden>JV 曲线</button>
-            <span id="darkFitHeading" class="chart-mode-label" hidden> / 暗电流拟合</span>
+            <div id="jvChartModes" class="chart-mode-switch" role="group" aria-label="JV 图表视图">
+              <button id="restoreJVButton" class="chart-title-input chart-mode-back" type="button" aria-pressed="true" title="显示 JV 曲线">JV 曲线</button>
+              <span class="chart-mode-divider" aria-hidden="true">/</span>
+              <button id="darkFitButton" class="chart-mode-option" type="button" aria-pressed="false" aria-controls="darkFitMount">暗电流拟合</button>
+            </div>
+            <details id="chartTitleEditor" class="chart-title-editor">
+              <summary>编辑图表标题</summary>
+              <input id="chartTitle" class="chart-title-input" value="JV 曲线" aria-label="图表标题">
+            </details>
           </div>
           <p id="chartMeta">尚未导入数据</p>
         </div>
@@ -326,6 +331,6 @@
   <script src="parser.js?v=20261026-1"></script>
   <script src="exporter.js?v=20260925-4"></script>
   <script src="dark-fit/ui.js?v=20261117-2"></script>
-  <script src="app.js?v=20261117-2"></script>
+  <script src="app.js?v=20261117-3"></script>
 </body>
 </html>

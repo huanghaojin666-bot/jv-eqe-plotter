@@ -91,7 +91,8 @@
     chartTitle: document.getElementById("chartTitle"),
     chartPanel: document.getElementById("chartPanel"),
     restoreJVButton: document.getElementById("restoreJVButton"),
-    darkFitHeading: document.getElementById("darkFitHeading"),
+    jvChartModes: document.getElementById("jvChartModes"),
+    chartTitleEditor: document.getElementById("chartTitleEditor"),
     chartMeta: document.getElementById("chartMeta"),
     gradientToggle: document.getElementById("gradientToggle"),
     deviceGradientToggle: document.getElementById("deviceGradientToggle"),
@@ -1436,6 +1437,9 @@
   function updateViewCopy() {
     const isJV = state.view === "JV";
     elements.darkFitButton.hidden = !isJV;
+    elements.jvChartModes.hidden = !isJV;
+    elements.chartTitleEditor.open = !isJV;
+    elements.chartTitleEditor.classList.toggle("is-eqe-title", !isJV);
     elements.chartEyebrow.textContent = isJV ? "CURRENT DENSITY" : "EXTERNAL QUANTUM EFFICIENCY";
     elements.chartTitle.value = isJV ? "JV 曲线" : "EQE 光谱";
     elements.scaleControl.hidden = !isJV;
@@ -1447,8 +1451,8 @@
     state.chartMode = enabled ? "fit" : "raw";
     elements.chartPanel.classList.toggle("is-fit-view", enabled);
     elements.chartTitle.hidden = enabled;
-    elements.restoreJVButton.hidden = !enabled;
-    elements.darkFitHeading.hidden = !enabled;
+    elements.chartTitleEditor.hidden = enabled;
+    elements.restoreJVButton.setAttribute("aria-pressed", String(!enabled));
     elements.darkFitButton.setAttribute("aria-pressed", String(enabled));
     elements.chartEyebrow.textContent = enabled ? "DARK CURRENT FITTING" : "CURRENT DENSITY";
     elements.downloadTxtButton.textContent = enabled ? "导出拟合数据" : "导出 TXT";
@@ -1930,7 +1934,7 @@
   elements.scaleSelect.addEventListener("change", renderPlot);
   elements.chartTitle.addEventListener("change", renderPlot);
   elements.darkFitButton.addEventListener("click", () => {
-    if (state.chartMode === "fit") { window.JVEQEDarkFit.close(); return; }
+    if (state.chartMode === "fit") return;
     setFitView(true);
     window.JVEQEDarkFit.open({ datasets: currentDatasets(false), onClose: restoreJVView, saveBlob });
   });

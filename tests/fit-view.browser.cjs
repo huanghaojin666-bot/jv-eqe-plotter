@@ -50,18 +50,26 @@ function current(voltage) {
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/`);
+    assert.equal(await page.locator(".toolbar-actions #darkFitButton").count(), 0);
+    assert.equal(await page.locator("#jvChartModes #darkFitButton").isVisible(), true);
+    assert.equal(await page.locator("#jvChartModes #restoreJVButton").isVisible(), true);
+    assert.equal(await page.locator("#restoreJVButton").getAttribute("aria-pressed"), "true");
+    assert.equal(await page.locator("#darkFitButton").getAttribute("aria-pressed"), "false");
     const x = Array.from({ length: 81 }, (_, index) => Number((-0.5 + index * 0.01).toFixed(2)));
     const datasets = [
       { type: "JV", device: "DMF1", point: "1", label: "DMF1-1", illumination: "dark", x, y: x.map(current) },
       { type: "JV", device: "DMF2", point: "2", label: "DMF2-2", illumination: "light", x, y: x.map(voltage => current(voltage) + 1e-5) }
     ];
     await page.locator("#fileInput").setInputFiles({ name: "JV_synthetic.txt", mimeType: "text/plain", buffer: Buffer.from(exporter.buildInstrumentText("JV", datasets)) });
+    await page.locator("#chartTitleEditor summary").click();
     await page.locator("#chartTitle").fill("我的 JV 原图");
     await page.locator("#chartTitle").press("Tab");
     await page.locator("#plot").evaluate(plot => Plotly.relayout(plot, { "xaxis.range": [-0.3, 0.2] }));
     const rawSnapshot = await page.locator("#plot").evaluate(plot => JSON.stringify({ data: plot.data.map(({ name, x, y, line, visible }) => ({ name, x, y, line, visible })), range: plot.layout.xaxis.range }));
 
     await page.locator("#darkFitButton").click();
+    assert.equal(await page.locator("#restoreJVButton").getAttribute("aria-pressed"), "false");
+    assert.equal(await page.locator("#darkFitButton").getAttribute("aria-pressed"), "true");
     assert.equal(await page.locator("dialog[open]").count(), 0, "fitting is inline, not a dialog");
     assert.equal(await page.locator("#darkFitPanel").isVisible(), true);
     assert.equal(await page.locator("#plot").isVisible(), false);
@@ -70,6 +78,8 @@ function current(voltage) {
     assert.equal(await page.locator("#dfDataset option").count(), 1, "light curves excluded");
     await page.waitForFunction(() => document.querySelector("#dfStatus").textContent.startsWith("拟合完成"), {}, { timeout: 120000 });
     assert.ok(parseFloat(await page.locator("#dfMean").textContent()) < 0.1);
+    await page.locator("#darkFitButton").click();
+    assert.equal(await page.locator("#darkFitPanel").isVisible(), true, "clicking the selected heading keeps its view");
     const fitY = await page.locator("#dfPlot").evaluate(plot => plot.data.find(trace => trace.name === "拟合").y);
 
     async function saveFromToolbar(button, basename, extension) {
@@ -99,6 +109,10 @@ function current(voltage) {
 
     await page.locator("#chartPanel").screenshot({ path: path.join(root, "tmp/fit-inline-desktop.png") });
     await page.locator("#restoreJVButton").click();
+    assert.equal(await page.locator("#restoreJVButton").isVisible(), true);
+    assert.equal(await page.locator("#darkFitButton").isVisible(), true);
+    assert.equal(await page.locator("#restoreJVButton").getAttribute("aria-pressed"), "true");
+    assert.equal(await page.locator("#darkFitButton").getAttribute("aria-pressed"), "false");
     assert.equal(await page.locator("#plot").isVisible(), true);
     assert.equal(await page.locator("#darkFitPanel").isVisible(), false);
     assert.equal(await page.locator("#chartTitle").inputValue(), "我的 JV 原图");
