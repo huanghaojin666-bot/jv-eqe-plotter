@@ -212,6 +212,10 @@
     syncHash();
     const jvLink = document.querySelector('[data-jv-link]');
     if (jvLink) jvLink.href = 'jv.html#'+new URLSearchParams({ type: state.type, key: state.key });
+    const contextCell = selectedCells()[0];
+    for (const link of document.querySelectorAll('[data-metric-link]')) {
+      link.href = link.dataset.metricLink+'.html#'+new URLSearchParams({ date: contextCell.date, group: contextCell.group });
+    }
     icons();
     window.EQEApp.snapshot = { ...state, hidden: Array.from(state.hidden), series, traces: original ? [] : traceData(series) };
   }
