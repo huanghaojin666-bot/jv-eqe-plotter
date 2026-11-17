@@ -25,7 +25,7 @@
     return [current()];
   }
   function metricLabel(record) {
-    if (kind === 'liquidAbs') return record.metadata.curveCount+' 条原始光谱';
+    if (kind === 'liquidAbs') return record.metadata.curveCount+' 条光谱'+(record.metadata.normalized ? ' · 归一化' : ' · 原始值');
     if (kind === 'abs') return record.category === 'individual' ? '原始吸收 · '+record.metadata.pointsPerCurve+' 点'
       : record.members.length+' 个样品 · '+record.title;
     if (kind === 'response') return record.category === 'individual'
@@ -36,7 +36,7 @@
     if (kind === 'isd') return record.metadata.plottedRows+' 个正频率点';
     return '80 dB span';
   }
-  function resultHeading() { return kind === 'liquidAbs' ? '原始光谱条数' : kind === 'abs' ? '1300–1400 nm 最大原始吸收' : kind === 'response' ? 'Rise / Fall / μs' : kind === 'bandwidth' ? '带宽 / kHz' : kind === 'isd' ? '正频率点数' : 'OD1–OD5 斜率 α'; }
+  function resultHeading() { return kind === 'liquidAbs' ? '光谱条数' : kind === 'abs' ? '1300–1400 nm 最大原始吸收' : kind === 'response' ? 'Rise / Fall / μs' : kind === 'bandwidth' ? '带宽 / kHz' : kind === 'isd' ? '正频率点数' : 'OD1–OD5 斜率 α'; }
   function resultValue(record) { return kind === 'bandwidth' ? record.metadata.bandwidthKHz.toFixed(1)
     : kind === 'liquidAbs' ? record.metadata.curveCount
     : kind === 'abs' ? record.metadata.normalizationFactor == null ? '—' : record.metadata.normalizationFactor.toFixed(3)
@@ -46,9 +46,10 @@
     ? kind === 'abs' ? '原薄膜样品配色' : kind === 'response' ? '原图配色 · EQE 无对应编号' : '原图配色 · 器件点位未标明' : '原对比配色'; }
   function fullTitle(record) { return `${record.experiment} · ${record.date} · ${record.title}`; }
   function title() {
+    if (kind === 'liquidAbs' && ['all', 'date'].includes(state.type)) return (state.type === 'date' ? state.key+' · ' : '')+data.label+' · all 总览（归一化）';
     if (groupedOverview && ['all', 'date'].includes(state.type)) return (state.type === 'date' ? state.key+' · ' : '')+data.label+' · 全部变量组图';
     if (state.type === 'all') return data.label+' · 全部实验对比';
-    if (state.type === 'group') return state.key+' · '+data.label+(groupedOverview ? ' · 变量组图' : kind === 'abs' ? ' · 样品对比' : ' · 跨日期对比');
+    if (state.type === 'group') return state.key+' · '+data.label+(cellCategory === 'variable' ? ' · 变量组图' : kind === 'abs' ? ' · 样品对比' : ' · 跨日期对比');
     return fullTitle(current());
   }
   function renderMatrix() {
@@ -150,6 +151,7 @@
     if (kind === 'response') $('gallery-caption').textContent = records.every(r => r.category === 'comparison')
       ? '组内时间为同帧 3 周期中位估计，不是 3 个独立器件重复；保留原图，不重新计时。'
       : '单记录图保留原图示周期的 Rise / Fall 估计、10% / 90% 交点与原始标注，未重新计时。';
+    if (kind === 'liquidAbs' && record.metadata.normalized) $('gallery-caption').textContent = 'all 总览保留全部 21 条归一化光谱，不平均、不选代表样品；直接使用原图。';
     $('format-svg').setAttribute('aria-pressed', String(state.format === 'svg'));
     $('format-png').setAttribute('aria-pressed', String(state.format === 'png'));
     $('gallery-download-png').href = records[0].assetPng;
@@ -224,7 +226,7 @@
     $('gallery-method-content').innerHTML = '<dl><dt>当前版本</dt><dd>使用 Origin作图_20261118_最终版 的 8 张原始单图、1 张全部样品原始合图、2 张归一化图。只收录 c 组，不混入旧版变量子组图。PNG 与 SVG 逐字节保留原文件，未重新作图。</dd><dt>原始与归一化</dt><dd>原始吸收图保留测量值。归一化为 A_raw(λ) / max[A_raw(1300–1400 nm)]，包含窗口端点；不扣背景、不减最小值、不平滑、不去除负值。其他波段可能大于 1。峰区图为 1250–1450 nm，White 不参与归一化。</dd><dt>样品标签</dt><dd>F、F-2、5、10、20、DMF、N、White 保留原名与原色。薄膜样品没有对应器件点位，不将 F、F-2 擅自对应为 EQE 的具体器件；N 的真实 ABS 不改变 EQE 页的 n 参考值。每条原始曲线在 900–1715 nm 有 816 个采样点。</dd></dl>';
   }
   if (kind === 'liquidAbs') {
-    $('gallery-method-content').innerHTML = '<dl><dt>收录范围</dt><dd>只使用 02_variable_groups 中 f、5、10、20、DMF、n 的 6 张原始组图，保留全部 21 条光谱。不收录 individual、不按样品编号继续分图，也不把 10 组拆成 A/B 两个视图。</dd><dt>数据口径</dt><dd>PNG、SVG 均逐字节保留原文件，不平滑、不归一化、不扣 white、不修正负值或 n 组读数、不平均。每条源光谱 816 点，900–1715 nm。不同样品编号不自动解释为统计重复。</dd><dt>10 组</dt><dd>合图保留 10-1350 与 10-2 两份源文件的全部 7 条曲线，原图图例不改动。</dd></dl>';
+    $('gallery-method-content').innerHTML = '<dl><dt>groups</dt><dd>02_variable_groups 中 f、5、10、20、DMF、n 的 6 张原始组图。不收录 individual，也不把 10 组拆成 A/B 两个视图。原始组图不平滑、不归一化、不扣 white、不修正负值或 n 组读数、不平均。</dd><dt>all</dt><dd>采用 08_normalized_all_variables 的 Normalized_C_AllVariables 原图，将全部 21 条光谱叠在同一张图中，不平均、不选代表样品。每条曲线除以自身在 1300–1400 nm 内的最大原始吸收，不扣背景、不平滑、不对齐峰位、不修正负值。all 与原始 groups 的纵轴口径不同，页面分别标注。</dd><dt>原文件</dt><dd>PNG、SVG 均逐字节保留原文件，每条源光谱 816 点，900–1715 nm。不同样品编号不自动解释为统计重复。10 组保留两份源文件的全部 7 条曲线。</dd></dl>';
   }
   $('matrix').addEventListener('click', event => {
     const cell = event.target.closest('[data-metric-cell]');
@@ -280,7 +282,7 @@
       || data.records.find(r => r.category === category && (!params.get('group') || r.group === params.get('group')) && inView(r));
     if (candidate) { state.id = candidate.id; state.type = isCell(candidate) ? 'cell' : 'date'; state.key = state.type === 'cell' ? candidate.id : candidate.date; }
   }
-  if (groupedOverview && params.get('type') === 'date') {
+  if (params.get('type') === 'date') {
     const records = overviewRecords().filter(r => r.date === params.get('key'));
     if (records.length) { state.type = 'date'; state.key = params.get('key'); state.id = records[0].id; }
   }
