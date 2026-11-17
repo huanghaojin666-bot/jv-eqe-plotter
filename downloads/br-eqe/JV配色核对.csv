@@ -1,0 +1,75 @@
+﻿date,group,jv_curve,mode,canonical_device,color,eqeSource,eqeVersion,eqeLabel
+9.15,5,5 2-1 Dark,dark,5 2,#1F77B4,a 26.9.15 ink分两管 f和5/JV and QE/新建文件夹/9.15 5.txt,selected,low 2-1
+9.15,5,5 2-1 Light,light,5 2,#1F77B4,a 26.9.15 ink分两管 f和5/JV and QE/新建文件夹/9.15 5.txt,selected,low 2-1
+9.15,5,5 3-1 Dark,dark,5 3,#FF7F0E,a 26.9.15 ink分两管 f和5/JV and QE/新建文件夹/9.15 5.txt,selected,low 3-1
+9.15,5,5 3-1 Light,light,5 3,#FF7F0E,a 26.9.15 ink分两管 f和5/JV and QE/新建文件夹/9.15 5.txt,selected,low 3-1
+9.15,f,f 2-1 Dark,dark,f 2,#FF7F0E,a 26.9.15 ink分两管 f和5/JV and QE/新建文件夹/9.15 f.txt,selected,high 2-1
+9.15,f,f 2-1 Light,light,f 2,#FF7F0E,a 26.9.15 ink分两管 f和5/JV and QE/新建文件夹/9.15 f.txt,selected,high 2-1
+9.15,f,f 3-1 Dark,dark,f 3,#D62728,a 26.9.15 ink分两管 f和5/JV and QE/新建文件夹/9.15 f.txt,selected,high 3-1
+9.15,f,f 3-1 Light,light,f 3,#D62728,a 26.9.15 ink分两管 f和5/JV and QE/新建文件夹/9.15 f.txt,selected,high 3-1
+9.15,f,f 3-2 Dark,dark,f 3,#D62728,a 26.9.15 ink分两管 f和5/JV and QE/新建文件夹/9.15 f.txt,selected,high 3-1
+9.15,f,f 3-2 Light,light,f 3,#D62728,a 26.9.15 ink分两管 f和5/JV and QE/新建文件夹/9.15 f.txt,selected,high 3-1
+9.20,10,10 2-5 Dark,dark,10 2,#FF7F0E,b 26.9.20 ink 10和20/JV and QE/新建文件夹/all/9.20 10 all.txt,all,10 2-1
+9.20,10,10 3-3 Dark,dark,10 3,#D62728,b 26.9.20 ink 10和20/JV and QE/新建文件夹/9.20 10.txt,selected,10 3-3
+9.20,10,10 3-4 Dark,dark,10 3,#D62728,b 26.9.20 ink 10和20/JV and QE/新建文件夹/9.20 10.txt,selected,10 3-3
+9.20,10,10 3-6 Dark,dark,10 3,#D62728,b 26.9.20 ink 10和20/JV and QE/新建文件夹/9.20 10.txt,selected,10 3-3
+9.20,20,20 2-3 Dark,dark,20 2,#FF7F0E,b 26.9.20 ink 10和20/JV and QE/新建文件夹/9.20 20.txt,selected,20 2-3
+9.20,20,20 3-1 Dark,dark,20 3,#D62728,b 26.9.20 ink 10和20/JV and QE/新建文件夹/9.20 20.txt,selected,20 3-1
+9.20,20,20 3-4 Dark,dark,20 3,#D62728,b 26.9.20 ink 10和20/JV and QE/新建文件夹/9.20 20.txt,selected,20 3-1
+9.20,20,20 4-2 Dark,dark,20 4,#2CA02C,b 26.9.20 ink 10和20/JV and QE/新建文件夹/9.20 20.txt,selected,20 4-2
+9.20,20,20 4-4 Dark,dark,20 4,#2CA02C,b 26.9.20 ink 10和20/JV and QE/新建文件夹/9.20 20.txt,selected,20 4-2
+9.20,20,20 4-5 Dark,dark,20 4,#2CA02C,b 26.9.20 ink 10和20/JV and QE/新建文件夹/9.20 20.txt,selected,20 4-2
+10.12,10,10 2-2 Dark,dark,10 2,#2CA02C,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 10.txt,selected,10 2-2
+10.12,10,10 2-3 Dark,dark,10 2,#2CA02C,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 10.txt,selected,10 2-2
+10.12,10,10 2-4 Dark,dark,10 2,#2CA02C,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 10.txt,selected,10 2-2
+10.12,10,10 2-5 Dark,dark,10 2,#2CA02C,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 10.txt,selected,10 2-2
+10.12,20,20 2-1 Dark,dark,20 2,#17BECF,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 20.txt,selected,20 2-1
+10.12,20,20 2-2 Dark,dark,20 2,#17BECF,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 20.txt,selected,20 2-1
+10.12,20,20 2-4 Dark,dark,20 2,#17BECF,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 20.txt,selected,20 2-1
+10.12,5,5 1-1 Dark,dark,5 1,#1F77B4,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 1-2
+10.12,5,5 1-2 Dark,dark,5 1,#1F77B4,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 1-2
+10.12,5,5 1-3 Dark,dark,5 1,#1F77B4,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 1-2
+10.12,5,5 1-4 Dark,dark,5 1,#1F77B4,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 1-2
+10.12,5,5 1-5 Dark,dark,5 1,#1F77B4,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 1-2
+10.12,5,5 1-6 Dark,dark,5 1,#1F77B4,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 1-2
+10.12,5,5 2-1 Dark,dark,5 2,#FF7F0E,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 2-2
+10.12,5,5 2-2 Dark,dark,5 2,#FF7F0E,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 2-2
+10.12,5,5 2-3 Dark,dark,5 2,#FF7F0E,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 2-2
+10.12,5,5 2-4 Dark,dark,5 2,#FF7F0E,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 2-2
+10.12,5,5 2-5 Dark,dark,5 2,#FF7F0E,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 2-2
+10.12,5,5 2-6 Dark,dark,5 2,#FF7F0E,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 5.txt,selected,5 2-2
+10.12,DMF,DMF 2-1 Dark,dark,DMF 2,#8C564B,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 DMF.txt,selected,DMF 2-2
+10.12,DMF,DMF 2-2 Dark,dark,DMF 2,#8C564B,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 DMF.txt,selected,DMF 2-2
+10.12,DMF,DMF 2-3 Dark,dark,DMF 2,#8C564B,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 DMF.txt,selected,DMF 2-2
+10.12,DMF,DMF 2-4 Dark,dark,DMF 2,#8C564B,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 DMF.txt,selected,DMF 2-2
+10.12,DMF,DMF 2-5 Dark,dark,DMF 2,#8C564B,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 DMF.txt,selected,DMF 2-2
+10.12,DMF,DMF 2-6 Dark,dark,DMF 2,#8C564B,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 DMF.txt,selected,DMF 2-2
+10.12,f,f 1-3 Dark,dark,f 1,#1B9E77,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 f.txt,selected,f 1-3
+10.12,f,f 1-4 Dark,dark,f 1,#1B9E77,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 f.txt,selected,f 1-3
+10.12,f,f 1-5 Dark,dark,f 1,#1B9E77,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 f.txt,selected,f 1-3
+10.12,f,f 1-6 Dark,dark,f 1,#1B9E77,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 f.txt,selected,f 1-3
+10.12,f,f 2-1 Dark,dark,f 2,#D95F02,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 f.txt,selected,f 2-3
+10.12,f,f 2-2 Dark,dark,f 2,#D95F02,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 f.txt,selected,f 2-3
+10.12,f,f 2-3 Dark,dark,f 2,#D95F02,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 f.txt,selected,f 2-3
+10.12,f,f 2-4 Dark,dark,f 2,#D95F02,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 f.txt,selected,f 2-3
+10.12,f,f 2-5 Dark,dark,f 2,#D95F02,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 f.txt,selected,f 2-3
+10.12,f,f 2-6 Dark,dark,f 2,#D95F02,c 26.10.12 ink分三管 两次ink f、5、10、20、DMF、n 其中n有异常/JV and QE/新建文件夹/10.12 f.txt,selected,f 2-3
+10.17,20,20 2-2 Dark,dark,20 2,#FF7F0E,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 20.txt,selected,20 2-2
+10.17,20,20 2-3 Dark,dark,20 2,#FF7F0E,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 20.txt,selected,20 2-2
+10.17,20,20 2-4 Dark,dark,20 2,#FF7F0E,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 20.txt,selected,20 2-2
+10.17,20,20 2-6 Dark,dark,20 2,#FF7F0E,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 20.txt,selected,20 2-2
+10.17,20,20 3-1 Dark,dark,20 3,#D62728,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 20.txt,selected,20 3-1
+10.17,20,20 3-3 Dark,dark,20 3,#D62728,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 20.txt,selected,20 3-1
+10.17,20,20 3-4 Dark,dark,20 3,#D62728,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 20.txt,selected,20 3-1
+10.17,20,20 3-5 Dark,dark,20 3,#D62728,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 20.txt,selected,20 3-1
+10.17,20,20 3-6 Dark,dark,20 3,#D62728,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 20.txt,selected,20 3-1
+10.17,DMF,DMF 2-1 Dark,dark,DMF 2,#9467BD,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/all/10.17 DMF all.txt,all,DMF 2-3
+10.17,DMF,DMF 2-3 Dark,dark,DMF 2,#9467BD,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/all/10.17 DMF all.txt,all,DMF 2-3
+10.17,DMF,DMF 2-4 Dark,dark,DMF 2,#9467BD,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/all/10.17 DMF all.txt,all,DMF 2-3
+10.17,DMF,DMF 2-5 Dark,dark,DMF 2,#9467BD,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/all/10.17 DMF all.txt,all,DMF 2-3
+10.17,DMF,DMF 2-6 Dark,dark,DMF 2,#9467BD,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/all/10.17 DMF all.txt,all,DMF 2-3
+10.17,DMF,DMF 3-2 Dark,dark,DMF 3,#17BECF,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 DMF.txt,selected,DMF 3-2
+10.17,DMF,DMF 3-3 Dark,dark,DMF 3,#17BECF,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 DMF.txt,selected,DMF 3-2
+10.17,DMF,DMF 3-4 Dark,dark,DMF 3,#17BECF,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 DMF.txt,selected,DMF 3-2
+10.17,DMF,DMF 3-5 Dark,dark,DMF 3,#17BECF,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 DMF.txt,selected,DMF 3-2
+10.17,DMF,DMF 3-6 Dark,dark,DMF 3,#17BECF,e 26.10.17 ink分两管 DMF和20/JV and QE/新建文件夹/10.17 DMF.txt,selected,DMF 3-2

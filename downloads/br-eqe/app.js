@@ -210,6 +210,8 @@
       await Plotly.react($('plot'), traces, layout(traces), { responsive: true, displayModeBar: false, scrollZoom: false });
     }
     syncHash();
+    const jvLink = document.querySelector('[data-jv-link]');
+    if (jvLink) jvLink.href = 'jv.html#'+new URLSearchParams({ type: state.type, key: state.key });
     icons();
     window.EQEApp.snapshot = { ...state, hidden: Array.from(state.hidden), series, traces: original ? [] : traceData(series) };
   }
