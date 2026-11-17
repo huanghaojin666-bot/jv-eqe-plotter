@@ -1,0 +1,12 @@
+﻿experiment,date,label,category,color_status,color,source_plotted_rows_per_curve,original_svg_vertices_per_curve,geometry_and_text_unchanged,source_svg
+a,9.15,组内对比,comparison,original-comparison,,511,511/507,True,isd/a/isd_export (1)/isd_comparison.svg
+a,9.15,5 3-1,individual,verified,#FF7F0E,511,511,True,isd/a/isd_export (1)/isd_1_5_3-1.svg
+a,9.15,f 2-1,individual,verified,#FF7F0E,511,507,True,isd/a/isd_export (1)/isd_2_f_2-1.svg
+c,10.12,组内对比,comparison,original-comparison,,511,505/507/508/508/506/509/510,True,isd/c/isd_export/isd_comparison.svg
+c,10.12,N,individual,unmatched,#555555,511,509,True,isd/c/isd_export/isd_1_N.svg
+c,10.12,DMF,individual,unmatched,#46B7F6,511,509,True,isd/c/isd_export/isd_2_DMF.svg
+c,10.12,20,individual,unmatched,#D55E00,511,510,True,isd/c/isd_export/isd_3_20.svg
+c,10.12,10,individual,unmatched,#009E73,511,510,True,isd/c/isd_export/isd_4_10.svg
+c,10.12,5,individual,unmatched,#CC79A7,511,509,True,isd/c/isd_export/isd_5_5.svg
+c,10.12,F2,individual,unmatched,#0072B2,511,509,True,isd/c/isd_export/isd_6_F2.svg
+c,10.12,F1,individual,unmatched,#555555,511,510,True,isd/c/isd_export/isd_7_F1.svg

@@ -6,7 +6,7 @@
   const categoryLabels = { individual: '单器件', comparison: '组内对比', detail: '高频放大' };
   const dates = [{ label: '9.15', experiment: 'a' }, { label: '9.20', experiment: 'b' },
     { label: '10.12', experiment: 'c' }, { label: '10.17', experiment: 'e' }];
-  const groups = ['f', '5', '10', '20', 'DMF'];
+  const groups = data.groups || ['f', '5', '10', '20', 'DMF'];
   const state = { type: 'cell', key: data.records[0].id, id: data.records[0].id, format: 'svg', zoom: 1 };
   let ready = Promise.resolve();
   let drag = null;
@@ -20,8 +20,13 @@
   function metricLabel(record) {
     if (record.category !== 'individual') return `${record.members.length} 个器件`;
     if (kind === 'bandwidth') return record.metadata.bandwidthKHz.toFixed(1)+' kHz';
+    if (kind === 'isd') return record.metadata.plottedRows+' 个正频率点';
     return '80 dB span';
   }
+  function resultHeading() { return kind === 'bandwidth' ? '带宽 / kHz' : kind === 'isd' ? '正频率点数' : 'OD1–OD5 斜率 α'; }
+  function resultValue(record) { return kind === 'bandwidth' ? record.metadata.bandwidthKHz.toFixed(1)
+    : kind === 'isd' ? record.metadata.plottedRows : record.metadata.slope.toFixed(4); }
+  function colorLabel(record) { return record.recolored ? '与 EQE / JV 器件同色' : record.category === 'individual' ? '原图配色 · 器件点位未标明' : '原对比配色'; }
   function fullTitle(record) { return `${record.experiment} · ${record.date} · ${record.title}`; }
   function title() {
     if (state.type === 'all') return data.label+' · 全部实验对比';
@@ -40,11 +45,13 @@
     for (const group of groups) {
       html += `<tr><th scope="row"><button data-metric-group="${group}" class="${state.type === 'group' && state.key === group ? 'is-active' : ''}" aria-label="${group} ${data.label}跨日期对比">${group}</button></th>`;
       for (const date of dates) {
-        const record = data.records.find(r => r.date === date.label && r.group === group && r.category === 'individual');
-        if (!record) { html += '<td class="is-blank" aria-label="无数据">—</td>'; continue; }
-        const value = kind === 'bandwidth' ? record.metadata.bandwidthKHz.toFixed(1) : esc(record.point);
-        const detail = kind === 'bandwidth' ? esc(record.point) : 'OD1–OD5';
-        html += `<td><button data-metric-cell="${record.id}" class="cell ${active.has(record.id) ? 'is-active' : ''}" aria-pressed="${active.has(record.id)}" title="${fullTitle(record)} · ${metricLabel(record)}"><span class="peak-value">${value}</span><span class="cell-detail"><b class="color-chip" style="background:${record.color}"></b>${detail}</span></button></td>`;
+        const records = data.records.filter(r => r.date === date.label && r.group === group && r.category === 'individual');
+        if (!records.length) { html += '<td class="is-blank" aria-label="无数据">—</td>'; continue; }
+        html += '<td><div class="metric-cell-stack">'+records.map(record => {
+          const value = kind === 'bandwidth' ? record.metadata.bandwidthKHz.toFixed(1) : esc(record.point || record.deviceLabel);
+          const detail = kind === 'bandwidth' ? esc(record.point) : kind === 'isd' ? record.metadata.plottedRows+' 点' : 'OD1–OD5';
+          return `<button data-metric-cell="${record.id}" class="cell ${active.has(record.id) ? 'is-active' : ''}" aria-pressed="${active.has(record.id)}" title="${fullTitle(record)} · ${metricLabel(record)}"><span class="peak-value">${value}</span><span class="cell-detail"><b class="color-chip" style="background:${record.color}"></b>${detail}</span></button>`;
+        }).join('')+'</div></td>';
       }
       html += '</tr>';
     }
@@ -58,11 +65,15 @@
     if (record.category === 'individual') {
       const facts = kind === 'bandwidth'
         ? [['−3 dB 带宽', record.metadata.bandwidthKHz.toFixed(1)+' kHz'], ['归一化参考', 'A(0.1 Hz) = 1']]
+        : kind === 'isd' ? [['原始行数', record.metadata.rawRows], ['正频率有效点', record.metadata.plottedRows],
+          ['偏压', record.metadata.biasV+' V'], ['原 SVG 顶点数', record.metadata.curvePointCount],
+          ['频率轴范围', record.metadata.axisFrequencyMinHz+'–'+record.metadata.axisFrequencyMaxHz+' Hz'],
+          ['零 / 负频率点', record.metadata.excluded.zero_frequency+' / '+record.metadata.excluded.negative_frequency]]
         : [['比较区间', 'OD1–OD5'], ['光功率跨度', '80 dB（span）'], ['偏压', '0 V'], ['幂律斜率 α', record.metadata.slope.toFixed(4)]];
-      $('gallery-metadata').innerHTML = '<dl class="gallery-facts">'+facts.map(([name, value]) => `<div><dt>${name}</dt><dd>${value}</dd></div>`).join('')+`<div><dt>EQE / JV 器件颜色</dt><dd><span class="color-chip" style="background:${record.color}"></span>${record.color}</dd></div></dl>`;
+      $('gallery-metadata').innerHTML = '<dl class="gallery-facts">'+facts.map(([name, value]) => `<div><dt>${name}</dt><dd>${value}</dd></div>`).join('')+`<div><dt>${record.recolored ? 'EQE / JV 器件颜色' : '原图颜色'}</dt><dd><span class="color-chip" style="background:${record.color}"></span>${record.color}</dd></div></dl>`;
     } else {
-      $('gallery-metadata').innerHTML = '<table class="gallery-members"><thead><tr><th>器件</th><th>'+(kind === 'bandwidth' ? '带宽 / kHz' : 'OD1–OD5 斜率 α')+'</th></tr></thead><tbody>'
-        +record.members.map(member => `<tr><td>${esc(member.deviceLabel)}</td><td>${kind === 'bandwidth' ? member.metadata.bandwidthKHz.toFixed(1) : member.metadata.slope.toFixed(4)}</td></tr>`).join('')+'</tbody></table>';
+      $('gallery-metadata').innerHTML = '<table class="gallery-members"><thead><tr><th>器件</th><th>'+resultHeading()+'</th></tr></thead><tbody>'
+        +record.members.map(member => `<tr><td>${esc(member.deviceLabel)}</td><td>${resultValue(member)}</td></tr>`).join('')+'</tbody></table>';
     }
   }
   function zoom(value) {
@@ -90,32 +101,35 @@
     const multiple = records.length > 1;
     renderMatrix();
     if (multiple) {
-      $('gallery-metadata').innerHTML = '<table class="gallery-members"><thead><tr><th>日期 / 器件</th><th>'+(kind === 'bandwidth' ? '带宽 / kHz' : 'OD1–OD5 斜率 α')+'</th></tr></thead><tbody>'
+      $('gallery-metadata').innerHTML = '<table class="gallery-members"><thead><tr><th>日期 / 器件</th><th>'+resultHeading()+'</th></tr></thead><tbody>'
         +records.flatMap(r => r.category === 'individual' ? [r] : r.members.map(m => ({ ...m, date: r.date })))
-          .map(r => `<tr><td>${esc(r.date)} · ${esc(r.deviceLabel)}</td><td>${kind === 'bandwidth' ? r.metadata.bandwidthKHz.toFixed(1) : r.metadata.slope.toFixed(4)}</td></tr>`).join('')+'</tbody></table>';
+          .map(r => `<tr><td>${esc(r.date)} · ${esc(r.deviceLabel)}</td><td>${resultValue(r)}</td></tr>`).join('')+'</tbody></table>';
     } else metadata(records[0]);
     $('gallery-selection').textContent = title();
     $('gallery-selection-meta').textContent = state.type === 'all' || state.type === 'group'
-      ? `${records.length} 张原图 · ${state.type === 'group' ? '与 EQE / JV 器件同色' : '原组内对比图'}`
-      : `${categoryLabels[record.category]} · ${metricLabel(record)} · ${record.recolored ? '与 EQE / JV 器件同色' : '原对比配色'}`;
+      ? `${records.length} 张原图 · ${state.type === 'group' ? kind === 'isd' ? '按原样品标签归组' : '与 EQE / JV 器件同色' : '原组内对比图'}`
+      : `${categoryLabels[record.category]} · ${metricLabel(record)} · ${colorLabel(record)}`;
     $('gallery-viewer-title').textContent = title();
     $('gallery-category').textContent = data.label+' · '+(state.type === 'all' ? '集总对比' : state.type === 'group' ? '变量对比' : categoryLabels[record.category]);
     $('gallery-source').textContent = records.map(r => r.sourceSvg).join('\n');
     $('gallery-caption').textContent = multiple ? '各图为本次提供的 Origin 图片，未合并拟合或重算。' : record.recolored
       ? 'Origin 图片仅统一器件颜色；曲线路径、坐标、数值及标注未重算。'
-      : 'Origin 组内对比图，保留你这次更新的原始配色与标注。';
+      : 'Origin '+(record.category === 'individual' ? '单器件图' : '组内对比图')+'，保留你这次更新的原始配色与标注。';
     $('format-svg').setAttribute('aria-pressed', String(state.format === 'svg'));
     $('format-png').setAttribute('aria-pressed', String(state.format === 'png'));
     $('gallery-download-png').href = records[0].assetPng;
     $('gallery-download-svg').href = records[0].assetSvg;
     $('gallery-download-png').hidden = multiple;
     $('gallery-download-svg').hidden = multiple;
-    const reference = new URLSearchParams({ type: state.type, key: state.type === 'cell' ? record.date+'_'+record.group : state.key });
+    const reference = new URLSearchParams(record.group === 'n' && state.type !== 'all'
+      ? { type: 'date', key: record.date } : { type: state.type, key: state.type === 'cell' ? record.date+'_'+record.group : state.key });
     document.querySelector('[data-eqe-gallery-link]').href = 'index.html#'+reference.toString();
     document.querySelector('[data-jv-gallery-link]').href = 'jv.html#'+reference.toString();
-    document.querySelector('[data-other-metric]').href = document.querySelector('[data-other-metric]').dataset.otherMetric+'.html#'
-      +new URLSearchParams(state.type === 'group' || state.type === 'all' ? { type: state.type, key: state.key }
-        : { date: record.date, group: record.group || '', category: record.category === 'individual' ? 'individual' : 'comparison' });
+    for (const link of document.querySelectorAll('[data-other-metric]')) {
+      link.href = link.dataset.otherMetric+'.html#'
+        +new URLSearchParams(state.type === 'group' || state.type === 'all' ? { type: state.type, key: state.key }
+          : { date: record.date, group: record.group || '', category: record.category === 'individual' ? 'individual' : 'comparison' });
+    }
     const image = $('gallery-image');
     $('gallery-error').hidden = true;
     $('gallery-image-frame').hidden = multiple;
@@ -126,7 +140,7 @@
       await Promise.all(Array.from($('metric-comparison').querySelectorAll('img'), img => img.decode()));
     } else {
       $('metric-comparison').replaceChildren();
-      image.alt = fullTitle(records[0])+' · '+data.label+' · '+(records[0].recolored ? 'EQE/JV 同器件颜色' : '组内对比');
+      image.alt = fullTitle(records[0])+' · '+data.label+' · '+colorLabel(records[0]);
       image.src = state.format === 'svg' ? records[0].assetSvg : records[0].assetPng;
       await image.decode();
       zoom(state.zoom);
@@ -159,6 +173,9 @@
   $('gallery-download-bundle').href = data.bundle;
   if (kind === 'ldr') { $('gallery-notice').hidden = false; $('gallery-notice').textContent = data.spanNote; }
   $('gallery-method-content').innerHTML = `<dl><dt>当前数据版本</dt><dd>${esc(data.sourceFolder)}。直接使用你此次提供的 Origin 图片，不重新拟合，也不把旧数据拼入。</dd><dt>单器件配色</dt><dd>按实验日期、变量及器件编号匹配 EQE/JV 的实际颜色，只修改曲线、数据标记和同色标注的颜色。坐标、路径、文本和数值保持不变；PNG 从同色 SVG 渲染，二者颜色一致。</dd><dt>组内对比</dt><dd>保留你更新后对比图的原配色；${kind === 'bandwidth' ? '同时保留 A、C 组高频放大图。带宽数值读取原图标注，不在本页重新计算。' : '只有 c 组（10.12）有 LDR，未生成其他实验的 LDR。'}</dd>${kind === 'ldr' ? '<dt>LDR 标注含义</dt><dd>OD1–OD5 的 80 dB 是比较用的光功率跨度，并非已验证的线性动态范围。页面未沿用旧版自选判据给出的最终 LDR 说法。</dd>' : ''}<dt>源文件</dt><dd>原始 Origin 工程、Excel、PNG 和 SVG 保持不变，网页使用单独的配色副本。</dd></dl>`;
+  if (kind === 'isd') {
+    $('gallery-method-content').innerHTML = `<dl><dt>当前数据版本</dt><dd>${esc(data.sourceFolder)}。仅加入此次整理的 9 张单样品图及 2 张组内对比图，原始文件不改动。</dd><dt>点数</dt><dd>按导出记录，每条源曲线有 1024 行，绘制 511 个正频率有效点；对数频率轴排除 1 行零频率和 512 行负频率。网页直接载入已导出的图片，不额外抽点、平滑、拟合、归一化、平均或换算 PSD。原 SVG 顶点数为 505–511，不等同于源表采样点数；网页保留这些原始路径，未重新生成曲线。</dd><dt>器件配色</dt><dd>${esc(data.mappingNote)} F1、F2 保留为两个独立样品，不合并或平均。a 组的同色 PNG 从 SVG 渲染，曲线路径、坐标、文本与数值不变。组内对比图保留原图。</dd><dt>n 组</dt><dd>本页 N 是此次提供的真实噪声曲线，不改变 EQE 页仅作参考、无关联曲线的 n = 1300 nm。</dd></dl>`;
+  }
   $('matrix').addEventListener('click', event => {
     const cell = event.target.closest('[data-metric-cell]');
     const date = event.target.closest('[data-metric-date]');
