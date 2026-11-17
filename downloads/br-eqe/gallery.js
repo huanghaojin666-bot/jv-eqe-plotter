@@ -101,7 +101,7 @@
     const multiple = records.length > 1;
     renderMatrix();
     if (kind === 'bandwidth' && data.processingNote) {
-      $('gallery-notice').hidden = !records.some(r => r.sourceSvg.startsWith('Origin_3dB_20261117_v5/'));
+      $('gallery-notice').hidden = !records.some(r => r.category !== 'detail');
     }
     if (multiple) {
       $('gallery-metadata').innerHTML = '<table class="gallery-members"><thead><tr><th>日期 / 器件</th><th>'+resultHeading()+'</th></tr></thead><tbody>'
@@ -181,7 +181,7 @@
     $('gallery-method-content').innerHTML = `<dl><dt>当前数据版本</dt><dd>${esc(data.sourceFolder)}。仅加入此次整理的 9 张单样品图及 2 张组内对比图，原始文件不改动。</dd><dt>点数</dt><dd>按导出记录，每条源曲线有 1024 行，绘制 511 个正频率有效点；对数频率轴排除 1 行零频率和 512 行负频率。网页直接载入已导出的图片，不额外抽点、平滑、拟合、归一化、平均或换算 PSD。原 SVG 顶点数为 505–511，不等同于源表采样点数；网页保留这些原始路径，未重新生成曲线。</dd><dt>器件配色</dt><dd>${esc(data.mappingNote)} F1、F2 保留为两个独立样品，不合并或平均。a 组的同色 PNG 从 SVG 渲染，曲线路径、坐标、文本与数值不变。组内对比图保留原图。</dd><dt>n 组</dt><dd>本页 N 是此次提供的真实噪声曲线，不改变 EQE 页仅作参考、无关联曲线的 n = 1300 nm。</dd></dl>`;
   }
   if (kind === 'bandwidth' && data.processingNote) {
-    $('gallery-method-content').insertAdjacentHTML('beforeend', '<dl><dt>v5 数据说明</dt><dd>仅 01_individual 与 02_group_comparisons 更新为 v5，高频放大图保留原版，未加入新版放大图。'+esc(data.processingNote)+'</dd></dl>');
+    $('gallery-method-content').insertAdjacentHTML('beforeend', '<dl><dt>当前图片版本</dt><dd>组内对比图更新为 v6；单器件图保留 v5，高频放大图保持原样，未加入新版放大图。'+esc(data.processingNote)+'</dd></dl>');
   }
   $('matrix').addEventListener('click', event => {
     const cell = event.target.closest('[data-metric-cell]');
