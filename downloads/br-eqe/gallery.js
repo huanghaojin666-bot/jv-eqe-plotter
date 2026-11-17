@@ -3,7 +3,7 @@
   const kind = document.body.dataset.metric;
   const data = window.METRICS_DATA[kind];
   const $ = id => document.getElementById(id);
-  const categoryLabels = { individual: '单器件', comparison: '组内对比', detail: '高频放大' };
+  const categoryLabels = { individual: '单器件', comparison: '组内对比' };
   const dates = [{ label: '9.15', experiment: 'a' }, { label: '9.20', experiment: 'b' },
     { label: '10.12', experiment: 'c' }, { label: '10.17', experiment: 'e' }];
   const groups = data.groups || ['f', '5', '10', '20', 'DMF'];
@@ -57,9 +57,6 @@
     }
     $('matrix').innerHTML = html+'</tbody>';
     $('metric-all').setAttribute('aria-pressed', String(state.type === 'all'));
-    const detail = data.records.some(r => r.category === 'detail' && r.date === current().date);
-    $('metric-date-views').hidden = state.type !== 'date' || !detail;
-    document.querySelectorAll('[data-date-view]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.dateView === current().category)));
   }
   function metadata(record) {
     if (record.category === 'individual') {
@@ -100,9 +97,6 @@
     const records = selected();
     const multiple = records.length > 1;
     renderMatrix();
-    if (kind === 'bandwidth' && data.processingNote) {
-      $('gallery-notice').hidden = !records.some(r => r.category !== 'detail');
-    }
     if (multiple) {
       $('gallery-metadata').innerHTML = '<table class="gallery-members"><thead><tr><th>日期 / 器件</th><th>'+resultHeading()+'</th></tr></thead><tbody>'
         +records.flatMap(r => r.category === 'individual' ? [r] : r.members.map(m => ({ ...m, date: r.date })))
@@ -176,12 +170,12 @@
   $('gallery-download-bundle').href = data.bundle;
   if (kind === 'ldr') { $('gallery-notice').hidden = false; $('gallery-notice').textContent = data.spanNote; }
   if (kind === 'bandwidth' && data.processingNote) { $('gallery-notice').hidden = false; $('gallery-notice').textContent = data.processingNote; }
-  $('gallery-method-content').innerHTML = `<dl><dt>当前数据版本</dt><dd>${esc(data.sourceFolder)}。直接使用你此次提供的 Origin 图片，不重新拟合，也不把旧数据拼入。</dd><dt>单器件配色</dt><dd>按实验日期、变量及器件编号匹配 EQE/JV 的实际颜色，只修改曲线、数据标记和同色标注的颜色。坐标、路径、文本和数值保持不变；PNG 从同色 SVG 渲染，二者颜色一致。</dd><dt>组内对比</dt><dd>保留你更新后对比图的原配色；${kind === 'bandwidth' ? '同时保留 A、C 组高频放大图。带宽数值读取原图标注，不在本页重新计算。' : '只有 c 组（10.12）有 LDR，未生成其他实验的 LDR。'}</dd>${kind === 'ldr' ? '<dt>LDR 标注含义</dt><dd>OD1–OD5 的 80 dB 是比较用的光功率跨度，并非已验证的线性动态范围。页面未沿用旧版自选判据给出的最终 LDR 说法。</dd>' : ''}<dt>源文件</dt><dd>原始 Origin 工程、Excel、PNG 和 SVG 保持不变，网页使用单独的配色副本。</dd></dl>`;
+  $('gallery-method-content').innerHTML = `<dl><dt>当前数据版本</dt><dd>${esc(data.sourceFolder)}。直接使用你此次提供的 Origin 图片，不重新拟合，也不把旧数据拼入。</dd><dt>单器件配色</dt><dd>按实验日期、变量及器件编号匹配 EQE/JV 的实际颜色，只修改曲线、数据标记和同色标注的颜色。坐标、路径、文本和数值保持不变；PNG 从同色 SVG 渲染，二者颜色一致。</dd><dt>组内对比</dt><dd>保留你更新后对比图的原配色；${kind === 'bandwidth' ? '仅展示完整单器件图和组内对比图。带宽数值读取原图标注，不在本页重新计算。' : '只有 c 组（10.12）有 LDR，未生成其他实验的 LDR。'}</dd>${kind === 'ldr' ? '<dt>LDR 标注含义</dt><dd>OD1–OD5 的 80 dB 是比较用的光功率跨度，并非已验证的线性动态范围。页面未沿用旧版自选判据给出的最终 LDR 说法。</dd>' : ''}<dt>源文件</dt><dd>原始 Origin 工程、Excel、PNG 和 SVG 保持不变，网页使用单独的配色副本。</dd></dl>`;
   if (kind === 'isd') {
     $('gallery-method-content').innerHTML = `<dl><dt>当前数据版本</dt><dd>${esc(data.sourceFolder)}。仅加入此次整理的 9 张单样品图及 2 张组内对比图，原始文件不改动。</dd><dt>点数</dt><dd>按导出记录，每条源曲线有 1024 行，绘制 511 个正频率有效点；对数频率轴排除 1 行零频率和 512 行负频率。网页直接载入已导出的图片，不额外抽点、平滑、拟合、归一化、平均或换算 PSD。原 SVG 顶点数为 505–511，不等同于源表采样点数；网页保留这些原始路径，未重新生成曲线。</dd><dt>器件配色</dt><dd>${esc(data.mappingNote)} F1、F2 保留为两个独立样品，不合并或平均。a 组的同色 PNG 从 SVG 渲染，曲线路径、坐标、文本与数值不变。组内对比图保留原图。</dd><dt>n 组</dt><dd>本页 N 是此次提供的真实噪声曲线，不改变 EQE 页仅作参考、无关联曲线的 n = 1300 nm。</dd></dl>`;
   }
   if (kind === 'bandwidth' && data.processingNote) {
-    $('gallery-method-content').insertAdjacentHTML('beforeend', '<dl><dt>当前图片版本</dt><dd>组内对比图更新为 v6；单器件图保留 v5，高频放大图保持原样，未加入新版放大图。'+esc(data.processingNote)+'</dd></dl>');
+    $('gallery-method-content').insertAdjacentHTML('beforeend', '<dl><dt>当前图片版本</dt><dd>完整单器件图和组内对比图均为 v7。'+esc(data.processingNote)+'</dd></dl>');
   }
   $('matrix').addEventListener('click', event => {
     const cell = event.target.closest('[data-metric-cell]');
@@ -192,10 +186,6 @@
     else if (group) selectScope('group', group.dataset.metricGroup);
   });
   $('metric-all').addEventListener('click', () => selectScope('all', ''));
-  document.querySelectorAll('[data-date-view]').forEach(button => button.addEventListener('click', () => {
-    const record = data.records.find(r => r.date === current().date && r.category === button.dataset.dateView);
-    if (record) select(record.id);
-  }));
   $('format-svg').addEventListener('click', () => { state.format = 'svg'; schedule(); });
   $('format-png').addEventListener('click', () => { state.format = 'png'; schedule(); });
   $('zoom-in').addEventListener('click', () => zoom(state.zoom+.25));
@@ -219,10 +209,13 @@
   $('gallery-close-dialog').addEventListener('click', () => $('gallery-dialog').close());
   document.addEventListener('click', event => { if (!event.target.closest('.menu')) document.querySelectorAll('.menu[open]').forEach(menu => { menu.open = false; }); });
   const params = new URLSearchParams(location.hash.slice(1));
-  const exact = data.records.find(r => r.id === params.get('asset'));
+  const requestedAsset = params.get('asset');
+  const exact = data.records.find(r => r.id === requestedAsset)
+    || (kind === 'bandwidth' && requestedAsset?.endsWith('_detail')
+      ? data.records.find(r => r.id === requestedAsset.replace(/_detail$/, '_comparison')) : null);
   if (exact) { state.id = exact.id; state.type = exact.category === 'individual' ? 'cell' : 'date'; state.key = state.type === 'cell' ? exact.id : exact.date; }
   else {
-    const category = ['comparison', 'detail'].includes(params.get('category')) && data.records.some(r => r.category === params.get('category')) ? params.get('category') : 'individual';
+    const category = ['comparison', 'detail'].includes(params.get('category')) ? 'comparison' : 'individual';
     const candidate = data.records.find(r => r.category === category && r.date === params.get('date') && (!params.get('group') || r.group === params.get('group')))
       || data.records.find(r => r.category === category && (!params.get('group') || r.group === params.get('group')));
     if (candidate) { state.id = candidate.id; state.type = candidate.category === 'individual' ? 'cell' : 'date'; state.key = state.type === 'cell' ? candidate.id : candidate.date; }
