@@ -5,30 +5,32 @@
   const html = value => String(value == null ? "" : value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
   const scientific = value => Number.isFinite(Number(value)) && value !== null ? Number(value).toExponential(4) : "—";
   const percent = value => Number.isFinite(Number(value)) && value !== null ? `${Number(value).toFixed(2)}%` : "—";
-  const state = { datasets: [], worker: null, sequence: 0, pending: null, busy: false, automatic: null, display: null, manual: null, input: null };
+  const state = { datasets: [], fingerprint: "", visible: false, onClose: null, saveBlob: null, worker: null, sequence: 0, pending: null, busy: false, automatic: null, display: null, manual: null, input: null };
 
-  function createDialog() {
-    if ($("darkFitDialog")) return;
-    const dialog = document.createElement("dialog");
-    dialog.id = "darkFitDialog";
-    dialog.className = "dark-fit-dialog";
-    dialog.setAttribute("aria-labelledby", "darkFitTitle");
-    dialog.innerHTML = `
-      <header class="df-heading"><div><p class="section-kicker">DARK CURRENT FITTING</p><h2 id="darkFitTitle">暗电流拟合</h2><p>沿用你的 f 拟合引擎 · 计算和数据均留在本机</p></div><button type="button" id="dfClose" class="button button-secondary">返回作图</button></header>
+  function createPanel() {
+    if ($("darkFitPanel")) return;
+    const panel = document.createElement("section");
+    panel.id = "darkFitPanel";
+    panel.className = "dark-fit-inline";
+    panel.setAttribute("aria-label", "暗电流拟合图与设置");
+    panel.hidden = true;
+    panel.innerHTML = `
       <div class="df-grid">
-        <aside class="df-controls">
+        <div class="df-controls">
           <label>拟合曲线<select id="dfDataset"></select></label>
+          <label>拟合方式<select id="dfMode"><option value="fast_fit">快速拟合</option><option value="diagnostic_fit">诊断拟合（多策略 / n、m 扫描 / 模型比较）</option></select></label>
+          <div class="df-actions"><button type="button" id="dfRun" class="button button-primary">开始拟合</button><button type="button" id="dfStop" class="button button-secondary" disabled>停止</button></div>
           <label class="df-check"><input type="checkbox" id="dfUnknown">包含状态未识别的 JV（我确认是暗电流）</label>
           <p id="dfSource" class="df-muted"></p>
-          <label>拟合方式<select id="dfMode"><option value="fast_fit">快速拟合</option><option value="diagnostic_fit">诊断拟合（多策略 / n、m 扫描 / 模型比较）</option></select></label>
+          <details class="df-settings"><summary>拟合设置：电压范围、温度、n / m</summary><div class="df-setting-grid">
           <div class="df-pair"><label>电压下限 (V)<input id="dfMinimum" type="number" step="any" placeholder="全部数据"></label><label>电压上限 (V)<input id="dfMaximum" type="number" step="any" placeholder="全部数据"></label></div>
           <label>温度 (K)<input id="dfTemperature" type="number" min="1" max="1500" value="300" step="any"></label>
           <div class="df-pair"><label>n<input id="dfN" type="number" min="0.1" max="20" value="1.4" step="any"></label><label>m<input id="dfM" type="number" min="1" max="20" value="2.4" step="any"></label></div>
           <p class="df-muted">快速模式固定 n、m；诊断模式沿用原程序的 n/m 网格与细化流程。</p>
-          <div class="df-actions"><button type="button" id="dfRun" class="button button-primary">开始拟合</button><button type="button" id="dfStop" class="button button-secondary" disabled>停止</button></div>
-          <p id="dfStatus" role="status" aria-live="polite">请选择一条暗电流曲线。</p>
           <details class="df-model"><summary>模型与单位</summary><p>u = V − J·Rs</p><p>J = J₀[exp(q·u/nkBT) − 1] + u/Rsh + k·|u|ᵐ·sign(u)</p><p>使用有符号的 J (A/cm²) 拟合；对数图仅显示 |J|。Rs、Rsh 为 Ω·cm²；k 的单位随 m 变化。分量和诊断解释沿用原程序；模型有效参数不能单凭一条曲线确定微观机制。</p></details>
-        </aside>
+          </div></details>
+          <p id="dfStatus" role="status" aria-live="polite">请选择一条暗电流曲线。</p>
+        </div>
         <section class="df-results">
           <div class="df-view-controls"><label>显示<select id="dfScale"><option value="log">对数 |J|</option><option value="linear">线性 J</option></select></label><label class="df-check"><input id="dfComponents" type="checkbox" checked>显示分量</label><span id="dfResultLabel">待拟合</span></div>
           <div id="dfPlot" class="df-plot"></div>
@@ -44,9 +46,7 @@
           </div>
         </section>
       </div>`;
-    document.body.appendChild(dialog);
-    $("dfClose").addEventListener("click", () => { stop(); dialog.close(); });
-    dialog.addEventListener("cancel", stop);
+    $("darkFitMount").appendChild(panel);
     $("dfUnknown").addEventListener("change", refreshDatasets);
     $("dfDataset").addEventListener("change", () => { clearResult(); showSource(); renderPlot(); });
     $("dfRun").addEventListener("click", runFit);
@@ -60,8 +60,8 @@
     });
     $("dfEvaluate").addEventListener("click", evaluate);
     $("dfRestore").addEventListener("click", () => { state.manual = null; state.display = state.automatic; $("dfCandidate").value = "primary"; renderResult(); status("已恢复自动拟合结果。"); });
-    $("dfCSV").addEventListener("click", exportCSV);
-    $("dfJSON").addEventListener("click", () => download(new Blob([JSON.stringify({ automatic: state.automatic, displayed: state.display, manual_preview: state.manual, input: state.input }, null, 2)], { type: "application/json" }), "json"));
+    $("dfCSV").addEventListener("click", () => exportCSV().catch(exportError));
+    $("dfJSON").addEventListener("click", () => download(new Blob([JSON.stringify({ automatic: state.automatic, displayed: state.display, manual_preview: state.manual, input: state.input }, null, 2)], { type: "application/json" }), "json").catch(exportError));
     $("dfPNG").addEventListener("click", () => exportImage("png"));
     $("dfSVG").addEventListener("click", () => exportImage("svg"));
   }
@@ -158,11 +158,11 @@
   function currentSeries() { return state.display?.series || state.display?.fit?.series; }
   function plotLayout(residual = false) {
     return {
-      height: residual ? 210 : 440, margin: { l: 88, r: 25, t: 24, b: residual ? 55 : 85 },
+      height: residual ? 210 : 520, margin: { l: 88, r: 25, t: 24, b: residual ? 55 : 95 },
       paper_bgcolor: "#fff", plot_bgcolor: "#fff", hovermode: "closest",
       font: { family: "Arial, Microsoft YaHei UI, sans-serif", color: "#172d4b", size: 12 },
-      xaxis: { title: "Voltage (V)", showline: true, mirror: true, ticks: "outside", zeroline: true, gridcolor: "#e8edf4" },
-      yaxis: { title: residual ? "有符号残差 (A/cm²)" : $("dfScale").value === "log" ? "|J| (A/cm²)" : "J (A/cm²)", type: !residual && $("dfScale").value === "log" ? "log" : "linear", nticks: 7, showline: true, mirror: true, ticks: "outside", zeroline: true, gridcolor: "#e8edf4", exponentformat: "power" },
+      xaxis: { title: { text: "Voltage (V)" }, showline: true, mirror: true, ticks: "outside", zeroline: true, gridcolor: "#e8edf4" },
+      yaxis: { title: { text: residual ? "有符号残差 (A/cm²)" : $("dfScale").value === "log" ? "|J| (A/cm²)" : "J (A/cm²)" }, type: !residual && $("dfScale").value === "log" ? "log" : "linear", nticks: 7, showline: true, mirror: true, ticks: "outside", zeroline: true, gridcolor: "#e8edf4", exponentformat: "power" },
       legend: { orientation: "h", x: 0, y: -0.22, font: { size: 11 } },
       showlegend: !residual, annotations: []
     };
@@ -186,6 +186,7 @@
     return traces;
   }
   function renderPlot() {
+    if (!state.visible) return;
     window.Plotly.react($("dfPlot"), plotTraces(), plotLayout(), { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage", "lasso2d", "select2d"] });
     const series = currentSeries();
     $("dfResidual").hidden = !series;
@@ -212,23 +213,29 @@
     $("dfEvaluate").disabled = !canEvaluate || state.busy;
     renderPlot();
   }
-  function download(blob, extension) {
-    const link = document.createElement("a");
+  function exportTitle() {
     const name = state.input?.dataset?.label || "暗电流";
+    return `${name.replace(/[<>:"/\\|?*]/g, "_")}_暗电流${state.manual ? "_手动预览" : "_拟合"}`;
+  }
+  function exportError(error) { if (error?.name !== "AbortError") status(`导出失败：${error.message}`, true); }
+  async function download(blob, extension, fileName) {
+    const destination = fileName || `${exportTitle()}.${extension}`;
+    if (state.saveBlob) { await state.saveBlob(blob, destination); return; }
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.href = url; link.download = `${name.replace(/[<>:"/\\|?*]/g, "_")}_暗电流${state.manual ? "_手动预览" : "_拟合"}.${extension}`;
+    link.href = url; link.download = destination;
     document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000);
   }
-  function exportCSV() {
+  async function exportCSV(fileName) {
     const series = currentSeries();
     if (!series) return;
     const keys = Object.keys(series).filter(key => Array.isArray(series[key]) && series[key].length === series.voltage.length);
     const labels = { voltage: "Voltage (V)", v_drop: "Internal voltage (V)", measured: "Measured J (A/cm2)", fitted: "Fitted J (A/cm2)", relative_error: "Relative error (%)" };
-    const rows = [keys.map(key => labels[key] || `${key} (A/cm2)`).join(",")];
-    series.voltage.forEach((_, index) => rows.push(keys.map(key => series[key][index] ?? "").join(",")));
-    download(new Blob(["\uFEFF" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" }), "csv");
+    const rows = [keys.map(key => labels[key] || `${key} (A/cm2)`).concat("Residual (A/cm2)").join(",")];
+    series.voltage.forEach((_, index) => rows.push(keys.map(key => series[key][index] ?? "").concat(series.fitted[index] - series.measured[index]).join(",")));
+    await download(new Blob(["\uFEFF" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" }), "csv", fileName);
   }
-  async function exportImage(format) {
+  async function exportImage(format, fileName) {
     if (!state.display) return;
     const target = document.createElement("div");
     target.style.cssText = "position:fixed;left:-10000px;width:1600px;height:1000px";
@@ -237,18 +244,40 @@
       const layout = { ...plotLayout(), height: 1000, width: 1600, margin: { l: 130, r: 60, t: 90, b: 170 }, title: { text: html(`${state.input.dataset.label} · 暗电流${state.manual ? "手动预览" : "拟合"}`), font: { size: 25 } }, font: { size: 18 }, legend: { orientation: "h", y: -0.18, font: { size: 17 } } };
       await window.Plotly.newPlot(target, plotTraces(), layout, { staticPlot: true });
       const source = await window.Plotly.toImage(target, { format, width: 1600, height: 1000, scale: format === "png" ? 2 : 1 });
-      download(await (await fetch(source)).blob(), format);
+      await download(await (await fetch(source)).blob(), format, fileName);
     } catch (error) { status(`图片导出失败：${error.message}`, true); }
     finally { window.Plotly.purge(target); target.remove(); }
   }
+  function updateDatasets(datasets) {
+    const filtered = datasets.filter(dataset => dataset.type === "JV");
+    const fingerprint = JSON.stringify(filtered);
+    if (fingerprint === state.fingerprint) return;
+    stop();
+    state.fingerprint = fingerprint;
+    state.datasets = JSON.parse(fingerprint);
+    refreshDatasets();
+  }
   window.JVEQEDarkFit = {
-    open({ datasets }) {
-      createDialog();
-      state.datasets = JSON.parse(JSON.stringify(datasets.filter(dataset => dataset.type === "JV")));
-      $("dfUnknown").checked = false;
-      $("darkFitDialog").showModal();
-      refreshDatasets();
+    open({ datasets, onClose, saveBlob, autoRun = true }) {
+      createPanel();
+      state.visible = true; state.onClose = onClose; state.saveBlob = saveBlob;
+      $("darkFitPanel").hidden = false;
+      updateDatasets(datasets);
+      renderResult();
       if (location.protocol === "file:") status("请使用“启动网站.bat”打开本地网站后拟合，或访问 GitHub 网页版。", true);
-    }
+      else if (autoRun && !state.display && !state.busy && selectedDataset()) runFit();
+    },
+    update({ datasets }) { if (state.visible) updateDatasets(datasets); },
+    close() {
+      if (!state.visible) return;
+      state.visible = false;
+      stop();
+      $("darkFitPanel").hidden = true;
+      state.onClose?.();
+    },
+    hasResult() { return Boolean(state.display) && !state.busy; },
+    exportTitle,
+    exportData: exportCSV,
+    exportImage
   };
 }());

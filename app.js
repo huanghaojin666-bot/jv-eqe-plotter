@@ -26,6 +26,8 @@
     filesSeen: new Set(),
     messages: [],
     view: "JV",
+    chartMode: "raw",
+    rawPlotDirty: false,
     plotReady: false,
     plotClickBound: false,
     plotRelayoutBound: false,
@@ -87,6 +89,9 @@
     confirmExportButton: document.getElementById("confirmExportButton"),
     chartEyebrow: document.getElementById("chartEyebrow"),
     chartTitle: document.getElementById("chartTitle"),
+    chartPanel: document.getElementById("chartPanel"),
+    restoreJVButton: document.getElementById("restoreJVButton"),
+    darkFitHeading: document.getElementById("darkFitHeading"),
     chartMeta: document.getElementById("chartMeta"),
     gradientToggle: document.getElementById("gradientToggle"),
     deviceGradientToggle: document.getElementById("deviceGradientToggle"),
@@ -1392,6 +1397,12 @@
 
   function renderPlot() {
     const datasets = currentDatasets(false);
+    if (state.chartMode === "fit") {
+      state.rawPlotDirty = true;
+      window.JVEQEDarkFit.update({ datasets });
+      return;
+    }
+    state.rawPlotDirty = false;
     const traces = buildTraces(currentDatasets(true));
     elements.plot.style.height = `${plotGeometry(datasets, false).height}px`;
 
@@ -1430,6 +1441,25 @@
     elements.scaleControl.hidden = !isJV;
     elements.coordinateXLabel.textContent = isJV ? "横坐标 V" : "波长 λ (nm)";
     elements.coordinateX.placeholder = isJV ? "例如 0.5" : "例如 1200";
+  }
+
+  function setFitView(enabled) {
+    state.chartMode = enabled ? "fit" : "raw";
+    elements.chartPanel.classList.toggle("is-fit-view", enabled);
+    elements.chartTitle.hidden = enabled;
+    elements.restoreJVButton.hidden = !enabled;
+    elements.darkFitHeading.hidden = !enabled;
+    elements.darkFitButton.setAttribute("aria-pressed", String(enabled));
+    elements.chartEyebrow.textContent = enabled ? "DARK CURRENT FITTING" : "CURRENT DENSITY";
+    elements.downloadTxtButton.textContent = enabled ? "导出拟合数据" : "导出 TXT";
+    elements.downloadTxtButton.title = enabled ? "导出当前拟合的电压、实测、拟合、分量及残差 CSV" : "导出的 TXT 可直接重新导入本网站";
+    elements.downloadPngButton.title = enabled ? "导出当前拟合图像（PNG / SVG）" : "导出当前曲线图片";
+  }
+
+  function restoreJVView() {
+    setFitView(false);
+    if (state.rawPlotDirty) renderPlot();
+    else if (state.plotReady) window.Plotly.Plots.resize(elements.plot);
   }
 
   function renderAll(options) {
@@ -1500,6 +1530,8 @@
   }
 
   function setView(view) {
+    if (state.chartMode === "fit") window.JVEQEDarkFit.close();
+    if (state.view === view) return;
     state.view = view;
     document.querySelectorAll(".tab").forEach((tab) => {
       tab.classList.toggle("is-active", tab.dataset.view === view);
@@ -1515,7 +1547,7 @@
   function exportBaseName(value, fallback) {
     const cleanName = String(value || "")
       .trim()
-      .replace(/\.(txt|xlsx|zip|png|svg)$/i, "")
+      .replace(/\.(txt|xlsx|zip|png|svg|csv)$/i, "")
       .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
       .replace(/[. ]+$/g, "")
       .slice(0, 120);
@@ -1523,6 +1555,22 @@
   }
 
   function openExportDialog(kind) {
+    const fitExport = state.chartMode === "fit" && (kind === "image" || kind === "txt");
+    if (fitExport) {
+      if (!window.JVEQEDarkFit.hasResult()) {
+        showToast("请先完成拟合，再导出拟合图片或数据。", true);
+        return;
+      }
+      pendingExportKind = kind === "image" ? "fit-image" : "fit-data";
+      elements.exportDialogTitle.textContent = kind === "image" ? "导出拟合图片" : "导出拟合数据（CSV）";
+      elements.exportFormatField.hidden = kind !== "image";
+      elements.exportHint.hidden = false;
+      elements.exportHint.textContent = kind === "image" ? "导出当前拟合视图，包含实测、拟合及已显示的分量曲线。" : "包含带符号的电压、实测电流、拟合电流、各分量及残差。";
+      elements.exportFileName.value = window.JVEQEDarkFit.exportTitle();
+      elements.exportDialog.showModal();
+      window.setTimeout(() => { elements.exportFileName.focus(); elements.exportFileName.select(); }, 0);
+      return;
+    }
     const datasets = currentDatasets(false);
     if (!datasets.length || (kind === "image" && !state.plotReady)) {
       showToast(kind === "image" ? "当前图里没有可导出的可见曲线。" : "当前没有可导出的数据。", true);
@@ -1882,8 +1930,11 @@
   elements.scaleSelect.addEventListener("change", renderPlot);
   elements.chartTitle.addEventListener("change", renderPlot);
   elements.darkFitButton.addEventListener("click", () => {
-    window.JVEQEDarkFit.open({ datasets: currentDatasets(false) });
+    if (state.chartMode === "fit") { window.JVEQEDarkFit.close(); return; }
+    setFitView(true);
+    window.JVEQEDarkFit.open({ datasets: currentDatasets(false), onClose: restoreJVView, saveBlob });
   });
+  elements.restoreJVButton.addEventListener("click", () => window.JVEQEDarkFit.close());
   elements.downloadTxtButton.addEventListener("click", () => openExportDialog("txt"));
   elements.downloadExcelButton.addEventListener("click", () => openExportDialog("xlsx"));
   elements.openOriginButton.addEventListener("click", openCurrentViewInOrigin);
@@ -1904,12 +1955,21 @@
     const kind = pendingExportKind;
     if (!kind) return;
     const formatInput = elements.exportForm.querySelector('input[name="exportFormat"]:checked');
-    const format = kind === "image" && formatInput
+    const format = (kind === "image" || kind === "fit-image") && formatInput
       ? formatInput.value
-      : (kind === "origin-bundle" ? "zip" : kind);
+      : (kind === "origin-bundle" ? "zip" : kind === "fit-data" ? "csv" : kind);
     const fallback = kind === "image" ? `${state.view}_曲线` : `${state.view}_数据`;
     const fileName = `${exportBaseName(elements.exportFileName.value, fallback)}.${format}`;
     elements.exportDialog.close();
+    if (kind === "fit-image" || kind === "fit-data") {
+      try {
+        if (kind === "fit-image") await window.JVEQEDarkFit.exportImage(format, fileName);
+        else await window.JVEQEDarkFit.exportData(fileName);
+      } catch (error) {
+        if (error?.name !== "AbortError") showToast(`拟合结果导出失败：${error.message}`, true);
+      }
+      return;
+    }
     if (kind === "image") {
       await downloadImage(fileName, format);
     } else if (kind === "xlsx") {
@@ -2161,6 +2221,7 @@
   });
 
   elements.clearButton.addEventListener("click", () => {
+    if (state.chartMode === "fit") window.JVEQEDarkFit.close();
     state.datasets = [];
     state.filesSeen.clear();
     state.messages = [];
@@ -2205,7 +2266,7 @@
       const width = elements.plot.clientWidth;
       if (width === lastPlotWidth) return;
       lastPlotWidth = width;
-      if (state.plotReady && state.deviceGradient.enabled) renderPlot();
+      if (state.plotReady && state.deviceGradient.enabled && state.chartMode !== "fit") renderPlot();
     }).observe(elements.plot);
   }
 
