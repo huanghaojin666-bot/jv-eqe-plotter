@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" type="image/svg+xml" href="assets/nano-photonics-icon.svg">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Br 实验 · JV</title>
+  <link rel="stylesheet" href="styles.css?v=20261117-jv1">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="index.html" data-eqe-link>EQE 对比</a><a href="jv.html" aria-current="page">JV</a></nav></div>
+    <div class="header-meta"><span id="jv-inventory"></span><span class="local-status"><i data-lucide="hard-drive"></i>实验数据</span></div>
+  </header>
+  <main class="workspace">
+    <section class="matrix-section" aria-labelledby="matrix-title">
+      <div class="section-heading"><div><h2 id="matrix-title">筛选 JV</h2><span class="subtle">Dark / Light</span></div><button id="jv-all" class="primary command"><i data-lucide="layers"></i>集总曲线</button></div>
+      <div class="jv-data-status"><span class="status-tick"><i data-lucide="check"></i>新建文件夹 (2)</span><a href="assets/JV同EQE配色矢量图.zip" download class="text-command"><i data-lucide="folder-down"></i>SVG 全集</a></div>
+      <div class="matrix-scroll"><table id="jv-matrix" class="jv-matrix" aria-label="日期与变量的筛选JV"></table></div>
+      <div class="matrix-key"><span><b class="key-active"></b>当前对比</span><button id="jv-method" class="text-command"><i data-lucide="palette"></i>配色与数据口径</button></div>
+      <div class="selection-summary"><span class="overline">当前选择</span><h3 id="jv-selection-title"></h3><div id="jv-selection-meta" class="subtle"></div></div>
+      <div class="jv-mode-key"><span><b class="line-dark"></b>Dark</span><span><b class="line-light"></b>Light</span><span class="subtle">同一器件沿用 EQE 原图颜色</span></div>
+      <div id="jv-date-note" class="jv-date-note" hidden></div>
+      <details class="source-disclosure"><summary><i data-lucide="folder-open"></i>数据目录与版本</summary><div id="jv-sources"></div></details>
+    </section>
+    <section class="viewer-section" aria-labelledby="jv-viewer-title">
+      <div class="viewer-heading"><div><span class="overline" id="jv-category">单组 JV</span><h2 id="jv-viewer-title"></h2></div><div class="viewer-actions"><button id="jv-reset" class="icon-button" title="重置坐标" aria-label="重置坐标"><i data-lucide="scan"></i></button><details id="jv-export-menu" class="menu"><summary class="command"><i data-lucide="download"></i>导出<i data-lucide="chevron-down"></i></summary><div class="menu-content"><button data-jv-export="png"><i data-lucide="image"></i>PNG 图片</button><button data-jv-export="svg"><i data-lucide="file-image"></i>SVG 矢量图</button><button data-jv-export="csv"><i data-lucide="table-2"></i>CSV 原始有符号数据</button></div></details></div></div>
+      <div class="plot-toolbar"><div class="segmented view-mode" aria-label="JV视图"><button id="jv-view-plot" aria-pressed="true"><i data-lucide="chart-line"></i>交互曲线</button><button id="jv-view-svg" aria-pressed="false"><i data-lucide="image"></i>保存 SVG</button></div><div class="plot-options"><select id="jv-mode" aria-label="光暗状态"><option value="both">光暗全部</option><option value="dark">Dark</option><option value="light">Light</option></select><select id="jv-scale" aria-label="JV纵轴"><option value="log">对数 |J|</option><option value="linear">线性 J</option></select></div></div>
+      <div id="jv-notice" class="version-notice" hidden></div>
+      <div id="jv-plot-surface"><div id="jv-original-surface" hidden><img id="jv-original-image" alt=""></div><div id="jv-plot"></div><div id="jv-error" role="alert" hidden></div></div>
+      <div id="jv-caption" class="plot-caption"></div>
+      <section class="statistics" aria-labelledby="jv-stats-title"><div class="statistics-heading"><h3 id="jv-stats-title">当前曲线</h3><span id="jv-visible-count" class="subtle"></span></div><div class="stats-scroll jv-stats-scroll"><table><thead><tr><th>日期 / 点位</th><th>状态</th><th>器件</th><th>|J| @ −0.5 V</th><th>|J| @ +0.5 V</th></tr></thead><tbody id="jv-stats"></tbody></table></div><div class="jv-unit-note">电流密度单位 A/cm²；表格仅列指定偏压，不对不同器件求均值。</div></section>
+    </section>
+  </main>
+  <dialog id="jv-method-dialog"><div class="dialog-heading"><h2>JV 配色与数据口径</h2><button id="jv-close-method" class="icon-button" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button></div><dl><dt>筛选数据</dt><dd>仅使用每次实验“JV and QE/新建文件夹 (2)”中的 TXT。直接复用你的 JV/EQE 作图网站解析器，保留全部采样点、点位和有符号电流密度。</dd><dt>同器件与 EQE 同色</dt><dd>按“日期 + 变量 + 器件编号”逐个匹配 EQE 原始 SVG 的实际颜色；同器件的不同点位、Dark 与 Light 都使用该颜色。优先匹配筛选 EQE；只在 all 中出现的器件从对应 all 原图读取颜色，不把 all 曲线混入筛选数据。</dd><dt>光暗状态</dt><dd>以 TXT 的 Mode 字段识别，不根据电流正负推断。Dark 为实线，Light 为虚线。没有提供 Light 的组不补造 Light 数据。</dd><dt>电流显示</dt><dd>对数轴显示 |J|，零值不能在对数轴上显示；线性轴与 CSV 保留 J 的正负号。数据不归一化、不抽点、不平滑，不把光暗数据合并平均。</dd><dt>保存 SVG</dt><dd>来源于你保存的网站 SVG，只调整曲线、图例配色及光暗线型，并规范图例名称；曲线几何路径和测量数值不变。修改前的 SVG 已在本机另行备份。</dd><dt>9.15 日期修正</dt><dd>a 目录里文件名“9.20 f / 9.20 5”已由你确认实际属于 9.15，按实验目录归类，保留源 TXT 的文件名与测量时间。</dd><dt>器件对应范围</dt><dd>同日期同器件共享颜色；不同实验、不同变量可能复用颜色，图例和点位名称同时保留用于区分。EQE 与 JV 的筛选点位不完全相同，不把未同时测量的点位当成一一对应的数据。</dd></dl><a href="JV配色核对.csv" download class="command"><i data-lucide="download"></i>下载 JV / EQE 配色核对表</a></dialog>
+  <div id="toast" role="status" hidden></div>
+  <script src="assets/plotly.min.js"></script>
+  <script src="assets/lucide.min.js"></script>
+  <script src="jv-data.js?v=20261117-jv1"></script>
+  <script src="jv-model.js?v=20261117-jv1"></script>
+  <script src="jv.js?v=20261117-jv1"></script>
+</body>
+</html>
