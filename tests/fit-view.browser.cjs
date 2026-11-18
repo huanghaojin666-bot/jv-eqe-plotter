@@ -23,18 +23,13 @@ function current(voltage) {
 }
 
 (async () => {
-  const saved = new Map();
+  let desktopSaveRequests = 0;
   const server = http.createServer((request, response) => {
     const url = new URL(request.url, "http://localhost");
     if (url.pathname === "/api/save" && request.method === "POST") {
-      const chunks = [];
-      request.on("data", chunk => chunks.push(chunk));
-      request.on("end", () => {
-        const filename = url.searchParams.get("filename");
-        saved.set(filename, Buffer.concat(chunks));
-        response.writeHead(200, { "Content-Type": "application/json" });
-        response.end(JSON.stringify({ ok: true, filename, location: "project" }));
-      });
+      desktopSaveRequests++;
+      response.writeHead(500, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ error: "Exports must use the user's chosen folder" }));
       return;
     }
     const pathname = decodeURIComponent(url.pathname);
@@ -47,6 +42,25 @@ function current(voltage) {
   const browser = await chromium.launch({ channel: "msedge", headless: true });
   try {
     const page = await browser.newPage({ viewport: { width: 1600, height: 1200 } });
+    await page.addInitScript(() => {
+      window.__savedExports = {};
+      window.__folderPicks = 0;
+      window.showDirectoryPicker = async () => {
+        window.__folderPicks++;
+        if (window.__cancelNextFolderPick) {
+          window.__cancelNextFolderPick = false;
+          throw new DOMException("Cancelled", "AbortError");
+        }
+        return {
+          name: "测试导出文件夹",
+          queryPermission: async () => "granted",
+          getFileHandle: async (name, options = {}) => {
+            if (!options.create && !Object.prototype.hasOwnProperty.call(window.__savedExports, name)) throw new DOMException("Missing", "NotFoundError");
+            return { name, createWritable: async () => ({ write: async blob => { window.__savedExports[name] = Array.from(new Uint8Array(await blob.arrayBuffer())); }, close: async () => {} }) };
+          }
+        };
+      };
+    });
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/`);
@@ -67,6 +81,27 @@ function current(voltage) {
     await page.locator("#plot").evaluate(plot => Plotly.relayout(plot, { "xaxis.range": [-0.3, 0.2] }));
     const rawSnapshot = await page.locator("#plot").evaluate(plot => JSON.stringify({ data: plot.data.map(({ name, x, y, line, visible }) => ({ name, x, y, line, visible })), range: plot.layout.xaxis.range }));
 
+    // Folder selection happens before rendering images; cancellation saves nothing.
+    await page.evaluate(() => { window.__cancelNextFolderPick = true; window.__imageGenerationCalls = 0; const original = Plotly.toImage; Plotly.toImage = (...args) => { window.__imageGenerationCalls++; return original(...args); }; });
+    await page.locator("#downloadPngButton").click();
+    await page.locator("#confirmExportButton").click();
+    await page.waitForFunction(() => window.__folderPicks === 1);
+    assert.equal(await page.locator("#exportDialog").isVisible(), true);
+    assert.equal(await page.evaluate(() => window.__imageGenerationCalls), 0);
+    assert.equal(await page.evaluate(() => Object.keys(window.__savedExports).length), 0);
+    await page.locator("#cancelExportButton").click();
+    await page.locator("#downloadTxtButton").click();
+    await page.locator("#chooseExportFolderButton").click();
+    assert.equal(await page.locator("#exportFolderName").textContent(), "测试导出文件夹");
+    await page.locator("#exportDialog").screenshot({ path: path.join(root, "tmp/export-folder-dialog.png") });
+    await page.locator("#cancelExportButton").click();
+    const workbook = await saveFromToolbar("#downloadExcelButton", "raw-workbook", "xlsx");
+    assert.equal(workbook.subarray(0, 2).toString(), "PK");
+    const originZIP = await saveFromToolbar("#downloadOriginBundleButton", "raw-origin", "zip");
+    assert.equal(originZIP.subarray(0, 2).toString(), "PK");
+    const rawSVG = await saveFromToolbar("#downloadPngButton", "raw-figure", "svg");
+    assert.match(rawSVG.toString("utf8"), /Voltage/);
+
     await page.locator("#darkFitButton").click();
     assert.equal(await page.locator("#restoreJVButton").getAttribute("aria-pressed"), "false");
     assert.equal(await page.locator("#darkFitButton").getAttribute("aria-pressed"), "true");
@@ -86,11 +121,9 @@ function current(voltage) {
       await page.locator(button).click();
       await page.locator("#exportFileName").fill(basename);
       if (extension === "svg" || extension === "png") await page.locator(".export-format-options label").filter({ has: page.locator(`input[value="${extension}"]`) }).click();
-      const completion = page.waitForResponse(response => response.url().includes(`/api/save?filename=${encodeURIComponent(basename + "." + extension)}`));
       await page.locator("#confirmExportButton").click();
-      await completion;
-      assert.ok(saved.has(`${basename}.${extension}`));
-      return saved.get(`${basename}.${extension}`);
+      await page.waitForFunction(name => window.__savedExports[name], `${basename}.${extension}`);
+      return Buffer.from(await page.evaluate(name => window.__savedExports[name], `${basename}.${extension}`));
     }
     const csv = (await saveFromToolbar("#downloadTxtButton", "fit-series", "csv")).toString("utf8").replace(/^\uFEFF/, "").trim().split(/\r?\n/);
     assert.equal(csv.length, 82);
@@ -133,6 +166,14 @@ function current(voltage) {
     const manual = (await saveFromToolbar("#downloadTxtButton", "manual-series", "csv")).toString("utf8");
     assert.notEqual(manual, csv.join("\r\n"));
     await page.locator("#dfRestore").click();
+    const exportsBeforeJSON = await page.evaluate(() => Object.keys(window.__savedExports).length);
+    await page.locator("#dfJSON").click();
+    await page.waitForFunction(count => Object.keys(window.__savedExports).length > count, exportsBeforeJSON);
+    const savedJSON = await page.evaluate(() => {
+      const name = Object.keys(window.__savedExports).find(name => name.endsWith(".json"));
+      return JSON.parse(new TextDecoder().decode(new Uint8Array(window.__savedExports[name])));
+    });
+    assert.equal(savedJSON.automatic.series.voltage.length, 81);
 
     await page.locator('.tab[data-view="JV"]').click();
     assert.equal(await page.locator("#plot").isVisible(), true);
@@ -159,7 +200,9 @@ function current(voltage) {
     await page.waitForFunction(() => document.querySelector("#dfPlot .main-svg").getBoundingClientRect().width <= document.querySelector("#chartPanel").clientWidth);
     await page.locator("#chartPanel").screenshot({ path: path.join(root, "tmp/fit-inline-mobile.png") });
     assert.deepEqual(errors, []);
-    console.log("Inline fit checks passed: auto-fit, header/title/tab toggles, preserved original plot/title/zoom, current-result CSV/SVG/PNG, manual export, filter invalidation, cancellation, mobile.");
+    assert.equal(desktopSaveRequests, 0);
+    assert.equal(await page.evaluate(() => window.__folderPicks), 2, "one cancelled picker and one selected folder reused by all exports");
+    console.log("Browser checks passed: choose/cancel folder before rendering; XLSX/Origin ZIP/raw SVG, fitted CSV/SVG/PNG/JSON saved to the selected folder; no automatic desktop writes; view switches, manual preview, filters, cancellation and mobile remain correct.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

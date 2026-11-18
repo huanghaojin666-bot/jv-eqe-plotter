@@ -87,6 +87,9 @@
     exportHint: document.getElementById("exportHint"),
     cancelExportButton: document.getElementById("cancelExportButton"),
     confirmExportButton: document.getElementById("confirmExportButton"),
+    chooseExportFolderButton: document.getElementById("chooseExportFolderButton"),
+    exportFolderName: document.getElementById("exportFolderName"),
+    exportFolderHint: document.getElementById("exportFolderHint"),
     chartEyebrow: document.getElementById("chartEyebrow"),
     chartTitle: document.getElementById("chartTitle"),
     chartPanel: document.getElementById("chartPanel"),
@@ -121,6 +124,7 @@
 
   let toastTimer = null;
   let pendingExportKind = null;
+  let fileSaver = null;
 
   function syncGradientControlsVisibility() {
     const expanded = elements.deviceGradientToggle.checked || elements.gradientToggle.checked;
@@ -1571,6 +1575,7 @@
       elements.exportHint.hidden = false;
       elements.exportHint.textContent = kind === "image" ? "导出当前拟合视图，包含实测、拟合及已显示的分量曲线。" : "包含带符号的电压、实测电流、拟合电流、各分量及残差。";
       elements.exportFileName.value = window.JVEQEDarkFit.exportTitle();
+      syncExportFolderUI();
       elements.exportDialog.showModal();
       window.setTimeout(() => { elements.exportFileName.focus(); elements.exportFileName.select(); }, 0);
       return;
@@ -1596,6 +1601,7 @@
     elements.exportFileName.value = kind === "image"
       ? chartTitle
       : (kind === "origin-bundle" ? `${state.view}_Origin作图_${date}` : `${state.view}_数据_${date}`);
+    syncExportFolderUI();
     elements.exportDialog.showModal();
     window.setTimeout(() => {
       elements.exportFileName.focus();
@@ -1624,56 +1630,40 @@
     URL.revokeObjectURL(url);
   }
 
-  async function saveBlob(blob, fileName) {
-    const isLocalServer = (
-      location.protocol === "http:" &&
-      (location.hostname === "127.0.0.1" || location.hostname === "localhost")
-    );
-
-    if (isLocalServer) {
-      try {
-        const response = await fetch(`/api/save?filename=${encodeURIComponent(fileName)}`, {
-          method: "POST",
-          headers: { "Content-Type": blob.type || "application/octet-stream" },
-          body: blob
-        });
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.error || "保存失败");
-        }
-        if (result.location === "project") {
-          showToast(`桌面直存不可用，已保存到项目 exports：${result.filename}`);
-        } else {
-          showToast(`已保存到桌面：${result.filename}`);
-        }
-        return;
-      } catch (_error) {
-        browserDownload(blob, fileName);
-        showToast(`桌面直存不可用，已改为浏览器下载：${fileName}`);
-        return;
-      }
-    }
-
-    if (window.showSaveFilePicker) {
-      const handle = await window.showSaveFilePicker({ suggestedName: fileName });
-      const writable = await handle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-      showToast(`已保存：${fileName}`);
-      return;
-    }
-
-    browserDownload(blob, fileName);
-    showToast("文件已下载。若 Windows 仍拦截，请关闭本页并从桌面快捷方式重新打开网站。");
+  function getFileSaver() {
+    if (!fileSaver) fileSaver = window.JVEQEFileSave.createSaver({
+      host: window,
+      download: browserDownload,
+      onDirectoryChanged: syncExportFolderUI,
+      onSaved: ({ name, kind, directory }) => showToast(kind === "directory" ? `已保存到 ${directory}：${name}` : kind === "download" ? `已交给浏览器下载：${name}` : `已保存：${name}`)
+    });
+    return fileSaver;
   }
 
-  async function downloadTxt(fileName) {
+  function syncExportFolderUI() {
+    const saver = getFileSaver();
+    const directoryMode = saver.mode() === "directory";
+    elements.chooseExportFolderButton.hidden = !directoryMode;
+    elements.exportFolderName.textContent = directoryMode ? (saver.directoryName() || "尚未选择文件夹") : saver.mode() === "file" ? "在保存窗口中选择位置" : "浏览器下载位置";
+    elements.exportFolderHint.textContent = directoryMode ? "选择后，本次打开网页期间的导出保存在此文件夹，可随时更换；同名文件自动另存，不覆盖旧文件。" : saver.mode() === "file" ? "点击导出后，可在系统保存窗口中选择文件夹和文件名。" : "当前浏览器不支持直接选择文件夹，位置由浏览器下载设置决定；可用 Chrome 或 Edge 打开以选择文件夹。";
+    elements.confirmExportButton.textContent = directoryMode ? (saver.directoryName() ? "导出到此文件夹" : "选择文件夹并导出") : saver.mode() === "file" ? "选择位置并导出" : "下载";
+  }
+
+  function prepareExport(fileName) {
+    return getFileSaver().prepare(fileName);
+  }
+
+  async function saveBlob(blob, fileName, destination) {
+    await getFileSaver().save(blob, fileName, destination);
+  }
+
+  async function downloadTxt(fileName, destination) {
     const datasets = currentDatasets(false);
     if (!datasets.length) return;
     const text = exporter.buildInstrumentText(state.view, datasets);
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     try {
-      await saveBlob(blob, fileName);
+      await saveBlob(blob, fileName, destination);
     } catch (error) {
       if (error && error.name !== "AbortError") {
         showToast(`TXT 保存失败：${error.message || "未知错误"}`, true);
@@ -1681,14 +1671,14 @@
     }
   }
 
-  async function downloadExcel(fileName) {
+  async function downloadExcel(fileName, destination) {
     const datasets = currentDatasets(false);
     if (!datasets.length) return;
     try {
       const blob = exporter.buildWorkbookBlob(state.view, datasets, {
         chartTitle: elements.chartTitle.value.trim() || `${state.view} 曲线`
       });
-      await saveBlob(blob, fileName);
+      await saveBlob(blob, fileName, destination);
     } catch (error) {
       if (error && error.name !== "AbortError") {
         showToast(`Excel 保存失败：${error.message || "未知错误"}`, true);
@@ -1759,7 +1749,7 @@
     };
   }
 
-  async function downloadOriginBundle(fileName) {
+  async function downloadOriginBundle(fileName, destination) {
     const datasets = plottedDatasets(currentDatasets(false));
     if (!datasets.length) return;
     try {
@@ -1769,7 +1759,7 @@
         buildOriginRecipe(datasets),
         { chartTitle: elements.chartTitle.value.trim() || `${state.view} 曲线` }
       );
-      await saveBlob(blob, fileName);
+      await saveBlob(blob, fileName, destination);
     } catch (error) {
       if (error && error.name !== "AbortError") {
         showToast(`Origin 作图包保存失败：${error.message || "未知错误"}`, true);
@@ -1828,7 +1818,7 @@
     }
   }
 
-  async function downloadImage(fileName, format) {
+  async function downloadImage(fileName, format, destination) {
     const datasets = currentDatasets(false);
     if (!state.plotReady || !datasets.length) {
       showToast("当前图里没有可导出的可见曲线。", true);
@@ -1860,7 +1850,7 @@
         scale: format === "png" ? 3 : 1
       });
       const blob = await (await fetch(dataUrl)).blob();
-      await saveBlob(blob, fileName);
+      await saveBlob(blob, fileName, destination);
     } catch (error) {
       if (error && error.name !== "AbortError") {
         showToast(`图片保存失败：${error.message || "未知错误"}`, true);
@@ -1936,7 +1926,7 @@
   elements.darkFitButton.addEventListener("click", () => {
     if (state.chartMode === "fit") return;
     setFitView(true);
-    window.JVEQEDarkFit.open({ datasets: currentDatasets(false), onClose: restoreJVView, saveBlob });
+    window.JVEQEDarkFit.open({ datasets: currentDatasets(false), onClose: restoreJVView, saveBlob, prepareSave: prepareExport });
   });
   elements.restoreJVButton.addEventListener("click", () => window.JVEQEDarkFit.close());
   elements.downloadTxtButton.addEventListener("click", () => openExportDialog("txt"));
@@ -1945,6 +1935,10 @@
   elements.downloadOriginBundleButton.addEventListener("click", () => openExportDialog("origin-bundle"));
   elements.downloadPngButton.addEventListener("click", () => openExportDialog("image"));
   elements.cancelExportButton.addEventListener("click", () => elements.exportDialog.close());
+  elements.chooseExportFolderButton.addEventListener("click", async () => {
+    try { await getFileSaver().chooseDirectory(); }
+    catch (error) { if (error?.name !== "AbortError") showToast(`选择文件夹失败：${error.message}`, true); }
+  });
   elements.exportDialog.addEventListener("close", () => {
     pendingExportKind = null;
   });
@@ -1964,24 +1958,33 @@
       : (kind === "origin-bundle" ? "zip" : kind === "fit-data" ? "csv" : kind);
     const fallback = kind === "image" ? `${state.view}_曲线` : `${state.view}_数据`;
     const fileName = `${exportBaseName(elements.exportFileName.value, fallback)}.${format}`;
+    let destination;
+    try {
+      // Ask while the confirmation click still has user activation, before any
+      // image rendering, workbook building or Python result export.
+      destination = await prepareExport(fileName);
+    } catch (error) {
+      if (error?.name !== "AbortError") showToast(`选择保存位置失败：${error.message}`, true);
+      return;
+    }
     elements.exportDialog.close();
     if (kind === "fit-image" || kind === "fit-data") {
       try {
-        if (kind === "fit-image") await window.JVEQEDarkFit.exportImage(format, fileName);
-        else await window.JVEQEDarkFit.exportData(fileName);
+        if (kind === "fit-image") await window.JVEQEDarkFit.exportImage(format, fileName, destination);
+        else await window.JVEQEDarkFit.exportData(fileName, destination);
       } catch (error) {
         if (error?.name !== "AbortError") showToast(`拟合结果导出失败：${error.message}`, true);
       }
       return;
     }
     if (kind === "image") {
-      await downloadImage(fileName, format);
+      await downloadImage(fileName, format, destination);
     } else if (kind === "xlsx") {
-      await downloadExcel(fileName);
+      await downloadExcel(fileName, destination);
     } else if (kind === "origin-bundle") {
-      await downloadOriginBundle(fileName);
+      await downloadOriginBundle(fileName, destination);
     } else {
-      await downloadTxt(fileName);
+      await downloadTxt(fileName, destination);
     }
   });
   elements.gradientToggle.addEventListener("change", () => {

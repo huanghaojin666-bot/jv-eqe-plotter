@@ -5,7 +5,7 @@
   const html = value => String(value == null ? "" : value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
   const scientific = value => Number.isFinite(Number(value)) && value !== null ? Number(value).toExponential(4) : "—";
   const percent = value => Number.isFinite(Number(value)) && value !== null ? `${Number(value).toFixed(2)}%` : "—";
-  const state = { datasets: [], fingerprint: "", visible: false, onClose: null, saveBlob: null, worker: null, sequence: 0, pending: null, busy: false, automatic: null, display: null, manual: null, input: null };
+  const state = { datasets: [], fingerprint: "", visible: false, onClose: null, saveBlob: null, prepareSave: null, worker: null, sequence: 0, pending: null, busy: false, automatic: null, display: null, manual: null, input: null };
 
   function createPanel() {
     if ($("darkFitPanel")) return;
@@ -218,25 +218,28 @@
     return `${name.replace(/[<>:"/\\|?*]/g, "_")}_暗电流${state.manual ? "_手动预览" : "_拟合"}`;
   }
   function exportError(error) { if (error?.name !== "AbortError") status(`导出失败：${error.message}`, true); }
-  async function download(blob, extension, fileName) {
+  async function download(blob, extension, fileName, saveTarget) {
     const destination = fileName || `${exportTitle()}.${extension}`;
-    if (state.saveBlob) { await state.saveBlob(blob, destination); return; }
+    if (state.saveBlob) { await state.saveBlob(blob, destination, saveTarget); return; }
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.href = url; link.download = destination;
     document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000);
   }
-  async function exportCSV(fileName) {
+  async function exportCSV(fileName, saveTarget) {
     const series = currentSeries();
     if (!series) return;
     const keys = Object.keys(series).filter(key => Array.isArray(series[key]) && series[key].length === series.voltage.length);
     const labels = { voltage: "Voltage (V)", v_drop: "Internal voltage (V)", measured: "Measured J (A/cm2)", fitted: "Fitted J (A/cm2)", relative_error: "Relative error (%)" };
     const rows = [keys.map(key => labels[key] || `${key} (A/cm2)`).concat("Residual (A/cm2)").join(",")];
     series.voltage.forEach((_, index) => rows.push(keys.map(key => series[key][index] ?? "").concat(series.fitted[index] - series.measured[index]).join(",")));
-    await download(new Blob(["\uFEFF" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" }), "csv", fileName);
+    await download(new Blob(["\uFEFF" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" }), "csv", fileName, saveTarget);
   }
-  async function exportImage(format, fileName) {
+  async function exportImage(format, fileName, saveTarget) {
     if (!state.display) return;
+    const destinationName = fileName || `${exportTitle()}.${format}`;
+    try { saveTarget ||= await state.prepareSave?.(destinationName); }
+    catch (error) { exportError(error); return; }
     const target = document.createElement("div");
     target.style.cssText = "position:fixed;left:-10000px;width:1600px;height:1000px";
     document.body.appendChild(target);
@@ -244,7 +247,7 @@
       const layout = { ...plotLayout(), height: 1000, width: 1600, margin: { l: 130, r: 60, t: 90, b: 170 }, title: { text: html(`${state.input.dataset.label} · 暗电流${state.manual ? "手动预览" : "拟合"}`), font: { size: 25 } }, font: { size: 18 }, legend: { orientation: "h", y: -0.18, font: { size: 17 } } };
       await window.Plotly.newPlot(target, plotTraces(), layout, { staticPlot: true });
       const source = await window.Plotly.toImage(target, { format, width: 1600, height: 1000, scale: format === "png" ? 2 : 1 });
-      await download(await (await fetch(source)).blob(), format, fileName);
+      await download(await (await fetch(source)).blob(), format, destinationName, saveTarget);
     } catch (error) { status(`图片导出失败：${error.message}`, true); }
     finally { window.Plotly.purge(target); target.remove(); }
   }
@@ -258,9 +261,9 @@
     refreshDatasets();
   }
   window.JVEQEDarkFit = {
-    open({ datasets, onClose, saveBlob, autoRun = true }) {
+    open({ datasets, onClose, saveBlob, prepareSave, autoRun = true }) {
       createPanel();
-      state.visible = true; state.onClose = onClose; state.saveBlob = saveBlob;
+      state.visible = true; state.onClose = onClose; state.saveBlob = saveBlob; state.prepareSave = prepareSave;
       $("darkFitPanel").hidden = false;
       updateDatasets(datasets);
       renderResult();

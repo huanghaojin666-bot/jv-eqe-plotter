@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <title>JV · EQE 数据工作台</title>
   <link rel="icon" type="image/svg+xml" href="assets/nano-photonics-icon.svg?v=20261117-1">
-  <link rel="stylesheet" href="styles.css?v=20261026-1">
+  <link rel="stylesheet" href="styles.css?v=20261118-1">
   <link rel="stylesheet" href="dark-fit/styles.css?v=20261117-3">
 </head>
 <body>
@@ -313,10 +313,15 @@
             </label>
           </div>
         </fieldset>
+        <div class="export-folder-field">
+          <span>保存位置</span>
+          <div class="export-folder-row"><span id="exportFolderName">尚未选择文件夹</span><button id="chooseExportFolderButton" class="button button-secondary" type="button">选择文件夹</button></div>
+          <p id="exportFolderHint" class="export-hint">选择后，本次打开网页期间的导出会保存在此文件夹，可随时更换。</p>
+        </div>
         <p id="exportHint" class="export-hint" hidden></p>
         <div class="export-dialog-actions">
           <button id="cancelExportButton" class="button button-secondary" type="button">取消</button>
-          <button id="confirmExportButton" class="button button-dark" type="submit">导出到桌面</button>
+          <button id="confirmExportButton" class="button button-dark" type="submit">选择文件夹并导出</button>
         </div>
       </form>
     </dialog>
@@ -330,7 +335,8 @@
   <script src="vendor/plotly.min.js?v=20260613"></script>
   <script src="parser.js?v=20261026-1"></script>
   <script src="exporter.js?v=20260925-4"></script>
-  <script src="dark-fit/ui.js?v=20261117-2"></script>
-  <script src="app.js?v=20261117-3"></script>
+  <script src="dark-fit/ui.js?v=20261118-1"></script>
+  <script src="file-save.js?v=20261118-1"></script>
+  <script src="app.js?v=20261118-1"></script>
 </body>
 </html>

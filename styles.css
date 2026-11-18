@@ -1252,6 +1252,12 @@ td select:focus {
   border: 0;
 }
 
+.export-folder-field{font-size:13px;color:var(--ink)}
+.export-folder-field>span{display:block;margin-bottom:7px;font-weight:650}
+.export-folder-row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:7px;background:var(--paper)}
+#exportFolderName{min-width:0;overflow-wrap:anywhere;flex:1}
+.export-folder-row .button{font-size:12px;white-space:nowrap;padding:7px 12px}
+
 .export-format-field legend {
   margin-bottom: 8px;
   font-size: 12px;
