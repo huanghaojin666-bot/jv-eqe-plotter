@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="br-report-version" content="20261118-pl-trpl">
+  <link rel="icon" type="image/svg+xml" href="../../assets/nano-photonics-icon.svg?v=20261117-1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Br 实验 · TRPL</title>
+  <link rel="stylesheet" href="styles.css?v=20261118-pl-trpl">
+</head>
+<body data-metric="trpl">
+  <header class="app-header">
+    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261118-pl-trpl" data-jv-gallery-link>JV</a><a href="index.html?v=20261118-pl-trpl" data-eqe-gallery-link>EQE</a><a href="bandwidth.html?v=20261118-pl-trpl" data-other-metric="bandwidth">-3dB</a><a href="ldr.html?v=20261118-pl-trpl" data-other-metric="ldr">ldr</a><a href="isd.html?v=20261118-pl-trpl" data-other-metric="isd">isd</a><a href="response.html?v=20261118-pl-trpl" data-other-metric="response">response</a><a href="abs.html?v=20261118-pl-trpl" data-other-metric="abs">abs</a><a href="pl.html?v=20261118-pl-trpl" data-other-metric="pl">pl</a><a href="trpl.html?v=20261118-pl-trpl" aria-current="page">trpl</a></nav></div>
+    <div class="header-meta"><span id="gallery-inventory"></span><span class="local-status"><i data-lucide="images"></i>实验图片</span></div>
+  </header>
+  <main class="workspace metric-workspace">
+    <section class="matrix-section metric-sidebar" aria-labelledby="gallery-title">
+      <div class="section-heading"><div><h2 id="gallery-title">TRPL</h2><span class="subtle">Time / ns</span></div><button id="metric-all" class="primary command"><i data-lucide="layers"></i>all 总览</button></div>
+      <div class="metric-version"><span id="gallery-version" class="subtle"></span><a id="gallery-bundle" class="text-command" download><i data-lucide="folder-down"></i>图片包</a></div>
+      <div id="gallery-comparison-views" class="segmented metric-comparison-views" aria-label="TRPL 数据版本"></div>
+      <div class="matrix-scroll"><table id="matrix" class="metric-matrix" aria-label="日期与变量的 TRPL"></table></div>
+      <div class="matrix-key"><span><b class="key-active"></b>当前选择</span><span>仅 c 组</span><button id="gallery-method" class="text-command"><i data-lucide="file-text"></i>测量与参数</button></div>
+      <div class="selection-summary"><span class="overline">当前选择</span><h3 id="gallery-selection"></h3><div id="gallery-selection-meta" class="subtle"></div></div>
+    </section>
+    <section class="viewer-section gallery-viewer" aria-labelledby="gallery-viewer-title">
+      <div class="viewer-heading"><div><span id="gallery-category" class="overline"></span><h2 id="gallery-viewer-title"></h2></div><details class="menu"><summary class="command"><i data-lucide="download"></i>下载<i data-lucide="chevron-down"></i></summary><div class="menu-content"><a id="gallery-download-png" download><i data-lucide="image"></i>PNG 图片</a><a id="gallery-download-svg" download><i data-lucide="file-image"></i>SVG 矢量图</a><a id="gallery-download-bundle" download><i data-lucide="folder-down"></i>全部图片包</a></div></details></div>
+      <div class="gallery-toolbar"><div class="segmented" aria-label="显示格式"><button id="format-svg" aria-pressed="true">SVG</button><button id="format-png" aria-pressed="false">PNG</button></div><div class="gallery-tools"><button id="zoom-out" class="icon-button" title="缩小" aria-label="缩小"><i data-lucide="zoom-out"></i></button><output id="zoom-label">100%</output><button id="zoom-in" class="icon-button" title="放大" aria-label="放大"><i data-lucide="zoom-in"></i></button><button id="zoom-fit" class="icon-button" title="适应窗口" aria-label="适应窗口"><i data-lucide="scan"></i></button><button id="gallery-fullscreen" class="icon-button" title="全屏图片" aria-label="全屏图片"><i data-lucide="maximize"></i></button></div></div>
+      <div id="gallery-notice" class="version-notice" hidden></div>
+      <div id="gallery-image-frame" class="gallery-image-frame"><div id="gallery-image-stage"><img id="gallery-image" alt="" draggable="false"></div></div>
+      <div id="metric-comparison" class="metric-comparison" hidden></div>
+      <div id="gallery-error" class="gallery-error" role="alert" hidden></div>
+      <div id="gallery-caption" class="plot-caption"></div>
+      <section class="gallery-metadata"><h3>样品信息</h3><div id="gallery-metadata"></div><details class="source-disclosure"><summary><i data-lucide="folder-open"></i>图片来源</summary><div id="gallery-source" class="source-path"></div></details></section>
+    </section>
+  </main>
+  <dialog id="gallery-dialog"><div class="dialog-heading"><h2>PL / TRPL 测量与参数</h2><button id="gallery-close-dialog" class="icon-button" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button></div><div id="gallery-method-content"></div><a href="PL_TRPL图像核对.csv" download class="command"><i data-lucide="download"></i>下载核对表</a></dialog>
+  <script src="assets/lucide.min.js"></script><script src="gallery-data.js?v=20261118-pl-trpl"></script><script src="pl-trpl-data.js?v=20261118-pl-trpl"></script><script src="navigation.js?v=20261118-pl-trpl"></script><script src="gallery.js?v=20261118-pl-trpl"></script>
+</body>
+</html>
