@@ -158,7 +158,10 @@
     }
     const hash = new URLSearchParams({ type: state.type, key: state.key, view: state.view, mode: state.mode, scale: state.scale });
     history.replaceState(null, '', '#'+hash.toString());
-    document.querySelector('[data-eqe-link]').href = 'index.html#'+new URLSearchParams({ type: state.type, key: state.key, version: 'selected', view: state.type === 'cell' ? 'original' : 'comparison' });
+    document.querySelector('[data-eqe-link]').href = window.ReportNavigation.href('index.html', new URLSearchParams({ type: state.type, key: state.key, version: 'selected', view: state.type === 'cell' ? 'original' : 'comparison' }));
+    for (const link of document.querySelectorAll('[data-metric-link]')) {
+      link.href = window.ReportNavigation.href(link.dataset.metricLink+'.html', new URLSearchParams({ date: records[0].date, group: records[0].group }));
+    }
     icons();
     window.JVApp.snapshot = { ...state, hidden: Array.from(state.hidden), records, traces: original ? [] : traceData() };
   }

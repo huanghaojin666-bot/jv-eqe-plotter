@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:olab="http://www.originlab.com/namespaces/olab" viewBox="0,0 1052,839" width="8.900000cm" height="7.100000cm">
+	<defs>
+		<mask id="Cp_1">
+			<rect x="210" y="76" width="779" height="613" fill="white" />
+		</mask>
+	</defs>
+	<g mask="url(#Cp_1)">
+		<rect x="0" y="0" width="1052" height="839" visibility="hidden" fill="none" opacity="0" />
+		<polyline points="243,242 321,290 367,340 399,301 425,416 445,385 463,255 478,382 491,268 503,313 513,278 523,442 532,306 541,360 548,283 556,380 562,288 569,377 575,313 581,269 586,270 591,307 596,317 601,297 606,360 610,367 615,310 619,357 623,337 626,376 630,376 634,279 637,362 641,615 644,281 647,293 650,322 653,388 656,366 659,412 662,347 664,367 667,338 670,291 672,325 675,360 677,327 679,394 682,318 684,265 686,319 688,323 691,386 693,316 695,343 697,304 699,322 701,348 703,305 704,284 706,300 708,277 710,348 712,345 714,321 715,309 717,289 719,270 720,324 722,299 723,288 725,345 727,326 728,286 730,316 731,337 733,311 734,370 735,330 737,359 738,285 740,309 741,280 742,333 744,329 745,342 746,300 748,317 749,307 750,280 751,390 753,312 754,289 755,401 756,306 757,388 759,294 760,344 761,310 762,355 763,309 764,278 765,352 766,272 768,373 769,366 770,266 771,337 772,322 773,286 774,376 775,380 776,299 777,399 778,340 779,299 780,292 781,268 782,341 783,518 783,304 784,391 785,334 786,337 787,295 788,359 789,441 790,319 791,295 792,304 792,376 793,300 794,315 795,293 796,366 797,447 797,328 798,445 799,299 800,332 801,326 802,246 802,424 803,362 804,356 805,329 805,301 806,320 807,337 808,289 808,318 809,345 810,460 811,315 811,482 812,310 813,260 814,299 814,389 815,396 816,348 816,357 817,284 818,328 818,408 819,350 820,315 820,345 821,375 822,367 822,387 823,321 824,397 824,312 825,334 826,396 826,289 827,351 828,424 828,293 829,334 829,331 830,433 831,313 831,361 832,316 833,354 833,338 834,344 834,349 835,338 835,350 836,294 837,427 837,391 838,381 838,401 839,294 840,396 840,296 841,394 841,288 842,305 842,343 843,299 843,351 844,393 845,367 845,354 846,279 846,299 847,358 847,290 848,318 848,324 849,367 849,381 850,315 850,427 851,285 851,269 852,278 852,504 853,315 853,304 854,386 854,298 855,354 855,326 856,376 856,378 857,287 857,279 858,319 858,429 859,360 859,304 860,301 860,382 861,371 861,360 862,323 862,321 862,297 863,339 863,351 864,402 864,442 865,355 865,511 866,304 866,293 867,316 867,347 867,427 868,341 868,289 869,299 869,309 870,429 870,309 870,368 871,341 871,317 872,344 872,384 873,374 873,370 873,376 874,375 874,351 875,359 875,291 876,350 876,334 876,407 877,448 877,383 878,285 878,314 878,391 879,359 879,360 880,369 880,381 880,427 881,309 881,311 882,339 882,351 882,314 883,303 883,330 883,408 884,387 884,336 885,380 885,479 885,324 886,287 886,273 887,359 887,324 887,420 888,354 888,327 888,355 889,367 889,321 889,347 890,355 890,288 891,363 891,320 891,412 892,291 892,397 892,447 893,313 893,316 893,339 894,347 894,361 894,329 895,374 895,456 895,344 896,342 896,313 896,316 897,323 897,346 898,288 898,369 898,449 899,481 899,319 899,292 900,311 900,349 900,292 901,342 901,357 901,356 902,336 902,381 903,383 903,377 903,400 904,393 904,333 904,310 905,432 905,352 905,290 906,411 906,284 906,369 907,373 907,316 907,426 908,388 908,330 908,314 908,393 909,379 909,321 909,349 910,410 910,301 910,264 911,323 911,250 911,323 911,311 912,288 912,297 912,335 913,308 913,427 913,442 914,309 914,308 914,298 914,366 915,358 915,290 915,313 916,307 916,277 916,371 916,360 917,444 917,581 917,316 918,357 918,462 918,350 918,381 919,297 919,510 919,366 920,323 920,329 920,374 920,339 921,407 921,333 921,331 921,510 922,309 922,301 922,381 923,427 923,352 923,296 923,379 924,324 924,346 924,349 925,350 925,313 926,395 926,412 926,365 926,396 927,318 927,314 927,355 927,332 928,356 928,376 928,371 928,484 929,314 929,337 929,315 929,343 930,302 930,305 930,381 930,332 931,362 931,356 931,380 931,428 932,447 932,349 932,336 932,340 933,373 933,337 933,364 933,346 934,320 934,369 934,431 934,321 935,377 935,373 935,338 935,367 936,333 936,420 936,337 936,336 937,310 937,340 937,333 937,338 938,358 938,317 938,452 938,302 938,311 939,381 939,326 939,336 939,314 940,390 940,347 940,452 940,363 941,358 941,401 941,292 941,331 941,294 942,365 942,487 942,371 942,412 943,454 943,366 943,315 943,374 944,319 944,309 944,334 944,353 944,349 945,347 945,360 945,372 945,330 946,407 946,421" style="stroke: #FF7F0E;stroke-width: 4;stroke-linecap: round;stroke-linejoin: round" fill="none" olab:comment="" />
+	</g>
+	<polyline points="210,688 988,688" style="stroke: black;stroke-width: 3;stroke-linecap:square;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="288,688 288,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="334,688 334,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="366,688 366,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="391,688 391,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="412,688 412,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="429,688 429,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="444,688 444,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="457,688 457,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="547,688 547,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="593,688 593,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="625,688 625,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="651,688 651,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="671,688 671,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="688,688 688,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="704,688 704,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="717,688 717,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="807,688 807,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="852,688 852,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="885,688 885,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="910,688 910,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="930,688 930,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="948,688 948,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="963,688 963,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="976,688 976,671" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,688 210,654" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="469,688 469,654" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="729,688 729,654" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="988,688 988,654" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,76 988,76" style="stroke: black;stroke-width: 3;stroke-linecap:square;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,688 210,76" style="stroke: black;stroke-width: 3;stroke-linecap:square;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,627 227,627" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,591 227,591" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,565 227,565" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,545 227,545" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,529 227,529" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,516 227,516" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,504 227,504" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,493 227,493" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,423 227,423" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,387 227,387" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,361 227,361" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,341 227,341" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,325 227,325" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,312 227,312" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,300 227,300" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,289 227,289" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,219 227,219" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,183 227,183" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,157 227,157" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,137 227,137" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,121 227,121" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,108 227,108" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,96 227,96" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,85 227,85" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,688 244,688" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,484 244,484" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,280 244,280" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="210,76 244,76" style="stroke: black;stroke-width: 3;stroke-linecap:butt;stroke-linejoin:round" fill="none" olab:comment="" />
+	<polyline points="988,688 988,76" style="stroke: black;stroke-width: 3;stroke-linecap:square;stroke-linejoin:round" fill="none" olab:comment="" />
+	<text x="179" dominant-baseline="auto" y="752" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="33" font-weight="400" olab:comment="">
+		<tspan x="179" style="font-kerning:none">0.01</tspan>
+	</text>
+	<text x="447" dominant-baseline="auto" y="752" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="33" font-weight="400" olab:comment="">
+		<tspan x="447" style="font-kerning:none">0.1</tspan>
+	</text>
+	<text x="720" dominant-baseline="auto" y="752" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="33" font-weight="400" olab:comment="">
+		<tspan x="720" style="font-kerning:none">1</tspan>
+	</text>
+	<text x="970" dominant-baseline="auto" y="752" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="33" font-weight="400" olab:comment="">
+		<tspan x="970" style="font-kerning:none">10</tspan>
+	</text>
+	<text x="99" dominant-baseline="auto" y="701" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="33" font-weight="400" olab:comment="">
+		<tspan x="99" style="font-kerning:none">10</tspan>
+	</text>
+	<text x="135" dominant-baseline="auto" y="687" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="22" font-weight="400" olab:comment="">
+		<tspan x="135" style="font-kerning:none">−15</tspan>
+	</text>
+	<text x="99" dominant-baseline="auto" y="497" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="33" font-weight="400" olab:comment="">
+		<tspan x="99" style="font-kerning:none">10</tspan>
+	</text>
+	<text x="135" dominant-baseline="auto" y="483" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="22" font-weight="400" olab:comment="">
+		<tspan x="135" style="font-kerning:none">−14</tspan>
+	</text>
+	<text x="99" dominant-baseline="auto" y="293" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="33" font-weight="400" olab:comment="">
+		<tspan x="99" style="font-kerning:none">10</tspan>
+	</text>
+	<text x="135" dominant-baseline="auto" y="279" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="22" font-weight="400" olab:comment="">
+		<tspan x="135" style="font-kerning:none">−13</tspan>
+	</text>
+	<text x="99" dominant-baseline="auto" y="89" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="33" font-weight="400" olab:comment="">
+		<tspan x="99" style="font-kerning:none">10</tspan>
+	</text>
+	<text x="135" dominant-baseline="auto" y="75" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="22" font-weight="400" olab:comment="">
+		<tspan x="135" style="font-kerning:none">−12</tspan>
+	</text>
+	<text x="313" dominant-baseline="auto" y="640" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="33" font-weight="400" olab:comment="">
+		<tspan x="313" style="white-space:pre;font-kerning:none" xml:space="preserve">Bias = 0 V</tspan>
+	</text>
+	<text x="0" dominant-baseline="auto" y="0" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="38" font-weight="400" transform="matrix(-1.83698e-16 -1 0.999999 -1.83698e-16 74 572)" olab:comment="">
+		<tspan x="0" style="white-space:pre;font-kerning:none" xml:space="preserve">Noise current (A/Hz</tspan>
+	</text>
+	<text x="0" dominant-baseline="auto" y="0" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="26" font-weight="400" transform="matrix(-1.83698e-16 -1 0.999999 -1.83698e-16 58 240)" olab:comment="">
+		<tspan x="0" style="font-kerning:none">1/2</tspan>
+	</text>
+	<text x="0" dominant-baseline="auto" y="0" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="38" font-weight="400" transform="matrix(-1.83698e-16 -1 0.999999 -1.83698e-16 74 205)" olab:comment="">
+		<tspan x="0" style="font-kerning:none">)</tspan>
+	</text>
+	<text x="470" dominant-baseline="auto" y="821" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="38" font-weight="400" olab:comment="">
+		<tspan x="470" style="white-space:pre;font-kerning:none" xml:space="preserve">Frequency (Hz)</tspan>
+	</text>
+	<polyline points="777,119 863,119" style="stroke: #FF7F0E;stroke-width: 4;stroke-linecap: round;stroke-linejoin: round" fill="none" olab:comment="" />
+	<text x="863" dominant-baseline="auto" y="132" fill="black" font-family="Arial,'MS PGothic',SimSun" font-size="38" font-weight="400" olab:comment="">
+		<tspan x="863" style="white-space:pre;font-kerning:none" xml:space="preserve"> f 2-1</tspan>
+	</text>
+</svg>
