@@ -12,12 +12,12 @@
   function icons() { window.lucide.createIcons(); }
   function selected() { return model.selection(data, state.type, state.key); }
   function visible() { return model.visible(selected(), state); }
-  function fitRows() {
-    if (state.type !== 'cell') return [];
-    const record = selected()[0];
-    return (fits?.records[record.id] || []).filter(row => row.sourceSha256 === record.sha256);
+  function fitRows(records = selected()) {
+    return records.flatMap(record => (fits?.records[record.id] || [])
+      .filter(row => row.sourceSha256 === record.sha256)
+      .map(row => ({ ...row, date: record.date, group: record.group })));
   }
-  function activeFit() { return fitRows().find(row => row.id === state.fit) || fitRows()[0]; }
+  function activeFit(rows = fitRows()) { return rows.find(row => row.id === state.fit) || rows[0]; }
   function title() {
     if (state.type === 'date') return state.key+' · JV 各变量对比';
     if (state.type === 'group') return state.key+' · JV 跨日期对比';
@@ -146,12 +146,13 @@
   function sources() {
     $('jv-sources').innerHTML = selected().map(record => `<div class="source-item"><b>${record.date} · ${record.group}</b><a href="${record.assetSvg}" target="_blank" rel="noopener">同色 SVG</a><a href="${record.assetTxt}" download>TXT</a><div class="source-path">${esc(record.source)}</div></div>`).join('');
   }
-  async function renderFit() {
-    const row = activeFit();
+  async function renderFit(rows) {
+    const row = activeFit(rows);
     state.fit = row.id;
-    $('jv-fit-curve').replaceChildren(...fitRows().map(fit => new Option(fit.point, fit.id, false, fit.id === row.id)));
+    $('jv-fit-curve').replaceChildren(...rows.map(fit => new Option(
+      state.type === 'cell' ? fit.point : `${fit.date} · ${fit.group} · ${fit.point}`, fit.id, false, fit.id === row.id)));
     const image = $('jv-fit-image');
-    image.alt = title()+' · '+row.point+' 实测、总拟合、二极管、欧姆、非欧姆分量及有符号残差';
+    image.alt = `${row.date} · ${row.group} · ${row.point} · 实测、总拟合、二极管、欧姆、非欧姆分量及有符号残差`;
     image.src = window.ReportNavigation.href(row.svg);
     $('jv-fit-zip').href = window.ReportNavigation.href(fits.bundle);
     $('jv-fit-json').href = row.json;
@@ -161,8 +162,9 @@
     await image.decode();
   }
   async function render() {
-    if (state.view === 'svg' && state.type !== 'cell' || state.view === 'mean' && state.type !== 'all' || state.view === 'fit' && !activeFit()) state.view = 'plot';
     const records = selected();
+    const rows = fitRows(records);
+    if (state.view === 'svg' && state.type !== 'cell' || state.view === 'mean' && state.type !== 'all' || state.view === 'fit' && !rows.length) state.view = 'plot';
     renderMatrix(); sources(); renderStats();
     $('jv-selection-title').textContent = title();
     $('jv-selection-meta').textContent = selectedTitle();
@@ -171,7 +173,7 @@
     const original = state.view === 'svg';
     const fitting = state.view === 'fit';
     const mean = state.view === 'mean';
-    $('jv-view-fit').hidden = !fitRows().length;
+    $('jv-view-fit').hidden = !rows.length;
     $('jv-view-fit').setAttribute('aria-pressed', String(fitting));
     $('jv-view-mean').hidden = state.type !== 'all';
     $('jv-view-mean').setAttribute('aria-pressed', String(mean));
@@ -199,7 +201,7 @@
       : `未提供 Light：${noLight.map(r => r.date+' '+r.group).join('、')}。`;
     let traces = [];
     if (fitting) {
-      await renderFit();
+      await renderFit(rows);
     } else if (original) {
       $('jv-original-image').src = records[0].assetSvg;
       $('jv-original-image').alt = title()+' · 与 EQE 器件同色的 SVG';
@@ -225,7 +227,13 @@
     ready = ready.then(render).catch(error => { $('jv-error').hidden = false; $('jv-error').textContent = error.message; console.error(error); });
     window.JVApp.ready = ready; return ready;
   }
-  function select(type, key) { state.type = type; state.key = key; state.view = 'plot'; state.fit = ''; state.hidden.clear(); return schedule(); }
+  function select(type, key) {
+    state.type = type;
+    state.key = key;
+    if (state.view !== 'fit') { state.view = 'plot'; state.fit = ''; }
+    state.hidden.clear();
+    return schedule();
+  }
   function downloadUrl(url, filename) {
     const a = document.createElement('a'); a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
   }
@@ -303,7 +311,7 @@
   if (['cell', 'date', 'group', 'all'].includes(hash.get('type')) && model.selection(data, hash.get('type'), hash.get('key')).length) {
     state.type = hash.get('type'); state.key = hash.get('key');
     const view = hash.get('view');
-    state.view = state.type === 'cell' && ['svg', 'fit'].includes(view) || state.type === 'all' && view === 'mean' ? view : 'plot';
+    state.view = view === 'fit' || state.type === 'cell' && view === 'svg' || state.type === 'all' && view === 'mean' ? view : 'plot';
     state.fit = hash.get('fit') || '';
     state.mode = ['dark', 'light'].includes(hash.get('mode')) ? hash.get('mode') : 'both';
     state.scale = hash.get('scale') === 'linear' ? 'linear' : 'log';

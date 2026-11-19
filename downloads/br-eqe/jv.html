@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="br-report-version" content="20261119-jv-fit-components">
+  <meta name="br-report-version" content="20261119-jv-fit-switch">
   <link rel="icon" type="image/svg+xml" href="../../assets/nano-photonics-icon.svg?v=20261117-1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>Br 实验 · JV</title>
-  <link rel="stylesheet" href="styles.css?v=20261119-jv-fit-components">
+  <link rel="stylesheet" href="styles.css?v=20261119-jv-fit-switch">
 </head>
 <body>
   <header class="app-header">
-    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261119-jv-fit-components" aria-current="page">JV</a><a href="index.html?v=20261119-jv-fit-components" data-eqe-link>EQE</a><a href="bandwidth.html?v=20261119-jv-fit-components" data-metric-link="bandwidth">-3dB</a><a href="ldr.html?v=20261119-jv-fit-components" data-metric-link="ldr">ldr</a><a href="isd.html?v=20261119-jv-fit-components" data-metric-link="isd">isd</a><a href="response.html?v=20261119-jv-fit-components" data-metric-link="response">response</a><a href="abs.html?v=20261119-jv-fit-components" data-metric-link="abs">abs</a><a href="pl.html?v=20261119-jv-fit-components" data-metric-link="pl">pl</a><a href="trpl.html?v=20261119-jv-fit-components" data-metric-link="trpl">trpl</a></nav></div>
+    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261119-jv-fit-switch" aria-current="page">JV</a><a href="index.html?v=20261119-jv-fit-switch" data-eqe-link>EQE</a><a href="bandwidth.html?v=20261119-jv-fit-switch" data-metric-link="bandwidth">-3dB</a><a href="ldr.html?v=20261119-jv-fit-switch" data-metric-link="ldr">ldr</a><a href="isd.html?v=20261119-jv-fit-switch" data-metric-link="isd">isd</a><a href="response.html?v=20261119-jv-fit-switch" data-metric-link="response">response</a><a href="abs.html?v=20261119-jv-fit-switch" data-metric-link="abs">abs</a><a href="pl.html?v=20261119-jv-fit-switch" data-metric-link="pl">pl</a><a href="trpl.html?v=20261119-jv-fit-switch" data-metric-link="trpl">trpl</a></nav></div>
     <div class="header-meta"><span id="jv-inventory"></span><span class="local-status"><i data-lucide="hard-drive"></i>实验数据</span></div>
   </header>
   <main class="workspace">
@@ -28,7 +28,7 @@
       <details class="source-disclosure"><summary><i data-lucide="folder-open"></i>数据目录与版本</summary><div id="jv-sources"></div></details>
     </section>
     <section class="viewer-section" aria-labelledby="jv-viewer-title">
-      <div class="viewer-heading jv-viewer-heading"><div><span class="overline" id="jv-category">单组 JV</span><h2 id="jv-viewer-title"></h2></div><div class="viewer-actions"><button id="jv-view-fit" class="command jv-fit-button" aria-pressed="false" aria-controls="jv-fit-surface"><i data-lucide="activity"></i>暗电流拟合</button><button id="jv-reset" class="icon-button" title="重置坐标" aria-label="重置坐标"><i data-lucide="scan"></i></button><details id="jv-export-menu" class="menu"><summary class="command"><i data-lucide="download"></i>导出<i data-lucide="chevron-down"></i></summary><div class="menu-content"><button data-jv-export="png"><i data-lucide="image"></i>PNG 图片</button><button data-jv-export="svg"><i data-lucide="file-image"></i>SVG 矢量图</button><button data-jv-export="csv"><i data-lucide="table-2"></i><span id="jv-export-csv-label">CSV 原始有符号数据</span></button></div></details></div></div>
+      <div class="viewer-heading jv-viewer-heading"><div class="jv-title-actions"><div><span class="overline" id="jv-category">单组 JV</span><h2 id="jv-viewer-title"></h2></div><button id="jv-view-fit" class="command jv-fit-button" aria-pressed="false" aria-controls="jv-fit-surface"><i data-lucide="activity"></i>暗电流拟合</button></div><div class="viewer-actions"><button id="jv-reset" class="icon-button" title="重置坐标" aria-label="重置坐标"><i data-lucide="scan"></i></button><details id="jv-export-menu" class="menu"><summary class="command"><i data-lucide="download"></i>导出<i data-lucide="chevron-down"></i></summary><div class="menu-content"><button data-jv-export="png"><i data-lucide="image"></i>PNG 图片</button><button data-jv-export="svg"><i data-lucide="file-image"></i>SVG 矢量图</button><button data-jv-export="csv"><i data-lucide="table-2"></i><span id="jv-export-csv-label">CSV 原始有符号数据</span></button></div></details></div></div>
       <div class="plot-toolbar" id="jv-toolbar"><div class="segmented view-mode" aria-label="JV视图"><button id="jv-view-plot" aria-pressed="true"><i data-lucide="chart-line"></i>交互曲线</button><button id="jv-view-svg" aria-pressed="false"><i data-lucide="image"></i>保存 SVG</button><button id="jv-view-mean" aria-pressed="false" hidden><i data-lucide="chart-spline"></i>JV 平均值</button></div><div class="plot-options"><select id="jv-mode" aria-label="光暗状态"><option value="both">光暗全部</option><option value="dark">Dark</option><option value="light">Light</option></select><select id="jv-scale" aria-label="JV纵轴"><option value="log">对数 |J|</option><option value="linear">线性 J</option></select></div></div>
       <div id="jv-notice" class="version-notice" hidden></div>
       <div id="jv-plot-surface"><div id="jv-original-surface" hidden><img id="jv-original-image" alt=""></div><div id="jv-plot"></div><div id="jv-fit-surface" hidden>
@@ -45,10 +45,10 @@
   <div id="toast" role="status" hidden></div>
   <script src="assets/plotly.min.js"></script>
   <script src="assets/lucide.min.js"></script>
-  <script src="jv-data.js?v=20261119-jv-fit-components"></script>
-  <script src="jv-model.js?v=20261119-jv-fit-components"></script>
-  <script src="jv-fit-data.js?v=20261119-jv-fit-components"></script>
-  <script src="navigation.js?v=20261119-jv-fit-components"></script>
-  <script src="jv.js?v=20261119-jv-fit-components"></script>
+  <script src="jv-data.js?v=20261119-jv-fit-switch"></script>
+  <script src="jv-model.js?v=20261119-jv-fit-switch"></script>
+  <script src="jv-fit-data.js?v=20261119-jv-fit-switch"></script>
+  <script src="navigation.js?v=20261119-jv-fit-switch"></script>
+  <script src="jv.js?v=20261119-jv-fit-switch"></script>
 </body>
 </html>
