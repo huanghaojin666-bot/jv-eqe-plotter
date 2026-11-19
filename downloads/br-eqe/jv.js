@@ -151,13 +151,13 @@
     state.fit = row.id;
     $('jv-fit-curve').replaceChildren(...fitRows().map(fit => new Option(fit.point, fit.id, false, fit.id === row.id)));
     const image = $('jv-fit-image');
-    image.alt = title()+' · '+row.point+' 暗电流拟合及有符号残差';
-    image.src = row.svg;
-    $('jv-fit-zip').href = fits.bundle;
+    image.alt = title()+' · '+row.point+' 实测、总拟合、二极管、欧姆、非欧姆分量及有符号残差';
+    image.src = window.ReportNavigation.href(row.svg);
+    $('jv-fit-zip').href = window.ReportNavigation.href(fits.bundle);
     $('jv-fit-json').href = row.json;
     const pct = value => value === null ? '无' : value.toFixed(2)+'%';
     $('jv-fit-details').textContent = `${row.points} 点 · ${row.range[0]} 至 ${row.range[1]} V · 平均相对误差 ${pct(row.meanErrorPct)} · 最大 ${pct(row.maxErrorPct)}${row.boundaryHits ? ' · 参数触边 '+row.boundaryHits+' 项' : ''}`;
-    $('jv-caption').textContent = '沿用作图网站快速拟合：300 K、n = 1.4、m = 2.4，全测量电压范围。拟合使用有符号 J；上图显示 |J|，下图为有符号残差。相对误差不计 0 V 和 |J| < 10⁻¹¹ A/cm²。';
+    $('jv-caption').textContent = '上图含实测、总拟合、二极管、欧姆和非欧姆分量，均显示 |J|；下图为有符号残差。拟合使用有符号 J，沿用作图网站快速拟合（300 K、n = 1.4、m = 2.4，全电压范围）。相对误差不计 0 V 和 |J| < 10⁻¹¹ A/cm²。';
     await image.decode();
   }
   async function render() {
@@ -234,7 +234,7 @@
     const file = `JV_${state.type}_${state.key.replaceAll('.', '-')}_${state.mode}_${state.scale}`+(state.view === 'mean' ? '_mean' : '');
     if (state.view === 'fit') {
       const path = activeFit()[format];
-      downloadUrl(path, path.split('/').at(-1)); return;
+      downloadUrl(window.ReportNavigation.href(path), path.split('/').at(-1)); return;
     }
     if (format === 'csv') {
       const mean = state.view === 'mean';
