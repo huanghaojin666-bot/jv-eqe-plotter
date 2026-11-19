@@ -164,20 +164,20 @@
     finally { busy(false); }
   }
   function currentSeries() { return state.display?.series || state.display?.fit?.series; }
-  function plotLayout({ residual = false, exportMode = false, traceCount = 0 } = {}) {
-    const legendHeight = traceCount * (exportMode ? 26 : 19);
+  function plotLayout({ residual = false, exportMode = false } = {}) {
     const margin = residual ? { l: 88, r: 25, t: 24, b: 55 }
-      : exportMode ? { l: 130, r: 60, t: 90, b: 100 + legendHeight }
-        : { l: 88, r: 25, t: 24, b: 74 + legendHeight };
+      : exportMode ? { l: 130, r: 60, t: 90, b: 100 }
+        : { l: 88, r: 25, t: 24, b: 74 };
     return {
-      height: residual ? 210 : exportMode ? 1000 : 499 + legendHeight,
+      height: residual ? 210 : exportMode ? 1000 : 520,
       margin,
       paper_bgcolor: "#fff", plot_bgcolor: "#fff", hovermode: "closest",
       font: { family: "Arial, Microsoft YaHei UI, sans-serif", color: "#172d4b", size: 12 },
       xaxis: { title: { text: "Voltage (V)" }, showline: true, mirror: true, ticks: "outside", zeroline: true, gridcolor: "#e8edf4" },
       yaxis: { title: { text: residual ? "有符号残差 (A/cm²)" : $("dfScale").value === "log" ? "|J| (A/cm²)" : "J (A/cm²)" }, type: !residual && $("dfScale").value === "log" ? "log" : "linear", nticks: 7, showline: true, mirror: true, ticks: "outside", zeroline: true, gridcolor: "#e8edf4", exponentformat: "power" },
       legend: {
-        orientation: "v", x: 0, xanchor: "left", y: -0.12, yanchor: "top",
+        orientation: "v", x: 0.04, xanchor: "left", y: 0.98, yanchor: "top",
+        bgcolor: "rgba(255,255,255,0)", borderwidth: 0,
         itemwidth: exportMode ? 54 : 42,
         font: { size: exportMode ? 19 : 13 }, traceorder: "normal"
       },
@@ -209,11 +209,7 @@
   }
   function renderPlot() {
     if (!state.visible) return;
-    const traces = plotTraces();
-    const layout = plotLayout({ traceCount: traces.length });
-    const plot = $("dfPlot");
-    plot.style.height = `${layout.height}px`;
-    window.Plotly.react(plot, traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage", "lasso2d", "select2d"] });
+    window.Plotly.react($("dfPlot"), plotTraces(), plotLayout(), { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage", "lasso2d", "select2d"] });
     const series = currentSeries();
     $("dfResidual").hidden = !series;
     if (series) window.Plotly.react($("dfResidual"), [{ x: series.voltage, y: series.fitted.map((value, index) => value - series.measured[index]), name: "拟合 − 实测", mode: "lines+markers", line: { color: "#9a4c39", width: 1 }, marker: { size: 3 } }], plotLayout({ residual: true }), { responsive: true, displaylogo: false });
@@ -272,7 +268,7 @@
     try {
       const traces = plotTraces();
       const layout = {
-        ...plotLayout({ exportMode: true, traceCount: traces.length }), width: 1600,
+        ...plotLayout({ exportMode: true }), width: 1600,
         title: { text: html(`${state.input.dataset.label} · 暗电流${state.manual ? "手动预览" : "拟合"}`), font: { size: 25 } },
         font: { size: 18 }
       };

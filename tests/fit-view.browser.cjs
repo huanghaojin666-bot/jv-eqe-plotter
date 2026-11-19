@@ -118,6 +118,12 @@ function current(voltage) {
     const fitPlot = page.locator("#dfPlot");
     const legendLabels = ["DMF1-1 · dark", "J_Fitted", "J_Diode", "J_Ohm", "J_Nohm"];
     assert.deepEqual(await fitPlot.locator(".legendtext").allTextContents(), legendLabels);
+    const plotBounds = await fitPlot.locator(".nsewdrag").boundingBox();
+    const legendBounds = await fitPlot.locator(".legend").boundingBox();
+    assert.ok(legendBounds.x >= plotBounds.x && legendBounds.y >= plotBounds.y, "legend starts inside the plot");
+    assert.ok(legendBounds.x + legendBounds.width <= plotBounds.x + plotBounds.width);
+    assert.ok(legendBounds.y + legendBounds.height <= plotBounds.y + plotBounds.height);
+    assert.ok(legendBounds.x - plotBounds.x < plotBounds.width / 8 && legendBounds.y - plotBounds.y < plotBounds.height / 8, "legend is in the upper left");
     const fitY = await fitPlot.evaluate(plot => {
       const [measured, fitted, diode, ohmic, nonohmic] = plot.data;
       return { y: fitted.y, marker: measured.marker.symbol, dashes: [fitted, diode, ohmic, nonohmic].map(trace => trace.line.dash) };
