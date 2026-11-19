@@ -1926,7 +1926,7 @@
   elements.darkFitButton.addEventListener("click", () => {
     if (state.chartMode === "fit") return;
     setFitView(true);
-    window.JVEQEDarkFit.open({ datasets: currentDatasets(false), onClose: restoreJVView, saveBlob, prepareSave: prepareExport });
+    window.JVEQEDarkFit.open({ datasets: currentDatasets(false), onClose: restoreJVView, saveBlob, prepareSave: prepareExport, datasetDisplayLabel });
   });
   elements.restoreJVButton.addEventListener("click", () => window.JVEQEDarkFit.close());
   elements.downloadTxtButton.addEventListener("click", () => openExportDialog("txt"));

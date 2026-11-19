@@ -5,7 +5,15 @@
   const html = value => String(value == null ? "" : value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
   const scientific = value => Number.isFinite(Number(value)) && value !== null ? Number(value).toExponential(4) : "—";
   const percent = value => Number.isFinite(Number(value)) && value !== null ? `${Number(value).toFixed(2)}%` : "—";
-  const state = { datasets: [], fingerprint: "", visible: false, onClose: null, saveBlob: null, prepareSave: null, worker: null, sequence: 0, pending: null, busy: false, automatic: null, display: null, manual: null, input: null };
+  const componentStyles = [
+    { key: "diode", name: "J_Diode", color: "#005bea", dash: "solid" },
+    { key: "ohmic", name: "J_Ohm", color: "#009640", dash: "longdash" },
+    { key: "nonohmic", name: "J_Nohm", color: "#a653d8", dash: "longdash" },
+    { key: "recombination", name: "J_Recombination", color: "#9c771e", dash: "dash" },
+    { key: "diffusion", name: "J_Diffusion", color: "#208596", dash: "dash" },
+    { key: "extra_current", name: "J_Extra", color: "#bb5a86", dash: "dash" }
+  ];
+  const state = { datasets: [], fingerprint: "", visible: false, onClose: null, saveBlob: null, prepareSave: null, datasetDisplayLabel: dataset => dataset.label, worker: null, sequence: 0, pending: null, busy: false, automatic: null, display: null, manual: null, input: null };
 
   function createPanel() {
     if ($("darkFitPanel")) return;
@@ -156,14 +164,23 @@
     finally { busy(false); }
   }
   function currentSeries() { return state.display?.series || state.display?.fit?.series; }
-  function plotLayout(residual = false) {
+  function plotLayout({ residual = false, exportMode = false, traceCount = 0 } = {}) {
+    const legendHeight = traceCount * (exportMode ? 26 : 19);
+    const margin = residual ? { l: 88, r: 25, t: 24, b: 55 }
+      : exportMode ? { l: 130, r: 60, t: 90, b: 100 + legendHeight }
+        : { l: 88, r: 25, t: 24, b: 74 + legendHeight };
     return {
-      height: residual ? 210 : 520, margin: { l: 88, r: 25, t: 24, b: residual ? 55 : 95 },
+      height: residual ? 210 : exportMode ? 1000 : 499 + legendHeight,
+      margin,
       paper_bgcolor: "#fff", plot_bgcolor: "#fff", hovermode: "closest",
       font: { family: "Arial, Microsoft YaHei UI, sans-serif", color: "#172d4b", size: 12 },
       xaxis: { title: { text: "Voltage (V)" }, showline: true, mirror: true, ticks: "outside", zeroline: true, gridcolor: "#e8edf4" },
       yaxis: { title: { text: residual ? "有符号残差 (A/cm²)" : $("dfScale").value === "log" ? "|J| (A/cm²)" : "J (A/cm²)" }, type: !residual && $("dfScale").value === "log" ? "log" : "linear", nticks: 7, showline: true, mirror: true, ticks: "outside", zeroline: true, gridcolor: "#e8edf4", exponentformat: "power" },
-      legend: { orientation: "h", x: 0, y: -0.22, font: { size: 11 } },
+      legend: {
+        orientation: "v", x: 0, xanchor: "left", y: -0.12, yanchor: "top",
+        itemwidth: exportMode ? 54 : 42,
+        font: { size: exportMode ? 19 : 13 }, traceorder: "normal"
+      },
       showlegend: !residual, annotations: []
     };
   }
@@ -174,23 +191,32 @@
     const x = series?.voltage || dataset.x;
     const values = series?.measured || dataset.y;
     const view = y => $("dfScale").value === "log" ? y.map(value => Math.abs(value) || null) : y;
-    const traces = [{ x, y: view(values), name: "实测", type: "scatter", mode: "markers", marker: { color: "#7d8b9d", size: 4 }, hovertemplate: "V=%{x:.4g} V<br>|J|/J=%{y:.4e}<extra>实测</extra>" }];
+    const traces = [{
+      x, y: view(values), name: html(state.datasetDisplayLabel(dataset) || "实测"),
+      type: "scatter", mode: "markers",
+      marker: { symbol: "circle-open", color: "#255d87", size: 6, line: { width: 1.4 } },
+      hovertemplate: "V=%{x:.4g} V<br>|J|/J=%{y:.4e}<extra>%{fullData.name}</extra>"
+    }];
     if (series) {
-      traces.push({ x, y: view(series.fitted), name: state.manual ? "手动预览" : "拟合", mode: "lines", line: { color: "#164b9b", width: 2.5 } });
+      traces.push({ x, y: view(series.fitted), name: "J_Fitted", mode: "lines", line: { color: "#ed2525", dash: "solid", width: 2.5 } });
       if ($("dfComponents").checked) {
-        [["diode", "二极管分量", "#d66a39"], ["ohmic", "欧姆分量", "#2e986d"], ["nonohmic", "非欧姆分量", "#8d62b0"], ["recombination", "复合分量", "#b7983c"], ["diffusion", "扩散分量", "#478ba1"], ["extra_current", "扩展分量", "#bb5a86"]].forEach(([key, name, color]) => {
-          if (Array.isArray(series[key])) traces.push({ x, y: view(series[key]), name, mode: "lines", line: { color, width: 1.5, dash: "dash" } });
-        });
+        for (const { key, name, color, dash } of componentStyles) {
+          if (Array.isArray(series[key])) traces.push({ x, y: view(series[key]), name, mode: "lines", line: { color, dash, width: 2 } });
+        }
       }
     }
     return traces;
   }
   function renderPlot() {
     if (!state.visible) return;
-    window.Plotly.react($("dfPlot"), plotTraces(), plotLayout(), { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage", "lasso2d", "select2d"] });
+    const traces = plotTraces();
+    const layout = plotLayout({ traceCount: traces.length });
+    const plot = $("dfPlot");
+    plot.style.height = `${layout.height}px`;
+    window.Plotly.react(plot, traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage", "lasso2d", "select2d"] });
     const series = currentSeries();
     $("dfResidual").hidden = !series;
-    if (series) window.Plotly.react($("dfResidual"), [{ x: series.voltage, y: series.fitted.map((value, index) => value - series.measured[index]), name: "拟合 − 实测", mode: "lines+markers", line: { color: "#9a4c39", width: 1 }, marker: { size: 3 } }], plotLayout(true), { responsive: true, displaylogo: false });
+    if (series) window.Plotly.react($("dfResidual"), [{ x: series.voltage, y: series.fitted.map((value, index) => value - series.measured[index]), name: "拟合 − 实测", mode: "lines+markers", line: { color: "#9a4c39", width: 1 }, marker: { size: 3 } }], plotLayout({ residual: true }), { responsive: true, displaylogo: false });
   }
   function renderResult() {
     const result = state.display;
@@ -244,8 +270,13 @@
     target.style.cssText = "position:fixed;left:-10000px;width:1600px;height:1000px";
     document.body.appendChild(target);
     try {
-      const layout = { ...plotLayout(), height: 1000, width: 1600, margin: { l: 130, r: 60, t: 90, b: 170 }, title: { text: html(`${state.input.dataset.label} · 暗电流${state.manual ? "手动预览" : "拟合"}`), font: { size: 25 } }, font: { size: 18 }, legend: { orientation: "h", y: -0.18, font: { size: 17 } } };
-      await window.Plotly.newPlot(target, plotTraces(), layout, { staticPlot: true });
+      const traces = plotTraces();
+      const layout = {
+        ...plotLayout({ exportMode: true, traceCount: traces.length }), width: 1600,
+        title: { text: html(`${state.input.dataset.label} · 暗电流${state.manual ? "手动预览" : "拟合"}`), font: { size: 25 } },
+        font: { size: 18 }
+      };
+      await window.Plotly.newPlot(target, traces, layout, { staticPlot: true });
       const source = await window.Plotly.toImage(target, { format, width: 1600, height: 1000, scale: format === "png" ? 2 : 1 });
       await download(await (await fetch(source)).blob(), format, destinationName, saveTarget);
     } catch (error) { status(`图片导出失败：${error.message}`, true); }
@@ -261,9 +292,10 @@
     refreshDatasets();
   }
   window.JVEQEDarkFit = {
-    open({ datasets, onClose, saveBlob, prepareSave, autoRun = true }) {
+    open({ datasets, onClose, saveBlob, prepareSave, datasetDisplayLabel, autoRun = true }) {
       createPanel();
       state.visible = true; state.onClose = onClose; state.saveBlob = saveBlob; state.prepareSave = prepareSave;
+      if (datasetDisplayLabel) state.datasetDisplayLabel = datasetDisplayLabel;
       $("darkFitPanel").hidden = false;
       updateDatasets(datasets);
       renderResult();

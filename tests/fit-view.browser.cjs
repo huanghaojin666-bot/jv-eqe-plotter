@@ -115,7 +115,18 @@ function current(voltage) {
     assert.ok(parseFloat(await page.locator("#dfMean").textContent()) < 0.1);
     await page.locator("#darkFitButton").click();
     assert.equal(await page.locator("#darkFitPanel").isVisible(), true, "clicking the selected heading keeps its view");
-    const fitY = await page.locator("#dfPlot").evaluate(plot => plot.data.find(trace => trace.name === "拟合").y);
+    const fitPlot = page.locator("#dfPlot");
+    const legendLabels = ["DMF1-1 · dark", "J_Fitted", "J_Diode", "J_Ohm", "J_Nohm"];
+    assert.deepEqual(await fitPlot.locator(".legendtext").allTextContents(), legendLabels);
+    const fitY = await fitPlot.evaluate(plot => {
+      const [measured, fitted, diode, ohmic, nonohmic] = plot.data;
+      return { y: fitted.y, marker: measured.marker.symbol, dashes: [fitted, diode, ohmic, nonohmic].map(trace => trace.line.dash) };
+    });
+    assert.equal(fitY.marker, "circle-open");
+    assert.deepEqual(fitY.dashes, ["solid", "solid", "longdash", "longdash"]);
+    await page.locator("#dfComponents").uncheck();
+    assert.deepEqual(await fitPlot.locator(".legendtext").allTextContents(), legendLabels.slice(0, 2));
+    await page.locator("#dfComponents").check();
 
     async function saveFromToolbar(button, basename, extension) {
       await page.locator(button).click();
@@ -134,7 +145,11 @@ function current(voltage) {
     assert.equal(Number(csv[1].split(",")[measured]), datasets[0].y[0], "export retains signed measured data");
     const svg = await saveFromToolbar("#downloadPngButton", "fit-chart", "svg");
     assert.match(svg.toString("utf8"), /拟合/);
-    assert.match(svg.toString("utf8"), /欧姆分量/);
+    const exportedLabels = await page.evaluate(svgSource => {
+      const image = new DOMParser().parseFromString(svgSource, "image/svg+xml");
+      return Array.from(image.querySelectorAll(".legendtext"), node => node.textContent);
+    }, svg.toString("utf8"));
+    assert.deepEqual(exportedLabels, legendLabels);
     assert.match(svg.toString("utf8"), /Voltage \(V\)/);
     assert.match(svg.toString("utf8"), /\|J\| \(A\/cm²\)/);
     const png = await saveFromToolbar("#downloadPngButton", "fit-chart", "png");
@@ -158,7 +173,7 @@ function current(voltage) {
 
     await page.locator("#darkFitButton").click();
     assert.equal(await page.locator("#dfRun").isEnabled(), true, "reopening reuses the completed fit");
-    assert.deepEqual(await page.locator("#dfPlot").evaluate(plot => plot.data.find(trace => trace.name === "拟合").y), fitY);
+    assert.deepEqual(await fitPlot.evaluate(plot => plot.data.find(trace => trace.name === "J_Fitted").y), fitY.y);
     await page.locator("#dfManual").evaluate(element => { element.open = true; });
     await page.locator("#dfParam0").fill("2e-9");
     await page.locator("#dfEvaluate").click();
