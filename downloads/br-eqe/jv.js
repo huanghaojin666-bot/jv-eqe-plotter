@@ -156,9 +156,15 @@
     image.src = window.ReportNavigation.href(row.svg);
     $('jv-fit-zip').href = window.ReportNavigation.href(fits.bundle);
     $('jv-fit-json').href = row.json;
+    $('jv-fit-review-csv').href = window.ReportNavigation.href(fits.review);
     const pct = value => value === null ? '无' : value.toFixed(2)+'%';
-    $('jv-fit-details').textContent = `${row.points} 点 · ${row.range[0]} 至 ${row.range[1]} V · 平均相对误差 ${pct(row.meanErrorPct)} · 最大 ${pct(row.maxErrorPct)}${row.boundaryHits ? ' · 参数触边 '+row.boundaryHits+' 项' : ''}`;
-    $('jv-caption').textContent = '上图含实测、总拟合、二极管、欧姆和非欧姆分量，均显示 |J|；下图为有符号残差。拟合使用有符号 J，沿用作图网站快速拟合（300 K、n = 1.4、m = 2.4，全电压范围）。相对误差不计 0 V 和 |J| < 10⁻¹¹ A/cm²。';
+    $('jv-fit-details').textContent = `${row.points} 点 · ${row.range[0]} 至 ${row.range[1]} V · 平均相对误差 ${pct(row.baselineMeanPct)} → ${pct(row.meanErrorPct)} · 反偏 ${pct(row.reversePct)} / 正偏 ${pct(row.forwardPct)} · Rₛ = ${row.params.Rs.toPrecision(3)} Ω·cm² · n = ${row.n.toFixed(2)} · m = ${row.m.toFixed(1)}${row.boundaryHits ? ' · 触边 '+row.boundaryParameters.join('、') : ''}`;
+    const status = { uncertain: '未能区分', diode: '主结较高', ohmic: '欧姆较高', nonohmic: '非欧姆较高' };
+    $('jv-fit-review').innerHTML = row.references.map(ref => `<tr><th scope="row">${ref.voltage.toFixed(1)} V</th><td>${Math.abs(ref.measured).toExponential(2)}</td>`
+      + ref.shares.map((value, i) => `<td>${value.toFixed(1)} <small>(${ref.min[i].toFixed(1)}–${ref.max[i].toFixed(1)})</small></td>`).join('')
+      + `<td class="${ref.status === 'uncertain' ? 'jv-fit-uncertain' : ''}">${status[ref.status]}</td></tr>`).join('');
+    $('jv-fit-review-note').textContent = `主拟合占比（括号为 ${row.comparableCandidates} 种可比设置的范围）；“较高”只表示候选内排序稳定。交错留点平均误差：反偏 ${pct(row.cvReversePct)}、正偏 ${pct(row.cvForwardPct)}。`+(row.cvForwardPct > 20 ? ' 正偏误差仍偏大，不宜用正偏分量作定量归因。' : '');
+    $('jv-caption').textContent = '三分量全区拟合，按偏压段平衡误差。上图显示 |J|，下图为有符号残差。原数据不重复除以面积。相对误差不计 0 V 和 |J| < 10⁻¹¹ A/cm²。';
     await image.decode();
   }
   async function render() {

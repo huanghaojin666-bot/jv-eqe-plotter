@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="br-report-version" content="20261119-jv-fit-switch">
+  <meta name="br-report-version" content="20261119-jv-refit-review">
   <link rel="icon" type="image/svg+xml" href="../../assets/nano-photonics-icon.svg?v=20261117-1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>Br 实验 · JV</title>
-  <link rel="stylesheet" href="styles.css?v=20261119-jv-fit-switch">
+  <link rel="stylesheet" href="styles.css?v=20261119-jv-refit-review">
 </head>
 <body>
   <header class="app-header">
-    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261119-jv-fit-switch" aria-current="page">JV</a><a href="index.html?v=20261119-jv-fit-switch" data-eqe-link>EQE</a><a href="bandwidth.html?v=20261119-jv-fit-switch" data-metric-link="bandwidth">-3dB</a><a href="ldr.html?v=20261119-jv-fit-switch" data-metric-link="ldr">ldr</a><a href="isd.html?v=20261119-jv-fit-switch" data-metric-link="isd">isd</a><a href="response.html?v=20261119-jv-fit-switch" data-metric-link="response">response</a><a href="abs.html?v=20261119-jv-fit-switch" data-metric-link="abs">abs</a><a href="pl.html?v=20261119-jv-fit-switch" data-metric-link="pl">pl</a><a href="trpl.html?v=20261119-jv-fit-switch" data-metric-link="trpl">trpl</a></nav></div>
+    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261119-jv-refit-review" aria-current="page">JV</a><a href="index.html?v=20261119-jv-refit-review" data-eqe-link>EQE</a><a href="bandwidth.html?v=20261119-jv-refit-review" data-metric-link="bandwidth">-3dB</a><a href="ldr.html?v=20261119-jv-refit-review" data-metric-link="ldr">ldr</a><a href="isd.html?v=20261119-jv-refit-review" data-metric-link="isd">isd</a><a href="response.html?v=20261119-jv-refit-review" data-metric-link="response">response</a><a href="abs.html?v=20261119-jv-refit-review" data-metric-link="abs">abs</a><a href="pl.html?v=20261119-jv-refit-review" data-metric-link="pl">pl</a><a href="trpl.html?v=20261119-jv-refit-review" data-metric-link="trpl">trpl</a></nav></div>
     <div class="header-meta"><span id="jv-inventory"></span><span class="local-status"><i data-lucide="hard-drive"></i>实验数据</span></div>
   </header>
   <main class="workspace">
@@ -35,20 +35,25 @@
         <div class="jv-fit-tools"><label for="jv-fit-curve">暗态点位</label><select id="jv-fit-curve"></select><a id="jv-fit-zip" download class="text-command"><i data-lucide="folder-down"></i>全部拟合包</a></div>
         <img id="jv-fit-image" alt="">
         <div id="jv-fit-details" class="subtle"></div>
-        <a id="jv-fit-json" download class="text-command"><i data-lucide="file-text"></i>拟合参数与诊断 JSON</a>
+        <section class="jv-fit-review" aria-labelledby="jv-fit-review-title">
+          <h3 id="jv-fit-review-title">反偏分量复核</h3>
+          <div class="stats-scroll"><table><thead><tr><th>偏压</th><th>实测 |J| (A/cm²)</th><th>主结 %</th><th>欧姆 %</th><th>非欧姆 %</th><th>区分结果</th></tr></thead><tbody id="jv-fit-review"></tbody></table></div>
+          <div class="jv-unit-note" id="jv-fit-review-note"></div>
+          <div class="jv-fit-links"><a id="jv-fit-json" download class="text-command"><i data-lucide="file-text"></i>点位诊断 JSON</a><a id="jv-fit-review-csv" download class="text-command"><i data-lucide="download"></i>全批复核 CSV</a></div>
+        </section>
       </div><div id="jv-error" role="alert" hidden></div></div>
       <div id="jv-caption" class="plot-caption"></div>
       <section class="statistics" id="jv-statistics" aria-labelledby="jv-stats-title"><div class="statistics-heading"><h3 id="jv-stats-title">当前曲线</h3><span id="jv-visible-count" class="subtle"></span></div><div class="stats-scroll jv-stats-scroll"><table><thead><tr><th>日期 / 点位</th><th>状态</th><th id="jv-stats-device">器件</th><th>|J| @ −0.5 V</th><th>|J| @ +0.5 V</th></tr></thead><tbody id="jv-stats"></tbody></table></div><div class="jv-unit-note" id="jv-unit-note">电流密度单位 A/cm²；表格仅列指定偏压，不对不同器件求均值。</div></section>
     </section>
   </main>
-  <dialog id="jv-method-dialog"><div class="dialog-heading"><h2>JV 配色与数据口径</h2><button id="jv-close-method" class="icon-button" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button></div><dl><dt>筛选数据</dt><dd>仅使用每次实验“JV and QE/新建文件夹 (2)”中的 TXT。直接复用你的 JV/EQE 作图网站解析器，保留全部采样点、点位和有符号电流密度。</dd><dt>同器件与 EQE 同色</dt><dd>按“日期 + 变量 + 器件编号”逐个匹配 EQE 原始 SVG 的实际颜色；同器件的不同点位、Dark 与 Light 都使用该颜色。优先匹配筛选 EQE；只在 all 中出现的器件从对应 all 原图读取颜色，不把 all 曲线混入筛选数据。</dd><dt>光暗状态</dt><dd>以 TXT 的 Mode 字段识别，不根据电流正负推断。Dark 为实线，Light 为虚线。没有提供 Light 的组不补造 Light 数据。</dd><dt>电流显示</dt><dd>对数轴显示 |J|，零值不能在对数轴上显示；线性轴与 CSV 保留 J 的正负号。数据不归一化、不抽点、不平滑，不把光暗数据合并平均。</dd><dt>暗电流拟合</dt><dd>逐条拟合筛选的 Dark 曲线，使用作图网站同一快速拟合模型，300 K、n = 1.4、m = 2.4，使用完整有符号 J 和全电压窗口。Light 不拟合。图与 CSV 保留残差，参数 JSON 保留原引擎诊断；参数触边或相对误差较大时，不宜将参数直接作物理归因。</dd><dt>JV 平均值</dt><dd>按日期、变量、光暗分组，仅平均实测曲线。在每组共有电压范围内线性插值，不外推；同一器件的点位先平均，再对器件等权平均。先算有符号 J 的算术平均，对数轴才取绝对值。</dd><dt>保存 SVG</dt><dd>来源于你保存的网站 SVG，只调整曲线、图例配色及光暗线型，并规范图例名称；曲线几何路径和测量数值不变。修改前的 SVG 已在本机另行备份。</dd><dt>9.15 日期修正</dt><dd>a 目录里文件名“9.20 f / 9.20 5”已由你确认实际属于 9.15，按实验目录归类，保留源 TXT 的文件名与测量时间。</dd><dt>器件对应范围</dt><dd>同日期同器件共享颜色；不同实验、不同变量可能复用颜色，图例和点位名称同时保留用于区分。EQE 与 JV 的筛选点位不完全相同，不把未同时测量的点位当成一一对应的数据。</dd></dl><a href="JV配色核对.csv" download class="command"><i data-lucide="download"></i>下载 JV / EQE 配色核对表</a></dialog>
+  <dialog id="jv-method-dialog"><div class="dialog-heading"><h2>JV 配色与数据口径</h2><button id="jv-close-method" class="icon-button" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button></div><dl><dt>筛选数据</dt><dd>仅使用每次实验“JV and QE/新建文件夹 (2)”中的 TXT。直接复用你的 JV/EQE 作图网站解析器，保留全部采样点、点位和有符号电流密度。</dd><dt>同器件与 EQE 同色</dt><dd>按“日期 + 变量 + 器件编号”逐个匹配 EQE 原始 SVG 的实际颜色；同器件的不同点位、Dark 与 Light 都使用该颜色。优先匹配筛选 EQE；只在 all 中出现的器件从对应 all 原图读取颜色，不把 all 曲线混入筛选数据。</dd><dt>光暗状态</dt><dd>以 TXT 的 Mode 字段识别，不根据电流正负推断。Dark 为实线，Light 为虚线。没有提供 Light 的组不补造 Light 数据。</dd><dt>电流显示</dt><dd>对数轴显示 |J|，零值不能在对数轴上显示；线性轴与 CSV 保留 J 的正负号。数据不归一化、不抽点、不平滑，不把光暗数据合并平均。</dd><dt>暗电流拟合</dt><dd>采用同一三分量等效电路，用原始有符号 J 拟合；原 TXT 已为 A/cm²，0.045 cm² 不重复换算。300 K 为名义温度。全电压区间按偏压段平衡误差，放宽 Rₛ 下限，拟合 n，并在 m = 1.8、2.4、3.2 中按三折交错采样点预测选择。另用核心窗口（−0.5 至 +0.3 V）、改变正反偏权重及 n ±10% 作敏感性检查。各候选在其窗口的平衡对数误差不超过主拟合的 1.2 倍或主拟合加 0.015 decade（二者取较宽），才纳入分量范围。至少两种候选、同一最大分量、与其次大分量差至少 10 个百分点且反偏留点误差不超过 20%，才标为候选内稳定。这是比较判据，不是置信区间或独立器件验证。非欧姆分量不能单独证明陷阱机制；参数触边或各分量重叠时不作唯一归因。Light 不拟合。</dd><dt>JV 平均值</dt><dd>按日期、变量、光暗分组，仅平均实测曲线。在每组共有电压范围内线性插值，不外推；同一器件的点位先平均，再对器件等权平均。先算有符号 J 的算术平均，对数轴才取绝对值。</dd><dt>保存 SVG</dt><dd>来源于你保存的网站 SVG，只调整曲线、图例配色及光暗线型，并规范图例名称；曲线几何路径和测量数值不变。修改前的 SVG 已在本机另行备份。</dd><dt>9.15 日期修正</dt><dd>a 目录里文件名“9.20 f / 9.20 5”已由你确认实际属于 9.15，按实验目录归类，保留源 TXT 的文件名与测量时间。</dd><dt>器件对应范围</dt><dd>同日期同器件共享颜色；不同实验、不同变量可能复用颜色，图例和点位名称同时保留用于区分。EQE 与 JV 的筛选点位不完全相同，不把未同时测量的点位当成一一对应的数据。</dd></dl><a href="JV配色核对.csv" download class="command"><i data-lucide="download"></i>下载 JV / EQE 配色核对表</a></dialog>
   <div id="toast" role="status" hidden></div>
   <script src="assets/plotly.min.js"></script>
   <script src="assets/lucide.min.js"></script>
-  <script src="jv-data.js?v=20261119-jv-fit-switch"></script>
-  <script src="jv-model.js?v=20261119-jv-fit-switch"></script>
-  <script src="jv-fit-data.js?v=20261119-jv-fit-switch"></script>
-  <script src="navigation.js?v=20261119-jv-fit-switch"></script>
-  <script src="jv.js?v=20261119-jv-fit-switch"></script>
+  <script src="jv-data.js?v=20261119-jv-refit-review"></script>
+  <script src="jv-model.js?v=20261119-jv-refit-review"></script>
+  <script src="jv-fit-data.js?v=20261119-jv-refit-review"></script>
+  <script src="navigation.js?v=20261119-jv-refit-review"></script>
+  <script src="jv.js?v=20261119-jv-refit-review"></script>
 </body>
 </html>
