@@ -2,14 +2,22 @@
   'use strict';
   const data = window.JV_DATA;
   const model = window.JVModel;
+  const fits = window.JV_FITS;
   const $ = id => document.getElementById(id);
-  const state = { type: 'cell', key: '9.15_f', view: 'plot', mode: 'both', scale: 'log', hidden: new Set() };
+  const state = { type: 'cell', key: '9.15_f', view: 'plot', mode: 'both', scale: 'log', fit: '', hidden: new Set() };
+  const meanColors = ['#1f77b4', '#d26b17', '#2a8c48', '#c43e49', '#8461a3', '#916351', '#b84887', '#62696e', '#88851a', '#198b97', '#354b9a'];
   let ready = Promise.resolve();
   let resizeTimer;
   function esc(value) { return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
   function icons() { window.lucide.createIcons(); }
   function selected() { return model.selection(data, state.type, state.key); }
   function visible() { return model.visible(selected(), state); }
+  function fitRows() {
+    if (state.type !== 'cell') return [];
+    const record = selected()[0];
+    return (fits?.records[record.id] || []).filter(row => row.sourceSha256 === record.sha256);
+  }
+  function activeFit() { return fitRows().find(row => row.id === state.fit) || fitRows()[0]; }
   function title() {
     if (state.type === 'date') return state.key+' · JV 各变量对比';
     if (state.type === 'group') return state.key+' · JV 跨日期对比';
@@ -45,6 +53,14 @@
     $('jv-matrix').innerHTML = html+'</tbody>';
   }
   function traceData() {
+    if (state.view === 'mean') return model.means(visible()).map(row => ({
+      x: row.x, y: model.displayY(row, state.scale), customdata: row.y,
+      type: 'scatter', mode: 'lines', showlegend: true,
+      name: row.record.date+' '+row.record.group+' '+capitalize(row.mode)+' (n='+row.deviceCount+')',
+      line: { color: meanColors[data.records.indexOf(row.record) % meanColors.length], dash: row.mode === 'light' ? 'dash' : 'solid', width: 2.2, simplify: false },
+      hovertemplate: 'V = %{x:.3f} V<br>平均 J = %{customdata:.5e} A/cm²<extra>%{fullData.name}</extra>',
+      meta: { record: row.record.id, mode: row.mode, deviceCount: row.deviceCount, pointCount: row.pointCount }
+    }));
     const entries = visible();
     const buckets = new Map();
     for (const entry of entries) {
@@ -96,7 +112,7 @@
         : { l: mobile ? 64 : 90, r: mobile ? 17 : 30, t: 25, b: many ? mobile ? 240 : 155 : 70 },
       paper_bgcolor: '#fff', plot_bgcolor: '#fff', hovermode: 'closest',
       font: { family: 'Arial, Microsoft YaHei UI, sans-serif', size: 13, color: '#111111' },
-      title: exporting ? { text: '<b>'+esc(title())+'</b>', x: .06, y: .97, font: { size: 32 } } : undefined,
+      title: exporting ? { text: '<b>'+esc(title()+(state.view === 'mean' ? ' · 平均值' : ''))+'</b>', x: .06, y: .97, font: { size: 32 } } : undefined,
       xaxis: { ...axis, range: xRange, dtick: .5, tickformat: '.1f', zeroline: true,
         title: { text: '<b>Voltage, V (V)</b>', standoff: 18, font: { size: exporting ? 25 : mobile ? 12 : 15 } } },
       yaxis: { ...axis, type: state.scale === 'log' ? 'log' : 'linear', range: yRange,
@@ -107,10 +123,20 @@
       annotations: traces.length ? [] : [{ x: .5, y: .5, xref: 'paper', yref: 'paper', showarrow: false,
         text: state.mode === 'light' ? '当前选择未提供 Light 曲线' : state.mode === 'dark' ? '当前选择未提供 Dark 曲线' : '没有可见曲线',
         font: { size: 14, color: '#697c81' } }],
-      uirevision: JSON.stringify([state.type, state.key, state.scale, state.mode]) };
+      uirevision: JSON.stringify([state.type, state.key, state.view, state.scale, state.mode]) };
   }
   function number(value) { return value === null ? '—' : Math.abs(value).toExponential(2); }
   function renderStats() {
+    $('jv-stats-title').textContent = state.view === 'mean' ? '分组平均' : '当前曲线';
+    $('jv-stats-device').textContent = state.view === 'mean' ? '器件 / 点位数' : '器件';
+    $('jv-unit-note').textContent = state.view === 'mean' ? '表格显示指定偏压下有符号平均 J 的绝对值（A/cm²）。' : '电流密度单位 A/cm²；表格仅列指定偏压，不对不同器件求均值。';
+    if (state.view === 'mean') {
+      const rows = model.means(visible());
+      $('jv-stats').innerHTML = rows.map(row => `<tr><td>${esc(row.record.date)} · ${esc(row.record.group)}</td><td class="jv-mode-${row.mode}">${capitalize(row.mode)}</td><td>${row.deviceCount} / ${row.pointCount}</td><td>${number(model.atVoltage(row, -.5))}</td><td>${number(model.atVoltage(row, .5))}</td></tr>`).join('')
+        || '<tr><td colspan="5" class="subtle">没有可计算的曲线</td></tr>';
+      $('jv-visible-count').textContent = rows.length+' 条组平均曲线';
+      return;
+    }
     const rows = selected().flatMap(record => record.curves.map(curve => ({ record, curve })))
       .filter(({ curve }) => state.mode === 'both' || state.mode === curve.mode);
     $('jv-stats').innerHTML = rows.length ? rows.map(({ record, curve }) => `<tr><td><label><input type="checkbox" data-jv-curve="${curve.id}" ${state.hidden.has(curve.id) ? '' : 'checked'} ${state.view === 'svg' ? 'disabled' : ''} aria-label="显示 ${record.date} ${curve.label}"><span class="swatch" style="background:${curve.color}"></span>${record.date} · ${record.group} ${curve.pointLabel}</label></td><td class="jv-mode-${curve.mode}">${curve.modeLabel}</td><td>${curve.deviceLabel}</td><td>${number(model.atVoltage(curve, -.5))}</td><td>${number(model.atVoltage(curve, .5))}</td></tr>`).join('')
@@ -120,8 +146,22 @@
   function sources() {
     $('jv-sources').innerHTML = selected().map(record => `<div class="source-item"><b>${record.date} · ${record.group}</b><a href="${record.assetSvg}" target="_blank" rel="noopener">同色 SVG</a><a href="${record.assetTxt}" download>TXT</a><div class="source-path">${esc(record.source)}</div></div>`).join('');
   }
+  async function renderFit() {
+    const row = activeFit();
+    state.fit = row.id;
+    $('jv-fit-curve').replaceChildren(...fitRows().map(fit => new Option(fit.point, fit.id, false, fit.id === row.id)));
+    const image = $('jv-fit-image');
+    image.alt = title()+' · '+row.point+' 暗电流拟合及有符号残差';
+    image.src = row.svg;
+    $('jv-fit-zip').href = fits.bundle;
+    $('jv-fit-json').href = row.json;
+    const pct = value => value === null ? '无' : value.toFixed(2)+'%';
+    $('jv-fit-details').textContent = `${row.points} 点 · ${row.range[0]} 至 ${row.range[1]} V · 平均相对误差 ${pct(row.meanErrorPct)} · 最大 ${pct(row.maxErrorPct)}${row.boundaryHits ? ' · 参数触边 '+row.boundaryHits+' 项' : ''}`;
+    $('jv-caption').textContent = '沿用作图网站快速拟合：300 K、n = 1.4、m = 2.4，全测量电压范围。拟合使用有符号 J；上图显示 |J|，下图为有符号残差。相对误差不计 0 V 和 |J| < 10⁻¹¹ A/cm²。';
+    await image.decode();
+  }
   async function render() {
-    if (state.type !== 'cell') state.view = 'plot';
+    if (state.view === 'svg' && state.type !== 'cell' || state.view === 'mean' && state.type !== 'all' || state.view === 'fit' && !activeFit()) state.view = 'plot';
     const records = selected();
     renderMatrix(); sources(); renderStats();
     $('jv-selection-title').textContent = title();
@@ -129,56 +169,81 @@
     $('jv-viewer-title').textContent = title();
     $('jv-category').textContent = state.type === 'cell' ? '单组 JV' : state.type === 'date' ? '同日变量对比' : state.type === 'group' ? '同变量跨日期对比' : '全部筛选 JV';
     const original = state.view === 'svg';
+    const fitting = state.view === 'fit';
+    const mean = state.view === 'mean';
+    $('jv-view-fit').hidden = !fitRows().length;
+    $('jv-view-fit').setAttribute('aria-pressed', String(fitting));
+    $('jv-view-mean').hidden = state.type !== 'all';
+    $('jv-view-mean').setAttribute('aria-pressed', String(mean));
+    $('jv-toolbar').hidden = fitting;
+    $('jv-fit-surface').hidden = !fitting;
+    $('jv-statistics').hidden = fitting;
+    $('jv-export-csv-label').textContent = fitting ? 'CSV 实测与拟合' : mean ? 'CSV 分组平均' : 'CSV 原始有符号数据';
     $('jv-view-svg').disabled = state.type !== 'cell';
     $('jv-view-svg').setAttribute('aria-pressed', String(original));
-    $('jv-view-plot').setAttribute('aria-pressed', String(!original));
+    $('jv-view-plot').setAttribute('aria-pressed', String(state.view === 'plot'));
     $('jv-mode').value = state.mode;
     $('jv-scale').value = state.scale;
-    $('jv-mode').disabled = original; $('jv-scale').disabled = original; $('jv-reset').disabled = original;
+    $('jv-mode').disabled = original; $('jv-scale').disabled = original; $('jv-reset').disabled = original || fitting;
     $('jv-original-surface').hidden = !original;
-    $('jv-plot').hidden = original;
+    $('jv-plot').hidden = original || fitting;
     $('jv-plot').classList.toggle('is-global', state.type === 'all');
     $('jv-error').hidden = true;
     const hasA = records.some(r => r.date === '9.15');
     $('jv-date-note').hidden = !hasA;
     $('jv-date-note').textContent = 'a 组源文件名为 9.20，已按你的确认归入 9.15；测量时间与源 TXT 不变。';
     const noLight = records.filter(r => r.lightCount === 0);
-    $('jv-notice').hidden = !noLight.length;
+    $('jv-notice').hidden = fitting || !noLight.length;
     if (noLight.length) $('jv-notice').textContent = noLight.length === records.length
       ? '当前选择只提供了 Dark 数据，没有对应 Light 曲线。'
       : `未提供 Light：${noLight.map(r => r.date+' '+r.group).join('、')}。`;
-    if (original) {
+    let traces = [];
+    if (fitting) {
+      await renderFit();
+    } else if (original) {
       $('jv-original-image').src = records[0].assetSvg;
       $('jv-original-image').alt = title()+' · 与 EQE 器件同色的 SVG';
       $('jv-caption').textContent = records[0].relativePath+' · 配色及线型已调整';
     } else {
-      const traces = traceData();
+      traces = traceData();
       await Plotly.react($('jv-plot'), traces, layout(traces), { responsive: true, displayModeBar: false });
-      $('jv-caption').textContent = `全部采样点保留；Dark 实线、Light 虚线。${state.scale === 'log' ? '对数轴显示 |J|，零值留在原始数据中。' : '线性轴保留电流正负号。'}同色对应同日期的同一器件，不对光暗求平均。`;
+      $('jv-caption').textContent = mean
+        ? '仅用筛选后的可见实测曲线，按日期 × 变量 × 光暗分组。在共有电压范围内线性插值，同器件点位先平均，再对器件等权平均；先平均有符号 J。图例 n 为器件数。'
+        : `全部采样点保留；Dark 实线、Light 虚线。${state.scale === 'log' ? '对数轴显示 |J|，零值留在原始数据中。' : '线性轴保留电流正负号。'}同色对应同日期的同一器件，不对光暗求平均。`;
     }
     const hash = new URLSearchParams({ type: state.type, key: state.key, view: state.view, mode: state.mode, scale: state.scale });
+    if (fitting) hash.set('fit', state.fit);
     history.replaceState(null, '', '#'+hash.toString());
     document.querySelector('[data-eqe-link]').href = window.ReportNavigation.href('index.html', new URLSearchParams({ type: state.type, key: state.key, version: 'selected', view: state.type === 'cell' ? 'original' : 'comparison' }));
     for (const link of document.querySelectorAll('[data-metric-link]')) {
       link.href = window.ReportNavigation.href(link.dataset.metricLink+'.html', new URLSearchParams({ date: records[0].date, group: records[0].group }));
     }
     icons();
-    window.JVApp.snapshot = { ...state, hidden: Array.from(state.hidden), records, traces: original ? [] : traceData() };
+    window.JVApp.snapshot = { ...state, hidden: Array.from(state.hidden), records, traces };
   }
   function schedule() {
     ready = ready.then(render).catch(error => { $('jv-error').hidden = false; $('jv-error').textContent = error.message; console.error(error); });
     window.JVApp.ready = ready; return ready;
   }
-  function select(type, key) { state.type = type; state.key = key; state.view = 'plot'; state.hidden.clear(); return schedule(); }
+  function select(type, key) { state.type = type; state.key = key; state.view = 'plot'; state.fit = ''; state.hidden.clear(); return schedule(); }
   function downloadUrl(url, filename) {
     const a = document.createElement('a'); a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
   }
   function downloadBlob(blob, filename) { const url = URL.createObjectURL(blob); downloadUrl(url, filename); setTimeout(() => URL.revokeObjectURL(url), 60000); }
   async function exportFigure(format) {
-    const file = `JV_${state.type}_${state.key.replaceAll('.', '-')}_${state.mode}_${state.scale}`;
+    const file = `JV_${state.type}_${state.key.replaceAll('.', '-')}_${state.mode}_${state.scale}`+(state.view === 'mean' ? '_mean' : '');
+    if (state.view === 'fit') {
+      const path = activeFit()[format];
+      downloadUrl(path, path.split('/').at(-1)); return;
+    }
     if (format === 'csv') {
-      const rows = [['date', 'group', 'native_label', 'display_label', 'device', 'point', 'mode', 'color_EQE', 'voltage_V', 'J_A_cm2_signed', 'display_y', 'source']];
-      for (const { record, curve } of visible()) {
+      const mean = state.view === 'mean';
+      const rows = mean ? [['date', 'group', 'mode', 'devices', 'point_curves', 'voltage_V', 'J_mean_A_cm2_signed']]
+        : [['date', 'group', 'native_label', 'display_label', 'device', 'point', 'mode', 'color_EQE', 'voltage_V', 'J_A_cm2_signed', 'display_y', 'source']];
+      if (mean) for (const row of model.means(visible())) {
+        row.x.forEach((v, i) => rows.push([row.record.date, row.record.group, row.mode, row.deviceCount, row.pointCount, v, row.y[i]]));
+      }
+      else for (const { record, curve } of visible()) {
         const y = model.displayY(curve, state.scale);
         curve.x.forEach((v, i) => rows.push([record.date, record.group, curve.nativeLabel, curve.label, curve.deviceLabel, curve.pointLabel, curve.mode, curve.color, v, curve.y[i], y[i], record.relativePath]));
       }
@@ -216,6 +281,9 @@
   });
   $('jv-all').addEventListener('click', () => select('all', 'all'));
   $('jv-view-plot').addEventListener('click', () => { state.view = 'plot'; schedule(); });
+  $('jv-view-mean').addEventListener('click', () => { state.view = 'mean'; schedule(); });
+  $('jv-view-fit').addEventListener('click', () => { state.view = state.view === 'fit' ? 'plot' : 'fit'; schedule(); });
+  $('jv-fit-curve').addEventListener('change', event => { state.fit = event.target.value; schedule(); });
   $('jv-view-svg').addEventListener('click', () => { state.view = 'svg'; state.mode = 'both'; state.hidden.clear(); schedule(); });
   $('jv-mode').addEventListener('change', event => { state.mode = event.target.value; state.hidden.clear(); schedule(); });
   $('jv-scale').addEventListener('change', event => { state.scale = event.target.value; schedule(); });
@@ -228,13 +296,15 @@
   document.querySelectorAll('[data-jv-export]').forEach(button => button.addEventListener('click', async () => {
     $('jv-export-menu').open = false; try { await ready; await exportFigure(button.dataset.jvExport); } catch (error) { toast(error.message); }
   }));
-  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (state.view === 'plot') schedule(); }, 120); });
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (['plot', 'mean'].includes(state.view)) schedule(); }, 120); });
   $('jv-original-image').addEventListener('error', () => { $('jv-error').hidden = false; $('jv-error').textContent = 'SVG 无法读取。'; });
   $('jv-inventory').textContent = `${data.dates.length} 个日期 · ${data.counts.groups} 组 · ${data.counts.curves} 条 JV`;
   const hash = new URLSearchParams(location.hash.slice(1));
   if (['cell', 'date', 'group', 'all'].includes(hash.get('type')) && model.selection(data, hash.get('type'), hash.get('key')).length) {
     state.type = hash.get('type'); state.key = hash.get('key');
-    state.view = state.type === 'cell' && hash.get('view') === 'svg' ? 'svg' : 'plot';
+    const view = hash.get('view');
+    state.view = state.type === 'cell' && ['svg', 'fit'].includes(view) || state.type === 'all' && view === 'mean' ? view : 'plot';
+    state.fit = hash.get('fit') || '';
     state.mode = ['dark', 'light'].includes(hash.get('mode')) ? hash.get('mode') : 'both';
     state.scale = hash.get('scale') === 'linear' ? 'linear' : 'log';
   }

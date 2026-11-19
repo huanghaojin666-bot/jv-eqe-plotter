@@ -27,5 +27,28 @@
     return records.flatMap(record => record.curves.map(curve => ({ record, curve })))
       .filter(({ curve }) => (state.mode === 'both' || state.mode === curve.mode) && !state.hidden.has(curve.id));
   }
-  return { selection, atVoltage, displayY, visible };
+  function means(entries) {
+    const buckets = new Map();
+    for (const { record, curve } of entries) {
+      const key = record.id+'|'+curve.mode;
+      if (!buckets.has(key)) buckets.set(key, { record, mode: curve.mode, devices: new Map() });
+      const devices = buckets.get(key).devices;
+      if (!devices.has(curve.deviceKey)) devices.set(curve.deviceKey, []);
+      devices.get(curve.deviceKey).push(curve);
+    }
+    const average = values => values.reduce((sum, value) => sum+value, 0)/values.length;
+    const results = [];
+    for (const [id, { record, mode, devices }] of buckets) {
+      const deviceCurves = [...devices.values()];
+      const curves = deviceCurves.flat();
+      const low = Math.max(...curves.map(c => c.x[0]));
+      const high = Math.min(...curves.map(c => c.x.at(-1)));
+      if (low >= high) continue;
+      const x = [...new Set(curves.flatMap(c => c.x.filter(v => v >= low && v <= high)))].sort((a, b) => a-b);
+      const y = x.map(voltage => average(deviceCurves.map(points => average(points.map(c => atVoltage(c, voltage))))));
+      results.push({ id, record, mode, x, y, deviceCount: devices.size, pointCount: curves.length });
+    }
+    return results;
+  }
+  return { selection, atVoltage, displayY, visible, means };
 });
