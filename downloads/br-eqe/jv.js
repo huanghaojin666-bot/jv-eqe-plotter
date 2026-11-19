@@ -2,9 +2,8 @@
   'use strict';
   const data = window.JV_DATA;
   const model = window.JVModel;
-  const fits = window.JV_FITS;
   const $ = id => document.getElementById(id);
-  const state = { type: 'cell', key: '9.15_f', view: 'plot', mode: 'both', scale: 'log', fit: '', hidden: new Set() };
+  const state = { type: 'cell', key: '9.15_f', view: 'plot', mode: 'both', scale: 'log', hidden: new Set() };
   const meanColors = ['#1f77b4', '#d26b17', '#2a8c48', '#c43e49', '#8461a3', '#916351', '#b84887', '#62696e', '#88851a', '#198b97', '#354b9a'];
   let ready = Promise.resolve();
   let resizeTimer;
@@ -12,12 +11,6 @@
   function icons() { window.lucide.createIcons(); }
   function selected() { return model.selection(data, state.type, state.key); }
   function visible() { return model.visible(selected(), state); }
-  function fitRows(records = selected()) {
-    return records.flatMap(record => (fits?.records[record.id] || [])
-      .filter(row => row.sourceSha256 === record.sha256)
-      .map(row => ({ ...row, date: record.date, group: record.group })));
-  }
-  function activeFit(rows = fitRows()) { return rows.find(row => row.id === state.fit) || rows[0]; }
   function title() {
     if (state.type === 'date') return state.key+' · JV 各变量对比';
     if (state.type === 'group') return state.key+' · JV 跨日期对比';
@@ -146,69 +139,39 @@
   function sources() {
     $('jv-sources').innerHTML = selected().map(record => `<div class="source-item"><b>${record.date} · ${record.group}</b><a href="${record.assetSvg}" target="_blank" rel="noopener">同色 SVG</a><a href="${record.assetTxt}" download>TXT</a><div class="source-path">${esc(record.source)}</div></div>`).join('');
   }
-  async function renderFit(rows) {
-    const row = activeFit(rows);
-    state.fit = row.id;
-    $('jv-fit-curve').replaceChildren(...rows.map(fit => new Option(
-      state.type === 'cell' ? fit.point : `${fit.date} · ${fit.group} · ${fit.point}`, fit.id, false, fit.id === row.id)));
-    const image = $('jv-fit-image');
-    image.alt = `${row.date} · ${row.group} · ${row.point} · 实测、总拟合、二极管、欧姆、非欧姆分量及有符号残差`;
-    image.src = window.ReportNavigation.href(row.svg);
-    $('jv-fit-zip').href = window.ReportNavigation.href(fits.bundle);
-    $('jv-fit-json').href = row.json;
-    $('jv-fit-review-csv').href = window.ReportNavigation.href(fits.review);
-    const pct = value => value === null ? '无' : value.toFixed(2)+'%';
-    $('jv-fit-details').textContent = `${row.points} 点 · ${row.range[0]} 至 ${row.range[1]} V · 平均相对误差 ${pct(row.baselineMeanPct)} → ${pct(row.meanErrorPct)} · 反偏 ${pct(row.reversePct)} / 正偏 ${pct(row.forwardPct)} · Rₛ = ${row.params.Rs.toPrecision(3)} Ω·cm² · n = ${row.n.toFixed(2)} · m = ${row.m.toFixed(1)}${row.boundaryHits ? ' · 触边 '+row.boundaryParameters.join('、') : ''}`;
-    const status = { uncertain: '未能区分', diode: '主结较高', ohmic: '欧姆较高', nonohmic: '非欧姆较高' };
-    $('jv-fit-review').innerHTML = row.references.map(ref => `<tr><th scope="row">${ref.voltage.toFixed(1)} V</th><td>${Math.abs(ref.measured).toExponential(2)}</td>`
-      + ref.shares.map((value, i) => `<td>${value.toFixed(1)} <small>(${ref.min[i].toFixed(1)}–${ref.max[i].toFixed(1)})</small></td>`).join('')
-      + `<td class="${ref.status === 'uncertain' ? 'jv-fit-uncertain' : ''}">${status[ref.status]}</td></tr>`).join('');
-    $('jv-fit-review-note').textContent = `主拟合占比（括号为 ${row.comparableCandidates} 种可比设置的范围）；“较高”只表示候选内排序稳定。交错留点平均误差：反偏 ${pct(row.cvReversePct)}、正偏 ${pct(row.cvForwardPct)}。`+(row.cvForwardPct > 20 ? ' 正偏误差仍偏大，不宜用正偏分量作定量归因。' : '');
-    $('jv-caption').textContent = '三分量全区拟合，按偏压段平衡误差。上图显示 |J|，下图为有符号残差。原数据不重复除以面积。相对误差不计 0 V 和 |J| < 10⁻¹¹ A/cm²。';
-    await image.decode();
-  }
   async function render() {
     const records = selected();
-    const rows = fitRows(records);
-    if (state.view === 'svg' && state.type !== 'cell' || state.view === 'mean' && state.type !== 'all' || state.view === 'fit' && !rows.length) state.view = 'plot';
+    if (state.view === 'svg' && state.type !== 'cell' || state.view === 'mean' && state.type !== 'all') state.view = 'plot';
     renderMatrix(); sources(); renderStats();
     $('jv-selection-title').textContent = title();
     $('jv-selection-meta').textContent = selectedTitle();
     $('jv-viewer-title').textContent = title();
     $('jv-category').textContent = state.type === 'cell' ? '单组 JV' : state.type === 'date' ? '同日变量对比' : state.type === 'group' ? '同变量跨日期对比' : '全部筛选 JV';
     const original = state.view === 'svg';
-    const fitting = state.view === 'fit';
     const mean = state.view === 'mean';
-    $('jv-view-fit').hidden = !rows.length;
-    $('jv-view-fit').setAttribute('aria-pressed', String(fitting));
     $('jv-view-mean').hidden = state.type !== 'all';
     $('jv-view-mean').setAttribute('aria-pressed', String(mean));
-    $('jv-toolbar').hidden = fitting;
-    $('jv-fit-surface').hidden = !fitting;
-    $('jv-statistics').hidden = fitting;
-    $('jv-export-csv-label').textContent = fitting ? 'CSV 实测与拟合' : mean ? 'CSV 分组平均' : 'CSV 原始有符号数据';
+    $('jv-export-csv-label').textContent = mean ? 'CSV 分组平均' : 'CSV 原始有符号数据';
     $('jv-view-svg').disabled = state.type !== 'cell';
     $('jv-view-svg').setAttribute('aria-pressed', String(original));
     $('jv-view-plot').setAttribute('aria-pressed', String(state.view === 'plot'));
     $('jv-mode').value = state.mode;
     $('jv-scale').value = state.scale;
-    $('jv-mode').disabled = original; $('jv-scale').disabled = original; $('jv-reset').disabled = original || fitting;
+    $('jv-mode').disabled = original; $('jv-scale').disabled = original; $('jv-reset').disabled = original;
     $('jv-original-surface').hidden = !original;
-    $('jv-plot').hidden = original || fitting;
+    $('jv-plot').hidden = original;
     $('jv-plot').classList.toggle('is-global', state.type === 'all');
     $('jv-error').hidden = true;
     const hasA = records.some(r => r.date === '9.15');
     $('jv-date-note').hidden = !hasA;
     $('jv-date-note').textContent = 'a 组源文件名为 9.20，已按你的确认归入 9.15；测量时间与源 TXT 不变。';
     const noLight = records.filter(r => r.lightCount === 0);
-    $('jv-notice').hidden = fitting || !noLight.length;
+    $('jv-notice').hidden = !noLight.length;
     if (noLight.length) $('jv-notice').textContent = noLight.length === records.length
       ? '当前选择只提供了 Dark 数据，没有对应 Light 曲线。'
       : `未提供 Light：${noLight.map(r => r.date+' '+r.group).join('、')}。`;
     let traces = [];
-    if (fitting) {
-      await renderFit(rows);
-    } else if (original) {
+    if (original) {
       $('jv-original-image').src = records[0].assetSvg;
       $('jv-original-image').alt = title()+' · 与 EQE 器件同色的 SVG';
       $('jv-caption').textContent = records[0].relativePath+' · 配色及线型已调整';
@@ -220,7 +183,6 @@
         : `全部采样点保留；Dark 实线、Light 虚线。${state.scale === 'log' ? '对数轴显示 |J|，零值留在原始数据中。' : '线性轴保留电流正负号。'}同色对应同日期的同一器件，不对光暗求平均。`;
     }
     const hash = new URLSearchParams({ type: state.type, key: state.key, view: state.view, mode: state.mode, scale: state.scale });
-    if (fitting) hash.set('fit', state.fit);
     history.replaceState(null, '', '#'+hash.toString());
     document.querySelector('[data-eqe-link]').href = window.ReportNavigation.href('index.html', new URLSearchParams({ type: state.type, key: state.key, version: 'selected', view: state.type === 'cell' ? 'original' : 'comparison' }));
     for (const link of document.querySelectorAll('[data-metric-link]')) {
@@ -236,7 +198,7 @@
   function select(type, key) {
     state.type = type;
     state.key = key;
-    if (state.view !== 'fit') { state.view = 'plot'; state.fit = ''; }
+    state.view = 'plot';
     state.hidden.clear();
     return schedule();
   }
@@ -246,10 +208,6 @@
   function downloadBlob(blob, filename) { const url = URL.createObjectURL(blob); downloadUrl(url, filename); setTimeout(() => URL.revokeObjectURL(url), 60000); }
   async function exportFigure(format) {
     const file = `JV_${state.type}_${state.key.replaceAll('.', '-')}_${state.mode}_${state.scale}`+(state.view === 'mean' ? '_mean' : '');
-    if (state.view === 'fit') {
-      const path = activeFit()[format];
-      downloadUrl(window.ReportNavigation.href(path), path.split('/').at(-1)); return;
-    }
     if (format === 'csv') {
       const mean = state.view === 'mean';
       const rows = mean ? [['date', 'group', 'mode', 'devices', 'point_curves', 'voltage_V', 'J_mean_A_cm2_signed']]
@@ -296,8 +254,6 @@
   $('jv-all').addEventListener('click', () => select('all', 'all'));
   $('jv-view-plot').addEventListener('click', () => { state.view = 'plot'; schedule(); });
   $('jv-view-mean').addEventListener('click', () => { state.view = 'mean'; schedule(); });
-  $('jv-view-fit').addEventListener('click', () => { state.view = state.view === 'fit' ? 'plot' : 'fit'; schedule(); });
-  $('jv-fit-curve').addEventListener('change', event => { state.fit = event.target.value; schedule(); });
   $('jv-view-svg').addEventListener('click', () => { state.view = 'svg'; state.mode = 'both'; state.hidden.clear(); schedule(); });
   $('jv-mode').addEventListener('change', event => { state.mode = event.target.value; state.hidden.clear(); schedule(); });
   $('jv-scale').addEventListener('change', event => { state.scale = event.target.value; schedule(); });
@@ -317,8 +273,7 @@
   if (['cell', 'date', 'group', 'all'].includes(hash.get('type')) && model.selection(data, hash.get('type'), hash.get('key')).length) {
     state.type = hash.get('type'); state.key = hash.get('key');
     const view = hash.get('view');
-    state.view = view === 'fit' || state.type === 'cell' && view === 'svg' || state.type === 'all' && view === 'mean' ? view : 'plot';
-    state.fit = hash.get('fit') || '';
+    state.view = state.type === 'cell' && view === 'svg' || state.type === 'all' && view === 'mean' ? view : 'plot';
     state.mode = ['dark', 'light'].includes(hash.get('mode')) ? hash.get('mode') : 'both';
     state.scale = hash.get('scale') === 'linear' ? 'linear' : 'log';
   }
