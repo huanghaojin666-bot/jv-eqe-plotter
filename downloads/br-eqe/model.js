@@ -37,9 +37,14 @@
       ownAll, fallback: version === 'all' && !cell.all };
   }
   function selection(data, type, key) {
-    return data.cells.filter(c => type === 'all' || (type === 'date' ? c.date === key : type === 'group' ? c.group === key : c.id === key))
+    const rows = data.cells.filter(c => type === 'all' || (type === 'date' ? c.date === key : type === 'group' ? c.group === key : c.id === key))
       .sort((a, b) => data.dates.findIndex(d => d.label === a.date) - data.dates.findIndex(d => d.label === b.date)
         || data.groups.indexOf(a.group) - data.groups.indexOf(b.group));
+    if (type === 'date' && rows.length && data.dates.some(d => d.label === key && !d.standalone)) {
+      const controls = new Set(data.dates.filter(d => d.standalone).map(d => d.label));
+      rows.push(...data.cells.filter(c => controls.has(c.date)));
+    }
+    return rows;
   }
   return { peak, stats, prepared, average, resolve, selection };
 });

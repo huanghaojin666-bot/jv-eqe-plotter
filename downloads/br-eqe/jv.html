@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="br-report-version" content="20261123-normal-n">
+  <meta name="br-report-version" content="20261123-date-n">
   <link rel="icon" type="image/svg+xml" href="../../assets/nano-photonics-icon.svg?v=20261117-1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>Br 实验 · JV</title>
-  <link rel="stylesheet" href="styles.css?v=20261123-normal-n">
+  <link rel="stylesheet" href="styles.css?v=20261123-date-n">
 </head>
 <body>
   <header class="app-header">
-    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261123-normal-n" aria-current="page">JV</a><a href="index.html?v=20261123-normal-n" data-eqe-link>EQE</a><a href="bandwidth.html?v=20261123-normal-n" data-metric-link="bandwidth">-3dB</a><a href="ldr.html?v=20261123-normal-n" data-metric-link="ldr">ldr</a><a href="isd.html?v=20261123-normal-n" data-metric-link="isd">isd</a><a href="response.html?v=20261123-normal-n" data-metric-link="response">response</a><a href="abs.html?v=20261123-normal-n" data-metric-link="abs">abs</a><a href="pl.html?v=20261123-normal-n" data-metric-link="pl">pl</a><a href="trpl.html?v=20261123-normal-n" data-metric-link="trpl">trpl</a></nav></div>
+    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261123-date-n" aria-current="page">JV</a><a href="index.html?v=20261123-date-n" data-eqe-link>EQE</a><a href="bandwidth.html?v=20261123-date-n" data-metric-link="bandwidth">-3dB</a><a href="ldr.html?v=20261123-date-n" data-metric-link="ldr">ldr</a><a href="isd.html?v=20261123-date-n" data-metric-link="isd">isd</a><a href="response.html?v=20261123-date-n" data-metric-link="response">response</a><a href="abs.html?v=20261123-date-n" data-metric-link="abs">abs</a><a href="pl.html?v=20261123-date-n" data-metric-link="pl">pl</a><a href="trpl.html?v=20261123-date-n" data-metric-link="trpl">trpl</a></nav></div>
     <div class="header-meta"><span id="jv-inventory"></span><span class="local-status"><i data-lucide="hard-drive"></i>实验数据</span></div>
   </header>
   <main class="workspace">
@@ -36,13 +36,13 @@
       <section class="statistics" id="jv-statistics" aria-labelledby="jv-stats-title"><div class="statistics-heading"><h3 id="jv-stats-title">当前曲线</h3><span id="jv-visible-count" class="subtle"></span></div><div class="stats-scroll jv-stats-scroll"><table><thead><tr><th>日期 / 点位</th><th>状态</th><th id="jv-stats-device">器件</th><th>|J| @ −0.5 V</th><th>|J| @ +0.5 V</th></tr></thead><tbody id="jv-stats"></tbody></table></div><div class="jv-unit-note" id="jv-unit-note">电流密度单位 A/cm²；表格仅列指定偏压，不对不同器件求均值。</div></section>
     </section>
   </main>
-  <dialog id="jv-method-dialog"><div class="dialog-heading"><h2>JV 配色与数据口径</h2><button id="jv-close-method" class="icon-button" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button></div><dl><dt>筛选数据</dt><dd>使用各实验“JV and QE/新建文件夹 (2)”中的 TXT，另加入正常器件 n 的独立 TXT（12 条暗态，6 个器件）。直接复用你的 JV/EQE 作图网站解析器，保留全部采样点、点位和有符号电流密度。</dd><dt>同器件与 EQE 同色</dt><dd>按“日期 + 变量 + 器件编号”逐个匹配 EQE 原始 SVG 的实际颜色；同器件的不同点位、Dark 与 Light 都使用该颜色。优先匹配筛选 EQE；只在 all 中出现的器件从对应 all 原图读取颜色，不把 all 曲线混入筛选数据。</dd><dt>光暗状态</dt><dd>以 TXT 的 Mode 字段识别，不根据电流正负推断。Dark 为实线，Light 为虚线。没有提供 Light 的组不补造 Light 数据。</dd><dt>电流显示</dt><dd>对数轴显示 |J|，零值不能在对数轴上显示；线性轴与 CSV 保留 J 的正负号。数据不归一化、不抽点、不平滑，不把光暗数据合并平均。</dd><dt>JV 平均值</dt><dd>按日期、变量、光暗分组，仅平均实测曲线。在每组共有电压范围内线性插值，不外推；同一器件的点位先平均，再对器件等权平均。先算有符号 J 的算术平均，对数轴才取绝对值。</dd><dt>归一化 JV</dt><dd>每条曲线除以自身 |J(−0.5 V)|，保留有符号 J 后再求均值；如无恰好采样点，则在原测量电压内线性插值。只比较曲线形状，实际暗电流大小看实测 J；表格仍为 A/cm²。</dd><dt>保存 SVG</dt><dd>来源于你保存的网站 SVG，只调整曲线、图例配色及光暗线型，并规范图例名称；曲线几何路径和测量数值不变。修改前的 SVG 已在本机另行备份。</dd><dt>9.15 日期修正</dt><dd>a 目录里文件名“9.20 f / 9.20 5”已由你确认实际属于 9.15，按实验目录归类，保留源 TXT 的文件名与测量时间。</dd><dt>器件对应范围</dt><dd>同日期同器件共享颜色；不同实验、不同变量可能复用颜色，图例和点位名称同时保留用于区分。EQE 与 JV 的筛选点位不完全相同，不把未同时测量的点位当成一一对应的数据。</dd></dl><a href="JV配色核对.csv" download class="command"><i data-lucide="download"></i>下载 JV / EQE 配色核对表</a></dialog>
+  <dialog id="jv-method-dialog"><div class="dialog-heading"><h2>JV 配色与数据口径</h2><button id="jv-close-method" class="icon-button" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button></div><dl><dt>筛选数据</dt><dd>使用各实验“JV and QE/新建文件夹 (2)”中的 TXT，另加入正常器件 n 的独立 TXT（12 条暗态，6 个器件）；点击日期时自动与该日期曲线并列对比，不混合求均值。直接复用你的 JV/EQE 作图网站解析器，保留全部采样点、点位和有符号电流密度。</dd><dt>同器件与 EQE 同色</dt><dd>按“日期 + 变量 + 器件编号”逐个匹配 EQE 原始 SVG 的实际颜色；同器件的不同点位、Dark 与 Light 都使用该颜色。优先匹配筛选 EQE；只在 all 中出现的器件从对应 all 原图读取颜色，不把 all 曲线混入筛选数据。</dd><dt>光暗状态</dt><dd>以 TXT 的 Mode 字段识别，不根据电流正负推断。Dark 为实线，Light 为虚线。没有提供 Light 的组不补造 Light 数据。</dd><dt>电流显示</dt><dd>对数轴显示 |J|，零值不能在对数轴上显示；线性轴与 CSV 保留 J 的正负号。数据不归一化、不抽点、不平滑，不把光暗数据合并平均。</dd><dt>JV 平均值</dt><dd>按日期、变量、光暗分组，仅平均实测曲线。在每组共有电压范围内线性插值，不外推；同一器件的点位先平均，再对器件等权平均。先算有符号 J 的算术平均，对数轴才取绝对值。</dd><dt>归一化 JV</dt><dd>每条曲线除以自身 |J(−0.5 V)|，保留有符号 J 后再求均值；如无恰好采样点，则在原测量电压内线性插值。只比较曲线形状，实际暗电流大小看实测 J；表格仍为 A/cm²。</dd><dt>保存 SVG</dt><dd>来源于你保存的网站 SVG，只调整曲线、图例配色及光暗线型，并规范图例名称；曲线几何路径和测量数值不变。修改前的 SVG 已在本机另行备份。</dd><dt>9.15 日期修正</dt><dd>a 目录里文件名“9.20 f / 9.20 5”已由你确认实际属于 9.15，按实验目录归类，保留源 TXT 的文件名与测量时间。</dd><dt>器件对应范围</dt><dd>同日期同器件共享颜色；不同实验、不同变量可能复用颜色，图例和点位名称同时保留用于区分。EQE 与 JV 的筛选点位不完全相同，不把未同时测量的点位当成一一对应的数据。</dd></dl><a href="JV配色核对.csv" download class="command"><i data-lucide="download"></i>下载 JV / EQE 配色核对表</a></dialog>
   <div id="toast" role="status" hidden></div>
   <script src="assets/plotly.min.js"></script>
   <script src="assets/lucide.min.js"></script>
-  <script src="jv-data.js?v=20261123-normal-n"></script>
-  <script src="jv-model.js?v=20261123-normal-n"></script>
-  <script src="navigation.js?v=20261123-normal-n"></script>
-  <script src="jv.js?v=20261123-normal-n"></script>
+  <script src="jv-data.js?v=20261123-date-n"></script>
+  <script src="jv-model.js?v=20261123-date-n"></script>
+  <script src="navigation.js?v=20261123-date-n"></script>
+  <script src="jv.js?v=20261123-date-n"></script>
 </body>
 </html>

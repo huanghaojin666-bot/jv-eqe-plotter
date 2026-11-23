@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="br-report-version" content="20261123-normal-n">
+  <meta name="br-report-version" content="20261123-date-n">
   <link rel="icon" type="image/svg+xml" href="../../assets/nano-photonics-icon.svg?v=20261117-1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>Br 实验 · EQE 对比</title>
-  <link rel="stylesheet" href="styles.css?v=20261123-normal-n">
+  <link rel="stylesheet" href="styles.css?v=20261123-date-n">
 </head>
 <body>
   <header class="app-header">
-    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261123-normal-n" data-jv-link>JV</a><a href="index.html?v=20261123-normal-n" aria-current="page">EQE</a><a href="bandwidth.html?v=20261123-normal-n" data-metric-link="bandwidth">-3dB</a><a href="ldr.html?v=20261123-normal-n" data-metric-link="ldr">ldr</a><a href="isd.html?v=20261123-normal-n" data-metric-link="isd">isd</a><a href="response.html?v=20261123-normal-n" data-metric-link="response">response</a><a href="abs.html?v=20261123-normal-n" data-metric-link="abs">abs</a><a href="pl.html?v=20261123-normal-n" data-metric-link="pl">pl</a><a href="trpl.html?v=20261123-normal-n" data-metric-link="trpl">trpl</a></nav></div>
+    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261123-date-n" data-jv-link>JV</a><a href="index.html?v=20261123-date-n" aria-current="page">EQE</a><a href="bandwidth.html?v=20261123-date-n" data-metric-link="bandwidth">-3dB</a><a href="ldr.html?v=20261123-date-n" data-metric-link="ldr">ldr</a><a href="isd.html?v=20261123-date-n" data-metric-link="isd">isd</a><a href="response.html?v=20261123-date-n" data-metric-link="response">response</a><a href="abs.html?v=20261123-date-n" data-metric-link="abs">abs</a><a href="pl.html?v=20261123-date-n" data-metric-link="pl">pl</a><a href="trpl.html?v=20261123-date-n" data-metric-link="trpl">trpl</a></nav></div>
     <div class="header-meta"><span id="inventory"></span><span class="local-status"><i data-lucide="hard-drive"></i>实验数据</span></div>
   </header>
   <main class="workspace">
@@ -35,13 +35,13 @@
       <section class="statistics" aria-labelledby="statistics-title"><div class="statistics-heading"><h3 id="statistics-title">当前曲线</h3><span class="subtle">峰位均值 ± 样本标准差</span></div><div class="stats-scroll"><table><thead><tr><th>日期 / 变量</th><th>版本</th><th>条数</th><th>峰位均值 / nm</th><th>均值曲线峰 / nm</th></tr></thead><tbody id="stats-body"></tbody></table></div></section>
     </section>
   </main>
-  <dialog id="method-dialog"><div class="dialog-heading"><h2>峰位核算口径</h2><button class="icon-button" id="close-method" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button></div><dl><dt>表格中的数值</dt><dd>先在 980–1450 nm 内逐条取 EQE 最大值对应的波长，再对这些峰位求算术平均。小数保留到 0.1 nm，仅为显示精度。</dd><dt>粗线与浅线</dt><dd>归一化模式下，每条曲线除以自身在 980–1450 nm 内的最大 EQE。浅线保留各条原始采样点；粗线为同组在共同波长点上的算术均值，不平滑、不插值。</dd><dt>两种“峰位”</dt><dd>各条曲线峰位的均值，不一定等于平均曲线的峰位。页面分别列示，不把二者混为一项。</dd><dt>all 版本</dt><dd>仅使用“新建文件夹/all”中另外保存的文件。有 all 的组被替换；未另存 all 的组沿用筛选数据，并逐组注明。默认筛选视图不读取 all 曲线。</dd><dt>n</dt><dd>正常器件的 6 条实测 EQE。在 n 行可查看原图与均值，集总按同一规则纳入；没有独立的 all 文件，不混入其他实验的 n。</dd><dt>集总</dt><dd>默认叠加所有“日期 × 变量”组的均值曲线。可额外显示“集总均值”：对当前全部实际选用的单条曲线等权平均，因此不同组的条数会影响权重。</dd><dt>手写表的取整</dt><dd>页面依据 TXT 重算。1122.5、1175.7、1186.7 nm 等保留计算结果，不用手记中的取整值覆盖。各组源文件保留不变。</dd></dl><a href="峰位核算.csv" download class="command"><i data-lucide="download"></i>下载峰位核算表</a></dialog>
+  <dialog id="method-dialog"><div class="dialog-heading"><h2>峰位核算口径</h2><button class="icon-button" id="close-method" title="关闭" aria-label="关闭"><i data-lucide="x"></i></button></div><dl><dt>表格中的数值</dt><dd>先在 980–1450 nm 内逐条取 EQE 最大值对应的波长，再对这些峰位求算术平均。小数保留到 0.1 nm，仅为显示精度。</dd><dt>粗线与浅线</dt><dd>归一化模式下，每条曲线除以自身在 980–1450 nm 内的最大 EQE。浅线保留各条原始采样点；粗线为同组在共同波长点上的算术均值，不平滑、不插值。</dd><dt>两种“峰位”</dt><dd>各条曲线峰位的均值，不一定等于平均曲线的峰位。页面分别列示，不把二者混为一项。</dd><dt>all 版本</dt><dd>仅使用“新建文件夹/all”中另外保存的文件。有 all 的组被替换；未另存 all 的组沿用筛选数据，并逐组注明。默认筛选视图不读取 all 曲线。</dd><dt>n</dt><dd>正常器件的 6 条实测 EQE。在 n 行可查看原图与均值；点击日期时，同图显示 n 作为独立对照，不纳入当日汇总均值。集总仍包含 n；没有独立的 all 文件，不混入其他实验的 n。</dd><dt>集总</dt><dd>默认叠加所有“日期 × 变量”组的均值曲线。可额外显示“集总均值”：对当前全部实际选用的单条曲线等权平均，因此不同组的条数会影响权重。</dd><dt>手写表的取整</dt><dd>页面依据 TXT 重算。1122.5、1175.7、1186.7 nm 等保留计算结果，不用手记中的取整值覆盖。各组源文件保留不变。</dd></dl><a href="峰位核算.csv" download class="command"><i data-lucide="download"></i>下载峰位核算表</a></dialog>
   <div id="toast" role="status" hidden></div>
   <script src="assets/plotly.min.js"></script>
   <script src="assets/lucide.min.js"></script>
-  <script src="data.js?v=20261123-normal-n"></script>
-  <script src="model.js"></script>
-  <script src="navigation.js?v=20261123-normal-n"></script>
-  <script src="app.js?v=20261123-normal-n"></script>
+  <script src="data.js?v=20261123-date-n"></script>
+  <script src="model.js?v=20261123-date-n"></script>
+  <script src="navigation.js?v=20261123-date-n"></script>
+  <script src="app.js?v=20261123-date-n"></script>
 </body>
 </html>

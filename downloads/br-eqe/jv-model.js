@@ -5,9 +5,14 @@
 })(typeof globalThis === 'undefined' ? this : globalThis, function () {
   'use strict';
   function selection(data, type, key) {
-    return data.records.filter(r => type === 'all' || (type === 'date' ? r.date === key : type === 'group' ? r.group === key : r.id === key))
+    const rows = data.records.filter(r => type === 'all' || (type === 'date' ? r.date === key : type === 'group' ? r.group === key : r.id === key))
       .sort((a, b) => data.dates.findIndex(d => d.label === a.date) - data.dates.findIndex(d => d.label === b.date)
         || data.groups.indexOf(a.group) - data.groups.indexOf(b.group));
+    if (type === 'date' && rows.length && data.dates.some(d => d.label === key && !d.standalone)) {
+      const controls = new Set(data.dates.filter(d => d.standalone).map(d => d.label));
+      rows.push(...data.records.filter(r => controls.has(r.date)));
+    }
+    return rows;
   }
   function atVoltage(curve, value) {
     if (value < curve.x[0] || value > curve.x[curve.x.length-1]) return null;

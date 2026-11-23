@@ -112,11 +112,11 @@
       }
     }
     if (state.pooled) {
-      const visible = series.filter(e => !state.hidden.has(e.cell.id));
+      const visible = series.filter(e => !state.hidden.has(e.cell.id) && (state.type !== 'date' || e.cell.date === state.key));
       if (visible.length) {
         const allCurves = visible.flatMap(e => e.curves);
         const pooled = model.average(allCurves);
-        traces.push({ ...pooled, mode: 'lines', type: 'scatter', name: `集总均值 (n=${allCurves.length})`,
+        traces.push({ ...pooled, mode: 'lines', type: 'scatter', name: `${state.type === 'date' ? '当日均值' : '集总均值'} (n=${allCurves.length})`,
           line: { color: '#161616', width: 3.2, simplify: false }, meta: { kind: 'pooled', sampleCount: allCurves.length } });
       }
     }
@@ -203,8 +203,13 @@
       $('plot-caption').textContent = series[0].record.relativePath;
     } else {
       $('plot-caption').textContent = state.normalized
-        ? `浅线：单条 EQE / 自身近红外最大值；粗线：逐波长均值。峰位区间 980–1450 nm。${state.pooled ? '黑线：当前单条曲线等权集总均值。' : ''}`
+        ? '浅线：单条 EQE / 自身近红外最大值；粗线：逐波长均值。峰位区间 980–1450 nm。'
         : '浅线：单条原始 EQE；粗线：逐波长均值。峰位区间 980–1450 nm。';
+      if (state.type === 'date' && series.some(e => e.cell.date !== state.key)) {
+        $('plot-caption').textContent += ' n 为独立对照，不计入当日均值。';
+      } else if (state.pooled) {
+        $('plot-caption').textContent += ' 集总均值对当前单条曲线等权平均。';
+      }
       const traces = traceData(series);
       if (token !== generation) return;
       await Plotly.react($('plot'), traces, layout(traces), { responsive: true, displayModeBar: false, scrollZoom: false });

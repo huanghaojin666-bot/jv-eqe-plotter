@@ -191,6 +191,10 @@
         ? '仅用筛选后的可见实测曲线，按日期 × 变量 × 光暗分组。在共有电压范围内线性插值，同器件点位先平均，再对器件等权平均；先平均有符号 J。图例 n 为器件数。'
         : `全部采样点保留；Dark 实线、Light 虚线。${state.scale === 'log' ? '对数轴显示 |J|，零值留在原始数据中。' : '线性轴保留电流正负号。'}同色对应同日期的同一器件，不对光暗求平均。`;
       if (state.normalized) $('jv-caption').textContent += ' 每条曲线先除以自身 |J(−0.5 V)|；表格仍显示实测量纲。';
+      if (state.type === 'date' && records.some(r => r.date !== state.key)) {
+        $('jv-caption').textContent += state.mode === 'light'
+          ? ' n 仅有暗态数据，在 Light 筛选下不显示。' : ' n 为独立对照，仅有暗态数据，单独显示。';
+      }
     }
     const hash = new URLSearchParams({ type: state.type, key: state.key, view: state.view, mode: state.mode, scale: state.scale });
     if (state.normalized) hash.set('norm', 'ref');
