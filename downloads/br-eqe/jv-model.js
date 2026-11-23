@@ -23,18 +23,24 @@
   function displayY(curve, scale) {
     return scale === 'log' ? curve.y.map(v => v === 0 ? null : Math.abs(v)) : curve.y.slice();
   }
+  const normalizationVoltage = -.5;
+  function normalizedCurve(curve) {
+    const divisor = Math.abs(atVoltage(curve, normalizationVoltage) ?? 0);
+    if (!Number.isFinite(divisor) || divisor <= 0) throw new Error('没有可用的 −0.5 V 归一化基准');
+    return { ...curve, y: curve.y.map(value => value/divisor), divisor };
+  }
   function visible(records, state) {
     return records.flatMap(record => record.curves.map(curve => ({ record, curve })))
       .filter(({ curve }) => (state.mode === 'both' || state.mode === curve.mode) && !state.hidden.has(curve.id));
   }
-  function means(entries) {
+  function means(entries, normalized = false) {
     const buckets = new Map();
     for (const { record, curve } of entries) {
       const key = record.id+'|'+curve.mode;
       if (!buckets.has(key)) buckets.set(key, { record, mode: curve.mode, devices: new Map() });
       const devices = buckets.get(key).devices;
       if (!devices.has(curve.deviceKey)) devices.set(curve.deviceKey, []);
-      devices.get(curve.deviceKey).push(curve);
+      devices.get(curve.deviceKey).push(normalized ? normalizedCurve(curve) : curve);
     }
     const average = values => values.reduce((sum, value) => sum+value, 0)/values.length;
     const results = [];
@@ -50,5 +56,5 @@
     }
     return results;
   }
-  return { selection, atVoltage, displayY, visible, means };
+  return { selection, atVoltage, displayY, visible, means, normalizedCurve, normalizationVoltage };
 });

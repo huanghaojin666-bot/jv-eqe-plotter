@@ -3,19 +3,21 @@
   const data = window.JV_DATA;
   const model = window.JVModel;
   const $ = id => document.getElementById(id);
-  const state = { type: 'cell', key: '9.15_f', view: 'plot', mode: 'both', scale: 'log', hidden: new Set() };
-  const meanColors = ['#1f77b4', '#d26b17', '#2a8c48', '#c43e49', '#8461a3', '#916351', '#b84887', '#62696e', '#88851a', '#198b97', '#354b9a'];
+  const state = { type: 'cell', key: '9.15_f', view: 'plot', mode: 'both', scale: 'log', normalized: false, hidden: new Set() };
+  const meanColors = ['#1f77b4', '#d26b17', '#2a8c48', '#c43e49', '#8461a3', '#916351', '#b84887', '#62696e', '#88851a', '#198b97', '#354b9a', '#24292c'];
   let ready = Promise.resolve();
   let resizeTimer;
   function esc(value) { return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
   function icons() { window.lucide.createIcons(); }
   function selected() { return model.selection(data, state.type, state.key); }
   function visible() { return model.visible(selected(), state); }
+  function recordLabel(record) { return record.group === 'n' ? 'n' : record.date+' · '+record.group; }
   function title() {
+    if (state.key === 'n' || state.key === '7.21') return 'n';
     if (state.type === 'date') return state.key+' · JV 各变量对比';
     if (state.type === 'group') return state.key+' · JV 跨日期对比';
     if (state.type === 'all') return '全部日期 · JV 集总';
-    const record = selected()[0]; return record.date+' · '+record.group+' · JV';
+    const record = selected()[0]; return record.group === 'n' ? 'n' : recordLabel(record)+' · JV';
   }
   function toast(message) {
     $('toast').textContent = message; $('toast').hidden = false;
@@ -29,29 +31,33 @@
   }
   function renderMatrix() {
     const selectedIds = new Set(selected().map(r => r.id));
+    const experimentDates = data.dates.filter(date => !date.standalone);
     let html = '<thead><tr><th>变量 / 日期</th>';
-    for (const date of data.dates) {
+    for (const date of experimentDates) {
       html += `<th><button data-jv-date="${date.label}" class="${state.type === 'date' && state.key === date.label ? 'is-active' : ''}" aria-label="${date.label} JV 各变量对比"><span>${date.label}</span><small>实验 ${date.experiment}</small></button></th>`;
     }
     html += '</tr></thead><tbody>';
     for (const group of data.groups) {
       html += `<tr><th><button data-jv-group="${group}" class="${state.type === 'group' && state.key === group ? 'is-active' : ''}" aria-label="${group} JV 跨日期对比">${group}</button></th>`;
-      for (const date of data.dates) {
+      const standalone = group === 'n';
+      for (const date of standalone ? data.dates.filter(d => d.standalone) : experimentDates) {
         const record = data.records.find(r => r.date === date.label && r.group === group);
         if (!record) { html += '<td class="is-blank" aria-label="无JV数据">—</td>'; continue; }
-        html += `<td><button data-jv-cell="${record.id}" class="cell ${selectedIds.has(record.id) ? 'is-active' : ''}" aria-pressed="${selectedIds.has(record.id)}" title="${record.date} ${record.group} · ${record.deviceCount} 个器件 / ${record.pointCount} 个点位"><span class="jv-cell-number">${record.pointCount}<small>点位</small></span><span class="cell-detail">暗 ${record.darkCount} · 光 ${record.lightCount}</span></button></td>`;
+        html += `<td${standalone ? ' colspan="'+experimentDates.length+'"' : ''}><button data-jv-cell="${record.id}" class="cell ${selectedIds.has(record.id) ? 'is-active' : ''}" aria-pressed="${selectedIds.has(record.id)}" title="${recordLabel(record)} · ${record.deviceCount} 个器件 / ${record.pointCount} 个点位"><span class="jv-cell-number">${record.pointCount}<small>点位</small></span><span class="cell-detail">暗 ${record.darkCount} · 光 ${record.lightCount}</span></button></td>`;
       }
       html += '</tr>';
     }
     $('jv-matrix').innerHTML = html+'</tbody>';
   }
   function traceData() {
-    if (state.view === 'mean') return model.means(visible()).map(row => ({
+    const normalized = state.normalized && state.view !== 'svg';
+    const unit = normalized ? '（无量纲）' : ' A/cm²';
+    if (state.view === 'mean') return model.means(visible(), normalized).map(row => ({
       x: row.x, y: model.displayY(row, state.scale), customdata: row.y,
       type: 'scatter', mode: 'lines', showlegend: true,
-      name: row.record.date+' '+row.record.group+' '+capitalize(row.mode)+' (n='+row.deviceCount+')',
+      name: recordLabel(row.record)+' '+capitalize(row.mode)+' (n='+row.deviceCount+')',
       line: { color: meanColors[data.records.indexOf(row.record) % meanColors.length], dash: row.mode === 'light' ? 'dash' : 'solid', width: 2.2, simplify: false },
-      hovertemplate: 'V = %{x:.3f} V<br>平均 J = %{customdata:.5e} A/cm²<extra>%{fullData.name}</extra>',
+      hovertemplate: 'V = %{x:.3f} V<br>平均 '+(normalized ? '归一化 J' : 'J')+' = %{customdata:.5e}'+unit+'<extra>%{fullData.name}</extra>',
       meta: { record: row.record.id, mode: row.mode, deviceCount: row.deviceCount, pointCount: row.pointCount }
     }));
     const entries = visible();
@@ -64,12 +70,13 @@
     return entries.map(({ record, curve }) => {
       const key = curve.deviceKey+'|'+curve.mode;
       const showlegend = !shown.has(key); shown.add(key);
-      const name = (state.type === 'all' || state.type === 'group' ? record.date+' ' : '')
+      const name = (record.group !== 'n' && (state.type === 'all' || state.type === 'group') ? record.date+' ' : '')
         +curve.deviceLabel+' '+curve.modeLabel+' (n='+buckets.get(key)+')';
-      return { x: curve.x, y: model.displayY(curve, state.scale), mode: 'lines', type: 'scatter', name,
+      const prepared = normalized ? model.normalizedCurve(curve) : curve;
+      return { x: curve.x, y: model.displayY(prepared, state.scale), mode: 'lines', type: 'scatter', name,
         showlegend, legendgroup: key, line: { color: curve.color, dash: curve.mode === 'light' ? 'dash' : 'solid', width: 1.7, simplify: false },
-        customdata: curve.y,
-        hovertemplate: `${esc(record.date)} · ${esc(curve.label)}<br>V = %{x:.3f} V<br>J = %{customdata:.5e} A/cm²<extra></extra>`,
+        customdata: prepared.y,
+        hovertemplate: `${record.group === 'n' ? '' : esc(record.date)+' · '}${esc(curve.label)}<br>V = %{x:.3f} V<br>${normalized ? '归一化 J' : 'J'} = %{customdata:.5e}${unit}<extra></extra>`,
         meta: { record: record.id, curve: curve.id, mode: curve.mode, device: curve.deviceKey, color: curve.color, sourcePoints: curve.x.length } };
     });
   }
@@ -111,12 +118,13 @@
       yaxis: { ...axis, type: state.scale === 'log' ? 'log' : 'linear', range: yRange,
         dtick: state.scale === 'log' ? Math.max(1, Math.ceil((yRange[1]-yRange[0])/8)) : undefined,
         tickformat: state.scale === 'linear' ? '.1e' : undefined, exponentformat: 'power', zeroline: state.scale === 'linear',
-        title: { text: state.scale === 'log' ? '<b>|J| (A/cm²)</b>' : '<b>J (A/cm²)</b>', standoff: 12, font: { size: exporting ? 25 : mobile ? 12 : 15 } } },
+        title: { text: state.normalized ? (state.scale === 'log' ? '<b>|J| / |J(−0.5 V)|</b>' : '<b>J / |J(−0.5 V)|</b>')
+          : state.scale === 'log' ? '<b>|J| (A/cm²)</b>' : '<b>J (A/cm²)</b>', standoff: 12, font: { size: exporting ? 25 : mobile ? 12 : 15 } } },
       legend: { ...legend, borderwidth: 0, tracegroupgap: 1, itemwidth: exporting ? 54 : 32, groupclick: 'togglegroup' },
       annotations: traces.length ? [] : [{ x: .5, y: .5, xref: 'paper', yref: 'paper', showarrow: false,
         text: state.mode === 'light' ? '当前选择未提供 Light 曲线' : state.mode === 'dark' ? '当前选择未提供 Dark 曲线' : '没有可见曲线',
         font: { size: 14, color: '#697c81' } }],
-      uirevision: JSON.stringify([state.type, state.key, state.view, state.scale, state.mode]) };
+      uirevision: JSON.stringify([state.type, state.key, state.view, state.scale, state.mode, state.normalized]) };
   }
   function number(value) { return value === null ? '—' : Math.abs(value).toExponential(2); }
   function renderStats() {
@@ -125,23 +133,23 @@
     $('jv-unit-note').textContent = state.view === 'mean' ? '表格显示指定偏压下有符号平均 J 的绝对值（A/cm²）。' : '电流密度单位 A/cm²；表格仅列指定偏压，不对不同器件求均值。';
     if (state.view === 'mean') {
       const rows = model.means(visible());
-      $('jv-stats').innerHTML = rows.map(row => `<tr><td>${esc(row.record.date)} · ${esc(row.record.group)}</td><td class="jv-mode-${row.mode}">${capitalize(row.mode)}</td><td>${row.deviceCount} / ${row.pointCount}</td><td>${number(model.atVoltage(row, -.5))}</td><td>${number(model.atVoltage(row, .5))}</td></tr>`).join('')
+      $('jv-stats').innerHTML = rows.map(row => `<tr><td>${esc(recordLabel(row.record))}</td><td class="jv-mode-${row.mode}">${capitalize(row.mode)}</td><td>${row.deviceCount} / ${row.pointCount}</td><td>${number(model.atVoltage(row, -.5))}</td><td>${number(model.atVoltage(row, .5))}</td></tr>`).join('')
         || '<tr><td colspan="5" class="subtle">没有可计算的曲线</td></tr>';
       $('jv-visible-count').textContent = rows.length+' 条组平均曲线';
       return;
     }
     const rows = selected().flatMap(record => record.curves.map(curve => ({ record, curve })))
       .filter(({ curve }) => state.mode === 'both' || state.mode === curve.mode);
-    $('jv-stats').innerHTML = rows.length ? rows.map(({ record, curve }) => `<tr><td><label><input type="checkbox" data-jv-curve="${curve.id}" ${state.hidden.has(curve.id) ? '' : 'checked'} ${state.view === 'svg' ? 'disabled' : ''} aria-label="显示 ${record.date} ${curve.label}"><span class="swatch" style="background:${curve.color}"></span>${record.date} · ${record.group} ${curve.pointLabel}</label></td><td class="jv-mode-${curve.mode}">${curve.modeLabel}</td><td>${curve.deviceLabel}</td><td>${number(model.atVoltage(curve, -.5))}</td><td>${number(model.atVoltage(curve, .5))}</td></tr>`).join('')
+    $('jv-stats').innerHTML = rows.length ? rows.map(({ record, curve }) => `<tr><td><label><input type="checkbox" data-jv-curve="${curve.id}" ${state.hidden.has(curve.id) ? '' : 'checked'} ${state.view === 'svg' ? 'disabled' : ''} aria-label="显示 ${record.date} ${curve.label}"><span class="swatch" style="background:${curve.color}"></span>${recordLabel(record)} ${curve.pointLabel}</label></td><td class="jv-mode-${curve.mode}">${curve.modeLabel}</td><td>${curve.deviceLabel}</td><td>${number(model.atVoltage(curve, -.5))}</td><td>${number(model.atVoltage(curve, .5))}</td></tr>`).join('')
       : '<tr><td colspan="5" class="subtle">当前筛选没有对应的光暗记录</td></tr>';
     $('jv-visible-count').textContent = `${visible().length} 条可见 / ${rows.length} 条当前状态记录`;
   }
   function sources() {
-    $('jv-sources').innerHTML = selected().map(record => `<div class="source-item"><b>${record.date} · ${record.group}</b><a href="${record.assetSvg}" target="_blank" rel="noopener">同色 SVG</a><a href="${record.assetTxt}" download>TXT</a><div class="source-path">${esc(record.source)}</div></div>`).join('');
+    $('jv-sources').innerHTML = selected().map(record => `<div class="source-item"><b>${recordLabel(record)}</b><a href="${record.assetSvg}" target="_blank" rel="noopener">同色 SVG</a><a href="${record.assetTxt}" download>TXT</a><div class="source-path">${esc(record.source)}</div></div>`).join('');
   }
   async function render() {
     const records = selected();
-    if (state.view === 'svg' && state.type !== 'cell' || state.view === 'mean' && state.type !== 'all') state.view = 'plot';
+    if (state.view === 'svg' && state.type !== 'cell') state.view = 'plot';
     renderMatrix(); sources(); renderStats();
     $('jv-selection-title').textContent = title();
     $('jv-selection-meta').textContent = selectedTitle();
@@ -149,7 +157,6 @@
     $('jv-category').textContent = state.type === 'cell' ? '单组 JV' : state.type === 'date' ? '同日变量对比' : state.type === 'group' ? '同变量跨日期对比' : '全部筛选 JV';
     const original = state.view === 'svg';
     const mean = state.view === 'mean';
-    $('jv-view-mean').hidden = state.type !== 'all';
     $('jv-view-mean').setAttribute('aria-pressed', String(mean));
     $('jv-export-csv-label').textContent = mean ? 'CSV 分组平均' : 'CSV 原始有符号数据';
     $('jv-view-svg').disabled = state.type !== 'cell';
@@ -157,6 +164,8 @@
     $('jv-view-plot').setAttribute('aria-pressed', String(state.view === 'plot'));
     $('jv-mode').value = state.mode;
     $('jv-scale').value = state.scale;
+    $('jv-normalization').value = state.normalized && !original ? 'normalized' : 'raw';
+    $('jv-normalization').disabled = original;
     $('jv-mode').disabled = original; $('jv-scale').disabled = original; $('jv-reset').disabled = original;
     $('jv-original-surface').hidden = !original;
     $('jv-plot').hidden = original;
@@ -169,7 +178,7 @@
     $('jv-notice').hidden = !noLight.length;
     if (noLight.length) $('jv-notice').textContent = noLight.length === records.length
       ? '当前选择只提供了 Dark 数据，没有对应 Light 曲线。'
-      : `未提供 Light：${noLight.map(r => r.date+' '+r.group).join('、')}。`;
+      : `未提供 Light：${noLight.map(recordLabel).join('、')}。`;
     let traces = [];
     if (original) {
       $('jv-original-image').src = records[0].assetSvg;
@@ -181,8 +190,10 @@
       $('jv-caption').textContent = mean
         ? '仅用筛选后的可见实测曲线，按日期 × 变量 × 光暗分组。在共有电压范围内线性插值，同器件点位先平均，再对器件等权平均；先平均有符号 J。图例 n 为器件数。'
         : `全部采样点保留；Dark 实线、Light 虚线。${state.scale === 'log' ? '对数轴显示 |J|，零值留在原始数据中。' : '线性轴保留电流正负号。'}同色对应同日期的同一器件，不对光暗求平均。`;
+      if (state.normalized) $('jv-caption').textContent += ' 每条曲线先除以自身 |J(−0.5 V)|；表格仍显示实测量纲。';
     }
     const hash = new URLSearchParams({ type: state.type, key: state.key, view: state.view, mode: state.mode, scale: state.scale });
+    if (state.normalized) hash.set('norm', 'ref');
     history.replaceState(null, '', '#'+hash.toString());
     document.querySelector('[data-eqe-link]').href = window.ReportNavigation.href('index.html', new URLSearchParams({ type: state.type, key: state.key, version: 'selected', view: state.type === 'cell' ? 'original' : 'comparison' }));
     for (const link of document.querySelectorAll('[data-metric-link]')) {
@@ -207,17 +218,22 @@
   }
   function downloadBlob(blob, filename) { const url = URL.createObjectURL(blob); downloadUrl(url, filename); setTimeout(() => URL.revokeObjectURL(url), 60000); }
   async function exportFigure(format) {
-    const file = `JV_${state.type}_${state.key.replaceAll('.', '-')}_${state.mode}_${state.scale}`+(state.view === 'mean' ? '_mean' : '');
+    const normalized = state.normalized && state.view !== 'svg';
+    const file = `JV_${state.type}_${state.key.replaceAll('.', '-')}_${state.mode}_${state.scale}`+(state.view === 'mean' ? '_mean' : '')+(normalized ? '_norm_m0p5V' : '');
     if (format === 'csv') {
       const mean = state.view === 'mean';
       const rows = mean ? [['date', 'group', 'mode', 'devices', 'point_curves', 'voltage_V', 'J_mean_A_cm2_signed']]
         : [['date', 'group', 'native_label', 'display_label', 'device', 'point', 'mode', 'color_EQE', 'voltage_V', 'J_A_cm2_signed', 'display_y', 'source']];
-      if (mean) for (const row of model.means(visible())) {
-        row.x.forEach((v, i) => rows.push([row.record.date, row.record.group, row.mode, row.deviceCount, row.pointCount, v, row.y[i]]));
+      if (normalized) rows[0].push(...(mean ? ['J_normalized_mean_signed'] : ['normalization_abs_J_m0p5V_A_cm2', 'J_normalized_signed']));
+      const scaledMeans = mean && normalized ? model.means(visible(), true) : [];
+      if (mean) for (const [index, row] of model.means(visible()).entries()) {
+        const scaled = scaledMeans[index];
+        row.x.forEach((v, i) => rows.push([row.record.date, row.record.group, row.mode, row.deviceCount, row.pointCount, v, row.y[i], ...(scaled ? [scaled.y[i]] : [])]));
       }
       else for (const { record, curve } of visible()) {
-        const y = model.displayY(curve, state.scale);
-        curve.x.forEach((v, i) => rows.push([record.date, record.group, curve.nativeLabel, curve.label, curve.deviceLabel, curve.pointLabel, curve.mode, curve.color, v, curve.y[i], y[i], record.relativePath]));
+        const scaled = normalized ? model.normalizedCurve(curve) : null;
+        const y = model.displayY(scaled || curve, state.scale);
+        curve.x.forEach((v, i) => rows.push([record.date, record.group, curve.nativeLabel, curve.label, curve.deviceLabel, curve.pointLabel, curve.mode, curve.color, v, curve.y[i], y[i], record.relativePath, ...(scaled ? [scaled.divisor, scaled.y[i]] : [])]));
       }
       const text = '\ufeff'+rows.map(row => row.map(v => '"'+String(v ?? '').replaceAll('"', '""')+'"').join(',')).join('\r\n');
       downloadBlob(new Blob([text], { type: 'text/csv;charset=utf-8' }), file+'.csv'); return;
@@ -257,6 +273,7 @@
   $('jv-view-svg').addEventListener('click', () => { state.view = 'svg'; state.mode = 'both'; state.hidden.clear(); schedule(); });
   $('jv-mode').addEventListener('change', event => { state.mode = event.target.value; state.hidden.clear(); schedule(); });
   $('jv-scale').addEventListener('change', event => { state.scale = event.target.value; schedule(); });
+  $('jv-normalization').addEventListener('change', event => { state.normalized = event.target.value === 'normalized'; schedule(); });
   $('jv-stats').addEventListener('change', event => { const id = event.target.dataset.jvCurve; if (!id) return; if (event.target.checked) state.hidden.delete(id); else state.hidden.add(id); schedule(); });
   $('jv-reset').addEventListener('click', () => { const settings = layout(traceData()); Plotly.relayout($('jv-plot'), { 'xaxis.range': settings.xaxis.range, 'yaxis.range': settings.yaxis.range }); });
   $('jv-method').addEventListener('click', () => $('jv-method-dialog').showModal());
@@ -273,9 +290,10 @@
   if (['cell', 'date', 'group', 'all'].includes(hash.get('type')) && model.selection(data, hash.get('type'), hash.get('key')).length) {
     state.type = hash.get('type'); state.key = hash.get('key');
     const view = hash.get('view');
-    state.view = state.type === 'cell' && view === 'svg' || state.type === 'all' && view === 'mean' ? view : 'plot';
+    state.view = state.type === 'cell' && view === 'svg' || view === 'mean' ? view : 'plot';
     state.mode = ['dark', 'light'].includes(hash.get('mode')) ? hash.get('mode') : 'both';
     state.scale = hash.get('scale') === 'linear' ? 'linear' : 'log';
+    state.normalized = hash.get('norm') === 'ref';
   }
   window.JVApp = { state, data, model, ready, select, traceData, layout, exportFigure, snapshot: null };
   installLabels(); icons(); schedule();

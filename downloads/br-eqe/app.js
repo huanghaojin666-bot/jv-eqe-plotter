@@ -4,8 +4,8 @@
   const model = window.EQEModel;
   const $ = id => document.getElementById(id);
   const colors = { f: '#D62728', '5': '#FF7F0E', '10': '#2CA02C', '20': '#1F77B4', DMF: '#9467BD', n: '#343434' };
-  const dateColors = { '9.15': '#D62728', '9.20': '#1F77B4', '10.12': '#2CA02C', '10.17': '#9467BD' };
-  const dashes = ['solid', 'dash', 'dot', 'dashdot'];
+  const dateColors = { '7.21': '#343434', '9.15': '#D62728', '9.20': '#1F77B4', '10.12': '#2CA02C', '10.17': '#9467BD' };
+  const dashes = { '7.21': 'solid', '9.15': 'solid', '9.20': 'dash', '10.12': 'dot', '10.17': 'dashdot' };
   const state = { type: 'cell', key: '9.15_f', version: 'selected', view: 'original',
     normalized: true, fullRange: false, individual: true, peaks: false, pooled: false, hidden: new Set() };
   let generation = 0;
@@ -17,14 +17,15 @@
   function selectedCells() { return model.selection(data, state.type, state.key); }
   function resolved() { return selectedCells().map(cell => model.resolve(cell, state.version)); }
   function colorFor(cell) { return state.type === 'group' ? dateColors[cell.date] : colors[cell.group]; }
-  function dashFor(cell) { return state.type === 'all' ? dashes[data.dates.findIndex(d => d.label === cell.date)] : 'solid'; }
+  function cellLabel(cell) { return cell.group === 'n' ? 'n' : cell.date+' · '+cell.group; }
+  function dashFor(cell) { return state.type === 'all' ? dashes[cell.date] : 'solid'; }
   function versionLabel(entry) { return entry.ownAll ? 'all' : entry.fallback ? '同筛选' : '筛选'; }
   function title() {
+    if (state.key === 'n' || state.key === '7.21') return 'n';
     if (state.type === 'date') return state.key + ' · 各变量对比';
     if (state.type === 'group') return state.key + ' · 跨日期对比';
     if (state.type === 'all') return '全部日期 · 集总对比';
-    const cell = selectedCells()[0];
-    return cell.date + ' · ' + cell.group;
+    return cellLabel(selectedCells()[0]);
   }
   function setPressed(id, value) { $(id).setAttribute('aria-pressed', String(value)); }
   function notify(message) {
@@ -49,25 +50,23 @@
   }
   function renderMatrix() {
     const chosen = new Set(selectedCells().map(c => c.id));
+    const experimentDates = data.dates.filter(date => !date.standalone);
     let html = '<thead><tr><th>变量 / 日期</th>';
-    for (const date of data.dates) {
+    for (const date of experimentDates) {
       const active = state.type === 'date' && state.key === date.label;
       html += `<th><button type="button" data-date="${date.label}" class="${active ? 'is-active' : ''}" aria-label="${date.label}，各变量对比"><span>${date.label}</span><small>实验 ${date.experiment}</small></button></th>`;
     }
     html += '</tr></thead><tbody>';
     for (const group of data.groups) {
-      if (group === 'n') {
-        html += `<tr><th class="reference-th">n</th><td colspan="${data.dates.length}" class="reference-cell">1300 <small>nm · 参考值，无关联曲线</small></td></tr>`;
-        continue;
-      }
       html += `<tr><th><button type="button" data-group="${group}" class="${state.type === 'group' && state.key === group ? 'is-active' : ''}" aria-label="${group}，跨日期对比">${group}</button></th>`;
-      for (const date of data.dates) {
+      const standalone = group === 'n';
+      for (const date of standalone ? data.dates.filter(d => d.standalone) : experimentDates) {
         const cell = data.cells.find(c => c.date === date.label && c.group === group);
         if (!cell) { html += '<td class="is-blank" aria-label="无数据">—</td>'; continue; }
         const entry = model.resolve(cell, state.version);
         const stats = model.stats(entry.record.curves, data.peakRange);
         const unitLabel = entry.ownAll ? ' · all' : entry.fallback ? ' · 同筛选' : '';
-        html += `<td><button type="button" data-cell="${esc(cell.id)}" class="cell ${chosen.has(cell.id) ? 'is-active' : ''}" aria-pressed="${chosen.has(cell.id)}" title="${date.label} ${group} · ${stats.n} 条 · ${versionLabel(entry)}"><span class="peak-value">${fmt(stats.mean)}<em>nm</em></span><span class="cell-detail">${stats.n} 条${unitLabel}</span>${cell.all ? '<b class="all-marker" aria-hidden="true"></b>' : ''}</button></td>`;
+        html += `<td${standalone ? ' colspan="'+experimentDates.length+'"' : ''}><button type="button" data-cell="${esc(cell.id)}" class="cell ${chosen.has(cell.id) ? 'is-active' : ''}" aria-pressed="${chosen.has(cell.id)}" title="${cellLabel(cell)} · ${stats.n} 条 · ${versionLabel(entry)}"><span class="peak-value">${fmt(stats.mean)}<em>nm</em></span><span class="cell-detail">${stats.n} 条${unitLabel}</span>${cell.all ? '<b class="all-marker" aria-hidden="true"></b>' : ''}</button></td>`;
       }
       html += '</tr>';
     }
@@ -86,7 +85,8 @@
     const traces = [];
     for (const entry of series) {
       if (state.hidden.has(entry.cell.id)) continue;
-      let name = state.type === 'date' ? entry.cell.group : state.type === 'group' ? entry.cell.date : `${entry.cell.date} ${entry.cell.group}`;
+      const label = cellLabel(entry.cell);
+      let name = entry.cell.group === 'n' ? 'n' : state.type === 'date' ? entry.cell.group : state.type === 'group' ? entry.cell.date : label;
       if (state.version === 'all') name += entry.ownAll ? ' [all]' : ' [同筛选]';
       name += ` (n=${entry.stats.n})`;
       if (state.individual) {
@@ -94,13 +94,13 @@
           traces.push({ x: curve.x, y: curve.y, type: 'scatter', mode: 'lines',
             name: curve.name, legendgroup: entry.cell.id, showlegend: false,
             line: { color: entry.color, width: 1, dash: entry.dash, simplify: false }, opacity: .23,
-            hovertemplate: `${esc(entry.cell.date)} ${esc(entry.cell.group)} · ${esc(curve.name)}<br>%{x:.0f} nm<br>%{y:.4f}<extra></extra>`,
+            hovertemplate: `${esc(label)} · ${esc(curve.name)}<br>%{x:.0f} nm<br>%{y:.4f}<extra></extra>`,
             meta: { kind: 'individual', cellId: entry.cell.id, version: entry.record.version } });
         }
       }
       traces.push({ x: entry.mean.x, y: entry.mean.y, type: 'scatter', mode: 'lines',
         name, legendgroup: entry.cell.id, line: { color: entry.color, width: 2.5, dash: entry.dash, simplify: false },
-        hovertemplate: `${esc(entry.cell.date)} ${esc(entry.cell.group)} · 均值<br>%{x:.0f} nm<br>%{y:.4f}<extra></extra>`,
+        hovertemplate: `${esc(label)} · 均值<br>%{x:.0f} nm<br>%{y:.4f}<extra></extra>`,
         meta: { kind: 'mean', cellId: entry.cell.id, version: entry.record.version, meanIndividualPeakNm: entry.stats.mean } });
       if (state.peaks) {
         const index = entry.mean.x.findIndex(x => x >= entry.stats.mean);
@@ -151,10 +151,10 @@
         tracegroupgap: 1 }, hovermode: 'closest', uirevision: JSON.stringify([state.type, state.key, state.version, state.normalized, state.fullRange]) };
   }
   function sourceList(entries) {
-    $('source-list').innerHTML = entries.map(e => `<div class="source-item"><b>${esc(e.cell.date)} · ${esc(e.cell.group)} · ${versionLabel(e)}</b><a href="${e.record.assetSvg}" target="_blank" rel="noopener">SVG</a><a href="${e.record.assetTxt}" download>TXT</a><div class="source-path">${esc(e.record.source)}</div></div>`).join('');
+    $('source-list').innerHTML = entries.map(e => `<div class="source-item"><b>${esc(cellLabel(e.cell))} · ${versionLabel(e)}</b><a href="${e.record.assetSvg}" target="_blank" rel="noopener">SVG</a><a href="${e.record.assetTxt}" download>TXT</a><div class="source-path">${esc(e.record.source)}</div></div>`).join('');
   }
   function renderStats(series) {
-    $('stats-body').innerHTML = series.map(entry => `<tr><td><label><input type="checkbox" data-series="${entry.cell.id}" ${state.hidden.has(entry.cell.id) ? '' : 'checked'} ${state.view === 'original' ? 'disabled' : ''} aria-label="显示 ${entry.cell.date} ${entry.cell.group}"><span class="swatch" style="background:${entry.color}"></span>${entry.cell.date} · ${entry.cell.group}</label></td><td><span class="version-tag ${entry.ownAll ? 'is-all' : ''}">${versionLabel(entry)}</span></td><td>${entry.stats.n}</td><td title="手记：${entry.cell.handwrittenNm ?? '—'} nm">${fmt(entry.stats.mean)}${entry.stats.sd === null ? '' : ' ± '+fmt(entry.stats.sd)}</td><td>${fmt(entry.meanPeak.x)}</td></tr>`).join('');
+    $('stats-body').innerHTML = series.map(entry => `<tr><td><label><input type="checkbox" data-series="${entry.cell.id}" ${state.hidden.has(entry.cell.id) ? '' : 'checked'} ${state.view === 'original' ? 'disabled' : ''} aria-label="显示 ${cellLabel(entry.cell)}"><span class="swatch" style="background:${entry.color}"></span>${cellLabel(entry.cell)}</label></td><td><span class="version-tag ${entry.ownAll ? 'is-all' : ''}">${versionLabel(entry)}</span></td><td>${entry.stats.n}</td><td title="手记：${entry.cell.handwrittenNm ?? '—'} nm">${fmt(entry.stats.mean)}${entry.stats.sd === null ? '' : ' ± '+fmt(entry.stats.sd)}</td><td>${fmt(entry.meanPeak.x)}</td></tr>`).join('');
   }
   async function render() {
     const token = ++generation;
@@ -190,7 +190,7 @@
     const notice = $('version-notice');
     notice.hidden = state.version !== 'all';
     if (!notice.hidden) {
-      const fallback = series.filter(e => e.fallback).map(e => `${e.cell.date} ${e.cell.group}`);
+      const fallback = series.filter(e => e.fallback).map(e => cellLabel(e.cell));
       notice.textContent = `all：${allCount} 组使用独立 all 文件` + (fallback.length ? `；${fallback.join('、')} 未另存 all，沿用筛选数据。` : '。');
     }
     renderStats(series);
