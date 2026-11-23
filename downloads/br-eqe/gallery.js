@@ -3,7 +3,7 @@
   const kind = document.body.dataset.metric;
   const data = window.METRICS_DATA[kind];
   const $ = id => document.getElementById(id);
-  const categoryLabels = { individual: kind === 'abs' ? '单样品' : '单器件', comparison: '组内对比', variable: ['pl', 'trpl'].includes(kind) ? '单样品' : '变量组图' };
+  const categoryLabels = { individual: kind === 'abs' ? '单样品' : '单器件', comparison: '组内对比', overview: '集总对比', variable: ['pl', 'trpl'].includes(kind) ? '单样品' : '变量组图' };
   const luminescence = ['pl', 'trpl'].includes(kind);
   const dates = [{ label: '9.15', experiment: 'a' }, { label: '9.20', experiment: 'b' },
     { label: '10.12', experiment: 'c' }, { label: '10.17', experiment: 'e' }];
@@ -23,17 +23,25 @@
     const included = new Set(comparisons.flatMap(r => r.members?.map(m => m.id) || []));
     return standaloneRecords().filter(r => !included.has(r.id));
   }
+  function scopeRecords() {
+    return data.records.filter(r => (groupedOverview ? isCell(r) : r.category === 'comparison') && inView(r));
+  }
+  function dateRecords(date) { return scopeRecords().filter(r => r.date === date); }
   function overviewRecords() {
-    const rows = data.records.filter(r => (groupedOverview ? isCell(r) : r.category === 'comparison') && inView(r));
+    const overview = data.records.filter(r => r.category === 'overview' && inView(r));
+    if (overview.length) return [...overview, ...separateControls(overview)];
+    const rows = scopeRecords();
     return groupedOverview ? rows : [...rows, ...separateControls(rows)];
   }
   function selected() {
     if (state.type === 'all') return overviewRecords();
-    if (state.type === 'date' && groupedOverview) return overviewRecords().filter(r => r.date === state.key);
+    if (state.type === 'date' && groupedOverview) return dateRecords(state.key);
     if (state.type === 'group') return data.records.filter(r => isCell(r) && r.group === state.key && inView(r));
     const record = current();
     return state.type === 'date' ? [record, ...separateControls([record])] : [record];
   }
+  function ldrRange(record) { return `OD${record.metadata.odStart}–OD${record.metadata.odEnd}`; }
+  function ldrSpan(record) { return record.metadata.powerSpanDB+' dB'; }
   function metricLabel(record) {
     if (luminescence) return record.metadata.curveCount+' 条曲线 · '+(record.metadata.fitted ? '拟合' : '原始计数');
     if (kind === 'liquidAbs') return record.metadata.curveCount+' 条光谱'+(record.metadata.normalized ? ' · 归一化' : ' · 原始值');
@@ -45,18 +53,18 @@
     if (record.category !== 'individual') return `${record.members.length} 个器件`;
     if (kind === 'bandwidth') return record.metadata.bandwidthKHz.toFixed(1)+' kHz';
     if (kind === 'isd') return record.metadata.plottedRows+' 个正频率点';
-    return '80 dB span';
+    return ldrSpan(record)+' span';
   }
-  function resultHeading() { return kind === 'pl' ? '原始最大计数峰 / nm' : kind === 'trpl' ? '检测波长 / nm' : kind === 'liquidAbs' ? '光谱条数' : kind === 'abs' ? '1300–1400 nm 最大原始吸收' : kind === 'response' ? 'Rise / Fall / μs' : kind === 'bandwidth' ? '带宽 / kHz' : kind === 'isd' ? '正频率点数' : 'OD1–OD5 斜率 α'; }
+  function resultHeading() { return kind === 'pl' ? '原始最大计数峰 / nm' : kind === 'trpl' ? '检测波长 / nm' : kind === 'liquidAbs' ? '光谱条数' : kind === 'abs' ? '1300–1400 nm 最大原始吸收' : kind === 'response' ? 'Rise / Fall / μs' : kind === 'bandwidth' ? '带宽 / kHz' : kind === 'isd' ? '正频率点数' : '图示区间 / 光功率跨度'; }
   function resultValue(record) { return kind === 'bandwidth' ? record.metadata.bandwidthKHz.toFixed(1)
     : kind === 'pl' ? record.metadata.rawPeakNm.toFixed(0)
     : kind === 'trpl' ? record.metadata.detectionNm.toFixed(0)
     : kind === 'liquidAbs' ? record.metadata.curveCount
     : kind === 'abs' ? record.metadata.normalizationFactor == null ? '—' : record.metadata.normalizationFactor.toFixed(3)
     : kind === 'response' ? record.metadata.displayRiseUs.toFixed(2)+' / '+record.metadata.displayFallUs.toFixed(2)
-    : kind === 'isd' ? record.metadata.plottedRows : record.metadata.slope.toFixed(4); }
+    : kind === 'isd' ? record.metadata.plottedRows : ldrRange(record)+' · '+ldrSpan(record); }
   function colorLabel(record) { return luminescence ? '原样品配色' : record.recolored ? '与 EQE / JV 器件同色' : record.category === 'individual'
-    ? kind === 'abs' ? '原薄膜样品配色' : kind === 'response' ? '原图配色 · EQE 无对应编号' : '原图配色 · 器件点位未标明' : '原对比配色'; }
+    ? kind === 'ldr' && record.standalone ? '原图配色' : kind === 'abs' ? '原薄膜样品配色' : kind === 'response' ? '原图配色 · EQE 无对应编号' : '原图配色 · 器件点位未标明' : '原对比配色'; }
   function fullTitle(record) { return record.standalone ? record.title : `${record.experiment} · ${record.date} · ${record.title}`; }
   function title() {
     if (kind === 'liquidAbs' && ['all', 'date'].includes(state.type)) return (state.type === 'date' ? state.key+' · ' : '')+data.label+' · all 总览（归一化）';
@@ -71,7 +79,7 @@
         : data.records.filter(s => isCell(s) && s.date === r.date).map(s => s.id)));
     let html = '<thead><tr><th>变量 / 日期</th>';
     for (const date of dates) {
-      const comparison = overviewRecords().find(r => r.date === date.label);
+      const comparison = dateRecords(date.label).length;
       html += `<th><button data-metric-date="${date.label}" ${comparison ? '' : 'disabled'} class="${state.type === 'date' && state.key === date.label ? 'is-active' : ''}" aria-label="${date.label} ${data.label}组内对比"><span>${date.label}</span><small>实验 ${date.experiment}</small></button></th>`;
     }
     html += '</tr></thead><tbody>';
@@ -84,7 +92,7 @@
         html += (date ? '<td>' : `<td colspan="${dates.length}">`)+'<div class="metric-cell-stack">'+records.map(record => {
           const value = kind === 'pl' ? resultValue(record)+'<em>nm</em>' : kind === 'liquidAbs' ? record.metadata.curveCount+'<em>条</em>' : kind === 'bandwidth' ? record.metadata.bandwidthKHz.toFixed(1) : esc(record.point || record.deviceLabel);
           const detail = kind === 'trpl' ? resultValue(record)+' nm · '+(state.variant === 'fit' ? '拟合' : '原始') : kind === 'pl' ? '原始峰位' : kind === 'liquidAbs' ? '完整组图' : kind === 'abs' ? record.metadata.pointsPerCurve+' 点' : kind === 'response' ? resultValue(record)
-            : kind === 'bandwidth' ? esc(record.point || record.deviceLabel) : kind === 'isd' ? record.metadata.plottedRows+' 点' : 'OD1–OD5';
+            : kind === 'bandwidth' ? esc(record.point || record.deviceLabel) : kind === 'isd' ? record.metadata.plottedRows+' 点' : ldrRange(record);
           return `<button data-metric-cell="${record.id}" class="cell ${active.has(record.id) ? 'is-active' : ''}" aria-pressed="${active.has(record.id)}" title="${fullTitle(record)} · ${metricLabel(record)}"><span class="peak-value">${value}</span><span class="cell-detail">${record.color ? '<b class="color-chip" style="background:'+record.color+'"></b>' : ''}${detail}</span></button>`;
         }).join('')+'</div></td>';
       }
@@ -126,7 +134,9 @@
           ['偏压', record.metadata.biasV+' V'], ['原 SVG 顶点数', record.metadata.curvePointCount],
           ['频率轴范围', record.metadata.axisFrequencyMinHz+'–'+record.metadata.axisFrequencyMaxHz+' Hz'],
           ['零 / 负频率点', record.metadata.excluded.zero_frequency+' / '+record.metadata.excluded.negative_frequency]]
-        : [['比较区间', 'OD1–OD5'], ['光功率跨度', '80 dB（span）'], ['偏压', '0 V'], ['幂律斜率 α', record.metadata.slope.toFixed(4)]];
+        : [['图示区间', ldrRange(record)], ['光功率跨度', ldrSpan(record)],
+          ...(record.standalone ? [['选区光功率（mW）', record.metadata.powerMinMw.toExponential()+' 至 '+record.metadata.powerMaxMw], ['实测点数', record.metadata.pointCount]]
+            : [['偏压', record.metadata.biasV+' V'], ['幂律斜率 α', record.metadata.slope.toFixed(4)]])];
       $('gallery-metadata').innerHTML = '<dl class="gallery-facts">'+facts.map(([name, value]) => `<div><dt>${name}</dt><dd>${value}</dd></div>`).join('')+(record.color ? `<div><dt>${record.recolored ? 'EQE / JV 器件颜色' : '原图颜色'}</dt><dd><span class="color-chip" style="background:${record.color}"></span>${record.color}</dd></div>` : '')+'</dl>';
     } else {
       $('gallery-metadata').innerHTML = '<table class="gallery-members"><thead><tr><th>'+(['abs', 'pl', 'trpl'].includes(kind) ? '样品' : '器件')+'</th><th>'+resultHeading()+'</th></tr></thead><tbody>'
@@ -179,14 +189,14 @@
     } else metadata(records[0]);
     $('gallery-selection').textContent = title();
     $('gallery-selection-meta').textContent = state.type === 'all' || state.type === 'group' || groupedOverview && state.type === 'date'
-      ? `${records.length} 张原图 · ${state.type === 'group' ? ['isd', 'response', 'abs', 'liquidAbs', 'pl', 'trpl'].includes(kind) ? '按原样品标签归组' : '与 EQE / JV 器件同色' : '原组内对比图'}`
+      ? `${records.length} 张原图 · ${record.category === 'overview' ? '原集总对比图' : state.type === 'group' ? ['isd', 'response', 'abs', 'liquidAbs', 'pl', 'trpl'].includes(kind) || kind === 'ldr' && record.standalone ? '按原样品标签归组' : '与 EQE / JV 器件同色' : '原组内对比图'}`
       : `${categoryLabels[record.category]} · ${metricLabel(record)} · ${colorLabel(record)}`;
     $('gallery-viewer-title').textContent = title();
     $('gallery-category').textContent = data.label+' · '+(state.type === 'all' ? '集总对比' : state.type === 'group' ? '变量对比' : categoryLabels[record.category]);
     $('gallery-source').textContent = multiple ? records.map(r => r.sourceSvg).join('\n') : figure.sourceSvg;
     $('gallery-caption').textContent = multiple ? '各图为本次提供的 Origin 图片，未合并拟合或重算。' : record.recolored
       ? 'Origin 图片仅统一器件颜色；曲线路径、坐标、数值及标注未重算。'
-      : 'Origin '+(record.category === 'individual' ? '单器件图' : '组内对比图')+'，保留你这次更新的原始配色与标注。';
+      : 'Origin '+(record.category === 'individual' ? '单器件图' : record.category === 'overview' ? '集总对比图' : '组内对比图')+'，保留你这次更新的原始配色与标注。';
     if (kind === 'response') $('gallery-caption').textContent = multiple && records.some(r => r.standalone)
       ? 'a/c 组图使用同帧 3 周期中位值；n 单独显示同一脉冲的原始交点结果，未合并计时。'
       : record.standalone ? 'n 的波形与交点核验图来自同一脉冲，计时按原始 10% / 90% 交点，未重新计算。'
@@ -239,14 +249,14 @@
   }
   function select(id) {
     const record = data.records.find(r => r.id === id); if (!record) return;
-    state.id = id; state.type = isCell(record) ? 'cell' : 'date';
+    state.id = id; state.type = isCell(record) ? 'cell' : record.category === 'overview' ? 'all' : 'date';
     state.detail = false;
     if (record.view) state.variant = record.view;
-    state.key = state.type === 'cell' ? id : record.date; state.zoom = 1;
+    state.key = state.type === 'cell' ? id : record.date || ''; state.zoom = 1;
     return schedule();
   }
   function selectScope(type, key) {
-    const rows = type === 'all' ? overviewRecords() : type === 'date' ? overviewRecords().filter(r => r.date === key)
+    const rows = type === 'all' ? overviewRecords() : type === 'date' ? dateRecords(key)
       : data.records.filter(r => isCell(r) && r.group === key && inView(r));
     if (!rows.length) return;
     state.type = type; state.key = key || ''; state.id = rows[0].id; state.zoom = 1;
@@ -268,6 +278,9 @@
   if (kind === 'bandwidth' && data.processingNote) {
     $('gallery-method-content').insertAdjacentHTML('beforeend', '<dl><dt>当前图片版本</dt><dd>采用 n 修正版的 8 张完整单图及 2 张组内对比图。n 已包含在 a/c 的组图中，不重复绘制。'+esc(data.processingNote)+'</dd></dl>');
   }
+  if (kind === 'ldr') {
+    $('gallery-method-content').innerHTML = `<dl><dt>当前版本</dt><dd>${esc(data.sourceFolder)}。收录 c 组五张单图、组内对比图、n 单图及六器件集总图。集总直接使用 Origin 原图，未重新拟合或平均。</dd><dt>图示跨度</dt><dd>${esc(data.spanNote)} n 是独立对照，不归入 10.12；其偏压和面积未注明。</dd><dt>器件配色</dt><dd>c 组单图保留现有 EQE / JV 配色；n 和两张对比图沿用原图配色。</dd></dl>`;
+  }
   if (kind === 'response') {
     $('gallery-method-content').innerHTML = '<dl><dt>当前记录</dt><dd>采用此次提供的 10 张单脉冲及交点图、2 张组内对比图，以及 n 的波形与交点核验图。原 SVG 曲线路径、标注、坐标和数值保持不变；网页未抽点、拟合或重新计算时间。</dd><dt>两种计时口径</dt><dd>单图与表格格子使用图示同一周期的 Rise / Fall 估计；组图及其下方汇总使用同帧 3 周期中位值。Rise 为 10%→90%，Fall 为 90%→10%，升降使用同一捕获脉冲、同一组高低平台。周期内波动不作为独立器件重复；这些估计未去除光源与电子学影响。</dd><dt>档位</dt><dd>灵敏度读取你提供的核验记录。f1 (001) 的 20 μA/V 为暂定值，已单独标出；灵敏度的线性换算不改变归一化 10%/90% 交点。不从 SOP 推断未记录的偏压。</dd><dt>配色</dt><dd>按日期、变量和器件编号匹配 EQE / JV 单器件颜色。C 10 1-3、C 20 1-5 没有对应 EQE 编号，保留原色。f1 (001) 按明确的 f1 器件标签匹配颜色，未推断点位，也不与旧重复标签合并。组内对比图保留原配色。</dd></dl>';
     $('gallery-method-content').insertAdjacentHTML('beforeend', '<dl><dt>正常器件 n</dt><dd>波形图和交点核验图是同一脉冲，不算两个器件。保留原色与原始计时标注：1.44 / 3.97 μs。主图和边沿显示分别按每 100 点、每 10 点取点；计时来自原始 3.2 ns 采样数据，不用展示抽点结果重新求交点。未提供灵敏度，也未与 JV/EQE 的具体器件点位配对。</dd></dl>');
@@ -288,7 +301,7 @@
     if (cell) select(cell.dataset.metricCell);
     else if (date && !date.disabled) {
       if (groupedOverview) selectScope('date', date.dataset.metricDate);
-      else select(overviewRecords().find(r => r.date === date.dataset.metricDate).id);
+      else select(dateRecords(date.dataset.metricDate)[0].id);
     }
     else if (group) selectScope('group', group.dataset.metricGroup);
   });
@@ -337,7 +350,7 @@
   const exact = data.records.find(r => r.id === requestedAsset)
     || (kind === 'bandwidth' && requestedAsset?.endsWith('_detail')
       ? data.records.find(r => r.id === requestedAsset.replace(/_detail$/, '_comparison')) : null);
-  if (exact) { state.id = exact.id; state.type = isCell(exact) ? 'cell' : 'date'; state.key = state.type === 'cell' ? exact.id : exact.date; if (exact.view) state.variant = exact.view; }
+  if (exact) { state.id = exact.id; state.type = isCell(exact) ? 'cell' : exact.category === 'overview' ? 'all' : 'date'; state.key = state.type === 'cell' ? exact.id : exact.date || ''; if (exact.view) state.variant = exact.view; }
   else {
     const category = ['comparison', 'detail'].includes(params.get('category')) && !groupedOverview ? 'comparison' : cellCategory;
     const candidate = data.records.find(r => r.category === category && r.date === params.get('date') && (!params.get('group') || r.group === params.get('group')) && inView(r))
@@ -345,7 +358,7 @@
     if (candidate) { state.id = candidate.id; state.type = isCell(candidate) ? 'cell' : 'date'; state.key = state.type === 'cell' ? candidate.id : candidate.date; }
   }
   if (params.get('type') === 'date') {
-    const records = overviewRecords().filter(r => r.date === params.get('key'));
+    const records = dateRecords(params.get('key'));
     if (records.length) { state.type = 'date'; state.key = params.get('key'); state.id = records[0].id; }
   }
   if (comparisonViews.some(view => view.id === params.get('variant'))) {
