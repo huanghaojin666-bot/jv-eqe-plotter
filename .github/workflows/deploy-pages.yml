@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -36,9 +37,29 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload website
+        id: pages-artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+
+      - name: Wait for the Pages artifact to be listed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGES_ARTIFACT_ID: ${{ steps.pages-artifact.outputs.artifact_id }}
+        run: |
+          if [[ -z "$PAGES_ARTIFACT_ID" ]]; then
+            echo "::error::The Pages upload returned no artifact ID."
+            exit 1
+          fi
+          for attempt in {1..12}; do
+            if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=github-pages" \
+              --jq '.artifacts[] | select(.expired == false) | .id' | grep -Fxq "$PAGES_ARTIFACT_ID"; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::The uploaded Pages artifact was not listed within one minute."
+          exit 1
 
       - name: Publish website
         id: deployment
