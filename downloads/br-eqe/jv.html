@@ -4,22 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="br-report-version" content="20261123-ldr-n">
+  <meta name="br-report-version" content="20261124-jv-light">
   <link rel="icon" type="image/svg+xml" href="../../assets/nano-photonics-icon.svg?v=20261117-1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>Br 实验 · JV</title>
-  <link rel="stylesheet" href="styles.css?v=20261123-ldr-n">
+  <link rel="stylesheet" href="styles.css?v=20261124-jv-light">
 </head>
 <body>
   <header class="app-header">
-    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261123-ldr-n" aria-current="page">JV</a><a href="index.html?v=20261123-ldr-n" data-eqe-link>EQE</a><a href="bandwidth.html?v=20261123-ldr-n" data-metric-link="bandwidth">-3dB</a><a href="ldr.html?v=20261123-ldr-n" data-metric-link="ldr">ldr</a><a href="isd.html?v=20261123-ldr-n" data-metric-link="isd">isd</a><a href="response.html?v=20261123-ldr-n" data-metric-link="response">response</a><a href="abs.html?v=20261123-ldr-n" data-metric-link="abs">abs</a><a href="pl.html?v=20261123-ldr-n" data-metric-link="pl">pl</a><a href="trpl.html?v=20261123-ldr-n" data-metric-link="trpl">trpl</a><a href="gisaxs.html?v=20261123-ldr-n" data-metric-link="gisaxs">gisaxs</a></nav></div>
+    <div class="brand"><i data-lucide="chart-no-axes-combined"></i><h1>Br 实验</h1><nav class="header-tabs" aria-label="表征"><a href="jv.html?v=20261124-jv-light" aria-current="page">JV</a><a href="index.html?v=20261124-jv-light" data-eqe-link>EQE</a><a href="bandwidth.html?v=20261124-jv-light" data-metric-link="bandwidth">-3dB</a><a href="ldr.html?v=20261124-jv-light" data-metric-link="ldr">ldr</a><a href="isd.html?v=20261124-jv-light" data-metric-link="isd">isd</a><a href="response.html?v=20261124-jv-light" data-metric-link="response">response</a><a href="abs.html?v=20261124-jv-light" data-metric-link="abs">abs</a><a href="pl.html?v=20261124-jv-light" data-metric-link="pl">pl</a><a href="trpl.html?v=20261124-jv-light" data-metric-link="trpl">trpl</a><a href="gisaxs.html?v=20261124-jv-light" data-metric-link="gisaxs">gisaxs</a></nav></div>
     <div class="header-meta"><span id="jv-inventory"></span><span class="local-status"><i data-lucide="hard-drive"></i>实验数据</span></div>
   </header>
   <main class="workspace">
     <section class="matrix-section" aria-labelledby="matrix-title">
       <div class="section-heading"><div><h2 id="matrix-title">筛选 JV</h2><span class="subtle">Dark / Light</span></div><button id="jv-all" class="primary command"><i data-lucide="layers"></i>集总曲线</button></div>
-      <div class="jv-data-status"><span class="status-tick"><i data-lucide="check"></i>新建文件夹 (2)</span><a href="assets/JV同EQE配色矢量图.zip" download class="text-command"><i data-lucide="folder-down"></i>SVG 全集</a></div>
+      <div class="jv-data-status"><span class="status-tick"><i data-lucide="check"></i><span id="jv-original-data-status"></span></span><a href="assets/JV同EQE配色矢量图.zip" download class="text-command">原 JV SVG 全集</a></div>
+      <div class="segmented jv-batch-control" id="jv-batch" role="group" aria-label="JV 测量批次"><button data-jv-batch="original" aria-pressed="true">原 JV</button><button data-jv-batch="light" aria-pressed="false">11.24 亮电流</button><button data-jv-batch="combined" aria-pressed="false">合看</button></div>
       <div class="matrix-scroll"><table id="jv-matrix" class="jv-matrix" aria-label="日期与变量的筛选JV"></table></div>
       <div class="matrix-key"><span><b class="key-active"></b>当前对比</span><button id="jv-method" class="text-command"><i data-lucide="palette"></i>配色与数据口径</button></div>
       <div class="selection-summary"><span class="overline">当前选择</span><h3 id="jv-selection-title"></h3><div id="jv-selection-meta" class="subtle"></div></div>
@@ -31,6 +32,11 @@
       <div class="viewer-heading"><div><span class="overline" id="jv-category">单组 JV</span><h2 id="jv-viewer-title"></h2></div><div class="viewer-actions"><button id="jv-reset" class="icon-button" title="重置坐标" aria-label="重置坐标"><i data-lucide="scan"></i></button><details id="jv-export-menu" class="menu"><summary class="command"><i data-lucide="download"></i>导出<i data-lucide="chevron-down"></i></summary><div class="menu-content"><button data-jv-export="png"><i data-lucide="image"></i>PNG 图片</button><button data-jv-export="svg"><i data-lucide="file-image"></i>SVG 矢量图</button><button data-jv-export="csv"><i data-lucide="table-2"></i><span id="jv-export-csv-label">CSV 原始有符号数据</span></button></div></details></div></div>
       <div class="plot-toolbar" id="jv-toolbar"><div class="segmented view-mode" aria-label="JV视图"><button id="jv-view-plot" aria-pressed="true"><i data-lucide="chart-line"></i>交互曲线</button><button id="jv-view-svg" aria-pressed="false"><i data-lucide="image"></i>保存 SVG</button><button id="jv-view-mean" aria-pressed="false"><i data-lucide="chart-spline"></i>JV 平均值</button></div><div class="plot-options"><select id="jv-mode" aria-label="光暗状态"><option value="both">光暗全部</option><option value="dark">Dark</option><option value="light">Light</option></select><select id="jv-scale" aria-label="JV纵轴"><option value="log">对数 |J|</option><option value="linear">线性 J</option></select><select id="jv-normalization" aria-label="JV 归一化"><option value="raw">实测 J</option><option value="normalized">归一化 JV</option></select></div></div>
       <div id="jv-notice" class="version-notice" hidden></div>
+      <details id="jv-curve-picker" class="jv-curve-picker">
+        <summary><i data-lucide="list-checks"></i><span>选择曲线</span><output id="jv-picker-count"></output><i data-lucide="chevron-down"></i></summary>
+        <div class="jv-picker-actions"><button id="jv-show-curves" class="command" type="button">全选</button><button id="jv-hide-curves" class="command" type="button">全不选</button></div>
+        <div id="jv-picker-list" class="jv-picker-list" role="group" aria-label="逐条选择 JV 曲线"></div>
+      </details>
       <div id="jv-plot-surface"><div id="jv-original-surface" hidden><img id="jv-original-image" alt=""></div><div id="jv-plot"></div><div id="jv-error" role="alert" hidden></div></div>
       <div id="jv-caption" class="plot-caption"></div>
       <section class="statistics" id="jv-statistics" aria-labelledby="jv-stats-title"><div class="statistics-heading"><h3 id="jv-stats-title">当前曲线</h3><span id="jv-visible-count" class="subtle"></span></div><div class="stats-scroll jv-stats-scroll"><table><thead><tr><th>日期 / 点位</th><th>状态</th><th id="jv-stats-device">器件</th><th>|J| @ −0.5 V</th><th>|J| @ +0.5 V</th></tr></thead><tbody id="jv-stats"></tbody></table></div><div class="jv-unit-note" id="jv-unit-note">电流密度单位 A/cm²；表格仅列指定偏压，不对不同器件求均值。</div></section>
@@ -40,9 +46,9 @@
   <div id="toast" role="status" hidden></div>
   <script src="assets/plotly.min.js"></script>
   <script src="assets/lucide.min.js"></script>
-  <script src="jv-data.js?v=20261123-ldr-n"></script>
-  <script src="jv-model.js?v=20261123-ldr-n"></script>
-  <script src="navigation.js?v=20261123-ldr-n"></script>
-  <script src="jv.js?v=20261123-ldr-n"></script>
+  <script src="jv-data.js?v=20261124-jv-light"></script>
+  <script src="jv-model.js?v=20261124-jv-light"></script>
+  <script src="navigation.js?v=20261124-jv-light"></script>
+  <script src="jv.js?v=20261124-jv-light"></script>
 </body>
 </html>
