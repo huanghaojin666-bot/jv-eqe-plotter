@@ -5,8 +5,8 @@
 })(typeof globalThis === 'undefined' ? this : globalThis, function () {
   'use strict';
   function sourceRecords(data, source) {
-    const light = data.lightBatch?.records || [];
-    return source === 'light' ? light : source === 'combined' ? [...data.records, ...light] : data.records;
+    const batch = data.newBatch?.records || [];
+    return source === 'new' ? batch : source === 'combined' ? [...data.records, ...batch] : data.records;
   }
   function selection(data, type, key, source) {
     const pool = sourceRecords(data, source);

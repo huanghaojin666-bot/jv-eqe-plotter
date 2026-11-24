@@ -183,7 +183,7 @@
     for (const button of $('jv-batch').querySelectorAll('button')) {
       button.setAttribute('aria-pressed', String(button.dataset.jvBatch === state.source));
     }
-    $('jv-original-data-status').textContent = state.source === 'original' ? '新建文件夹 (2)' : state.source === 'light' ? '2026-11-24 · Light' : '原 JV + 11.24 Light';
+    $('jv-original-data-status').textContent = state.source === 'original' ? '新建文件夹 (2)' : state.source === 'new' ? '2026-11-24 · Dark / Light' : '原 JV + 11.24 光暗 JV';
     $('jv-selection-title').textContent = title();
     $('jv-selection-meta').textContent = selectedTitle();
     $('jv-viewer-title').textContent = title();
@@ -195,7 +195,6 @@
     $('jv-view-svg').disabled = !canUseSvg();
     $('jv-view-svg').setAttribute('aria-pressed', String(original));
     $('jv-view-plot').setAttribute('aria-pressed', String(state.view === 'plot'));
-    $('jv-mode').querySelector('option[value="dark"]').disabled = state.source === 'light';
     $('jv-mode').value = original ? 'both' : state.mode;
     $('jv-scale').value = state.scale;
     $('jv-normalization').value = state.normalized && !original ? 'normalized' : 'raw';
@@ -255,7 +254,7 @@
   }
   function selectSource(source) {
     state.source = source;
-    if (source === 'light' && state.mode === 'dark') state.mode = 'light';
+    if (source === 'new') state.mode = 'both';
     if (!selected().length) {
       state.type = 'date';
       state.key = model.sourceRecords(data, source)[0].date;
@@ -344,10 +343,13 @@
   }));
   window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (['plot', 'mean'].includes(state.view)) schedule(); }, 120); });
   $('jv-original-image').addEventListener('error', () => { $('jv-error').hidden = false; $('jv-error').textContent = 'SVG 无法读取。'; });
-  $('jv-inventory').textContent = `原 JV ${data.counts.curves} 条 · 11.24 Light ${data.lightBatch.counts.c+data.lightBatch.counts.e} 条`;
-  $('jv-method-dialog').querySelector('dl').insertAdjacentHTML('beforeend', '<dt>11.24 亮电流</dt><dd>独立收录 c（10.12）和 e（10.17）在 2026-11-24 测量的 Light 曲线。同文件的 Dark 未导入。实验日期与测量时间分别保留；已有对应的器件沿用 EQE 颜色，无对应时使用独立颜色。合看只叠加显示，原 JV 与新批次不混合求均值。交互图、平均图和导出均按逐条勾选结果处理；保存 SVG 只适用于原 JV。</dd>');
+  const newCurveCount = data.newBatch.records.reduce((sum, r) => sum+r.curves.length, 0);
+  $('jv-inventory').textContent = `原 JV ${data.counts.curves} 条 · 11.24 光暗 JV ${newCurveCount} 条`;
+  $('jv-method-dialog').querySelector('dl').insertAdjacentHTML('beforeend', '<dt>11.24 光暗 JV</dt><dd>独立收录 c（10.12）和 e（10.17）在 2026-11-24 测量的 Dark 和 Light。相同点位光暗同色，分别用实线和虚线。实验日期与测量时间分别保留；已有对应的器件沿用 EQE 颜色，无对应时使用独立颜色。合看只叠加显示，原 JV 与新批次不混合求均值。交互图、平均图和导出均按逐条勾选结果处理；保存 SVG 只适用于原 JV。</dd>');
   const hash = new URLSearchParams(location.hash.slice(1));
-  if (['light', 'combined'].includes(hash.get('source'))) state.source = hash.get('source');
+  const source = hash.get('source');
+  if (source === 'light' || source === 'new') state.source = 'new';
+  else if (source === 'combined') state.source = source;
   if (['cell', 'date', 'group', 'all'].includes(hash.get('type')) && model.selection(data, hash.get('type'), hash.get('key'), state.source).length) {
     state.type = hash.get('type'); state.key = hash.get('key');
     const view = hash.get('view');
@@ -356,8 +358,7 @@
     state.scale = hash.get('scale') === 'linear' ? 'linear' : 'log';
     state.normalized = hash.get('norm') === 'ref';
   }
-  if (!selected().length) { state.type = 'date'; state.key = data.lightBatch.records[0].date; }
-  if (state.source === 'light' && state.mode === 'dark') state.mode = 'light';
+  if (!selected().length) { state.type = 'date'; state.key = data.newBatch.records[0].date; }
   for (const id of (hash.get('hidden') || '').split(',')) if (curveIds.has(id)) state.hidden.add(id);
   window.JVApp = { state, data, model, ready, select, traceData, layout, exportFigure, snapshot: null };
   installLabels(); icons(); schedule();
